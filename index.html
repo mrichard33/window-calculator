@@ -1,0 +1,1414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Window Cost Estimator</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary: #1a5276;
+      --primary-light: #2980b9;
+      --accent: #e67e22;
+      --bg: #f4f6f8;
+      --card: #ffffff;
+      --text: #2c3e50;
+      --text-light: #7f8c8d;
+      --border: #dce1e6;
+      --success: #27ae60;
+      --danger: #c0392b;
+      --shadow: 0 2px 12px rgba(0,0,0,0.08);
+      --radius: 8px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    header {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+      color: #fff;
+      padding: 2rem 1rem;
+      text-align: center;
+    }
+
+    header h1 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    header p {
+      opacity: 0.85;
+      margin-top: 0.4rem;
+      font-size: 0.95rem;
+    }
+
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 1.5rem 1rem 3rem;
+    }
+
+    /* Stepper */
+    .stepper {
+      display: flex;
+      justify-content: center;
+      gap: 0.25rem;
+      margin-bottom: 2rem;
+    }
+
+    .stepper .step {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.82rem;
+      color: var(--text-light);
+      font-weight: 500;
+    }
+
+    .stepper .step.active { color: var(--primary); font-weight: 700; }
+    .stepper .step.done { color: var(--success); }
+
+    .stepper .step .num {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      border: 2px solid var(--border);
+      background: #fff;
+      flex-shrink: 0;
+    }
+
+    .stepper .step.active .num { border-color: var(--primary); background: var(--primary); color: #fff; }
+    .stepper .step.done .num { border-color: var(--success); background: var(--success); color: #fff; }
+
+    .stepper .connector {
+      width: 30px;
+      height: 2px;
+      background: var(--border);
+      align-self: center;
+    }
+
+    .stepper .step.done + .connector { background: var(--success); }
+
+    /* Cards */
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 1.5rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .card h2 {
+      font-size: 1.1rem;
+      margin-bottom: 1rem;
+      padding-bottom: 0.6rem;
+      border-bottom: 2px solid var(--bg);
+      color: var(--primary);
+    }
+
+    .card h3 {
+      font-size: 0.95rem;
+      margin: 1rem 0 0.5rem;
+      color: var(--text);
+    }
+
+    /* Form elements */
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .form-row.three { grid-template-columns: 1fr 1fr 1fr; }
+
+    @media (max-width: 600px) {
+      .form-row, .form-row.three { grid-template-columns: 1fr; }
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .field label {
+      font-size: 0.82rem;
+      font-weight: 600;
+      margin-bottom: 0.3rem;
+      color: var(--text);
+    }
+
+    .field label .hint {
+      font-weight: 400;
+      color: var(--text-light);
+      font-size: 0.78rem;
+    }
+
+    .field select,
+    .field input[type="number"],
+    .field input[type="text"] {
+      padding: 0.55rem 0.7rem;
+      border: 1.5px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.9rem;
+      color: var(--text);
+      background: #fff;
+      transition: border-color 0.2s;
+    }
+
+    .field select:focus,
+    .field input:focus {
+      outline: none;
+      border-color: var(--primary-light);
+      box-shadow: 0 0 0 3px rgba(41,128,185,0.12);
+    }
+
+    /* Tile selectors */
+    .tile-group {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 0.6rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .tile {
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.7rem 0.5rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: #fff;
+      font-size: 0.82rem;
+    }
+
+    .tile:hover { border-color: var(--primary-light); background: #f0f7fc; }
+    .tile.selected { border-color: var(--primary); background: #eaf2f8; font-weight: 600; }
+
+    .tile .tile-icon { font-size: 1.4rem; display: block; margin-bottom: 0.3rem; }
+    .tile .tile-price { font-size: 0.72rem; color: var(--text-light); margin-top: 0.2rem; display: block; }
+
+    /* Checkbox group */
+    .check-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+    }
+
+    @media (max-width: 600px) { .check-group { grid-template-columns: 1fr; } }
+
+    .check-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+      padding: 0.6rem;
+      border: 1.5px solid var(--border);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 0.85rem;
+    }
+
+    .check-item:hover { border-color: var(--primary-light); }
+    .check-item.checked { border-color: var(--primary); background: #eaf2f8; }
+
+    .check-item input { margin-top: 2px; accent-color: var(--primary); }
+    .check-item .check-label { font-weight: 500; }
+    .check-item .check-desc { font-size: 0.75rem; color: var(--text-light); }
+
+    /* Section visibility */
+    .section { display: none; }
+    .section.visible { display: block; }
+
+    /* Buttons */
+    .btn-row {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 1.5rem;
+      gap: 0.75rem;
+    }
+
+    .btn {
+      padding: 0.65rem 1.6rem;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { background: var(--primary-light); }
+    .btn-secondary { background: var(--border); color: var(--text); }
+    .btn-secondary:hover { background: #c5ccd3; }
+    .btn-accent { background: var(--accent); color: #fff; }
+    .btn-accent:hover { background: #d35400; }
+
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* Window list */
+    .window-list { margin-top: 1rem; }
+
+    .window-entry {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.7rem 0.8rem;
+      border: 1.5px solid var(--border);
+      border-radius: 6px;
+      margin-bottom: 0.5rem;
+      background: #fafbfc;
+      font-size: 0.85rem;
+    }
+
+    .window-entry .we-info { flex: 1; }
+    .window-entry .we-info strong { color: var(--primary); }
+    .window-entry .we-cost { font-weight: 700; color: var(--success); margin: 0 1rem; white-space: nowrap; }
+
+    .window-entry .we-actions { display: flex; gap: 0.4rem; }
+
+    .btn-sm {
+      padding: 0.3rem 0.6rem;
+      font-size: 0.78rem;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .btn-edit { background: #eaf2f8; color: var(--primary); }
+    .btn-delete { background: #fdecea; color: var(--danger); }
+
+    /* Summary */
+    .summary-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .summary-table th,
+    .summary-table td {
+      padding: 0.55rem 0.75rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.88rem;
+    }
+
+    .summary-table th { background: #f8f9fa; font-weight: 600; color: var(--primary); }
+    .summary-table td:last-child { text-align: right; font-weight: 500; }
+
+    .summary-table tr.total td {
+      font-weight: 700;
+      font-size: 1rem;
+      border-top: 2px solid var(--primary);
+      border-bottom: none;
+      color: var(--primary);
+    }
+
+    .summary-table tr.subtotal td {
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .summary-section { margin-bottom: 1.5rem; }
+    .summary-section h3 {
+      font-size: 0.9rem;
+      color: var(--primary);
+      margin-bottom: 0.5rem;
+    }
+
+    /* Disclaimer */
+    .disclaimer {
+      background: #fef9e7;
+      border-left: 4px solid var(--accent);
+      padding: 0.8rem 1rem;
+      font-size: 0.8rem;
+      color: #7d6608;
+      border-radius: 0 6px 6px 0;
+      margin-top: 1rem;
+    }
+
+    /* Print */
+    .btn-print { background: #2c3e50; color: #fff; }
+    .btn-print:hover { background: #34495e; }
+
+    @media print {
+      header { padding: 1rem; }
+      .btn-row, .stepper, .btn-print { display: none; }
+      .section { display: block !important; }
+      .card { box-shadow: none; border: 1px solid #ddd; }
+    }
+
+    /* Running total bar */
+    .running-total {
+      position: sticky;
+      bottom: 0;
+      background: var(--primary);
+      color: #fff;
+      text-align: center;
+      padding: 0.65rem 1rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      box-shadow: 0 -2px 12px rgba(0,0,0,0.15);
+      z-index: 100;
+    }
+
+    .running-total span { font-size: 1.15rem; }
+
+    /* Info tooltip */
+    .info-tip {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--border);
+      color: var(--text-light);
+      font-size: 0.68rem;
+      text-align: center;
+      line-height: 16px;
+      cursor: help;
+      margin-left: 4px;
+      position: relative;
+      vertical-align: middle;
+    }
+
+    .info-tip:hover::after {
+      content: attr(data-tip);
+      position: absolute;
+      bottom: 120%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--text);
+      color: #fff;
+      padding: 0.5rem 0.7rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      white-space: normal;
+      width: 220px;
+      text-align: left;
+      font-weight: 400;
+      z-index: 999;
+      line-height: 1.4;
+    }
+
+    /* Quantity stepper */
+    .qty-control {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+
+    .qty-control button {
+      width: 30px;
+      height: 30px;
+      border: 1.5px solid var(--border);
+      border-radius: 4px;
+      background: #fff;
+      font-size: 1.1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--primary);
+      font-weight: 700;
+    }
+
+    .qty-control button:hover { background: #eaf2f8; }
+
+    .qty-control input {
+      width: 50px;
+      text-align: center;
+      padding: 0.35rem;
+      border: 1.5px solid var(--border);
+      border-radius: 4px;
+      font-size: 0.9rem;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 2rem;
+      color: var(--text-light);
+      font-size: 0.9rem;
+    }
+
+    /* Grid display for dimensions */
+    .dim-row {
+      display: flex;
+      align-items: end;
+      gap: 0.5rem;
+    }
+
+    .dim-row .field { flex: 1; }
+    .dim-row .dim-x { font-size: 1.1rem; font-weight: 600; align-self: center; padding-top: 1.2rem; color: var(--text-light); }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Window Cost Estimator</h1>
+    <p>Accurate pricing based on 2025-2026 industry data</p>
+  </header>
+
+  <div class="container">
+    <!-- Stepper -->
+    <div class="stepper" id="stepper">
+      <div class="step active" data-step="1"><span class="num">1</span> Project</div>
+      <div class="connector"></div>
+      <div class="step" data-step="2"><span class="num">2</span> Windows</div>
+      <div class="connector"></div>
+      <div class="step" data-step="3"><span class="num">3</span> Estimate</div>
+    </div>
+
+    <!-- ========== STEP 1: PROJECT DETAILS ========== -->
+    <div class="section visible" id="section-1">
+      <div class="card">
+        <h2>Project Details</h2>
+
+        <div class="form-row">
+          <div class="field">
+            <label>Installation Type <span class="info-tip" data-tip="Retrofit fits into the existing frame. Full-frame removes everything down to the rough opening for a complete replacement.">?</span></label>
+            <select id="installType">
+              <option value="retrofit">Retrofit / Insert ($100-$225 labor)</option>
+              <option value="fullframe">Full-Frame Replacement ($250-$600 labor)</option>
+              <option value="new">New Construction ($200-$450 labor)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Region <span class="info-tip" data-tip="Regional labor rates vary significantly. West Coast and Northeast have the highest costs.">?</span></label>
+            <select id="region">
+              <option value="midwest">Midwest (Baseline)</option>
+              <option value="south">South (-10%)</option>
+              <option value="northeast">Northeast (+18%)</option>
+              <option value="westcoast">West Coast (+22%)</option>
+              <option value="hawaii_alaska">Hawaii / Alaska (+35%)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="field">
+            <label>Building Stories <span class="info-tip" data-tip="Upper-story windows cost more due to scaffolding, ladders, and added labor time.">?</span></label>
+            <select id="stories">
+              <option value="1">1 Story (Ground Floor)</option>
+              <option value="2">2 Stories</option>
+              <option value="3">3+ Stories</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Permits Required? <span class="info-tip" data-tip="Some jurisdictions require permits for window replacement, especially for structural or egress changes. Typical permit cost is $50-$250.">?</span></label>
+            <select id="permits">
+              <option value="none">No Permit Needed</option>
+              <option value="basic">Basic Permit (~$75)</option>
+              <option value="standard">Standard Permit (~$150)</option>
+              <option value="full">Full Permit (~$250)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="field">
+            <label>Disposal of Old Windows <span class="info-tip" data-tip="Cost to haul away and dispose of old windows. Some contractors include this; others charge extra.">?</span></label>
+            <select id="disposal">
+              <option value="included">Included by Contractor</option>
+              <option value="per_window">Charge Per Window (~$30-$50 each)</option>
+              <option value="dumpster">Dumpster Rental (~$300-$500)</option>
+              <option value="self">Self-Disposal (No Cost)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Season <span class="info-tip" data-tip="Off-season installation (late fall/winter) can save 5-15% on labor as contractors have more availability.">?</span></label>
+            <select id="season">
+              <option value="peak">Peak Season (Spring/Summer)</option>
+              <option value="shoulder">Shoulder Season (Early Fall)</option>
+              <option value="offseason">Off-Season (Late Fall/Winter, -10% labor)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <div></div>
+        <button class="btn btn-primary" onclick="goToStep(2)">Next: Configure Windows &rarr;</button>
+      </div>
+    </div>
+
+    <!-- ========== STEP 2: WINDOW CONFIGURATION ========== -->
+    <div class="section" id="section-2">
+      <div class="card">
+        <h2>Window Configuration</h2>
+
+        <!-- Window Style -->
+        <h3>Window Style</h3>
+        <div class="tile-group" id="windowStyle">
+          <div class="tile selected" data-value="single_hung" onclick="selectTile(this)">
+            <span class="tile-icon">&#9633;</span>
+            Single-Hung
+            <span class="tile-price">$250-$600</span>
+          </div>
+          <div class="tile" data-value="double_hung" onclick="selectTile(this)">
+            <span class="tile-icon">&#8645;</span>
+            Double-Hung
+            <span class="tile-price">$350-$850</span>
+          </div>
+          <div class="tile" data-value="casement" onclick="selectTile(this)">
+            <span class="tile-icon">&#8635;</span>
+            Casement
+            <span class="tile-price">$350-$1,000</span>
+          </div>
+          <div class="tile" data-value="sliding" onclick="selectTile(this)">
+            <span class="tile-icon">&harr;</span>
+            Sliding
+            <span class="tile-price">$300-$800</span>
+          </div>
+          <div class="tile" data-value="awning" onclick="selectTile(this)">
+            <span class="tile-icon">&#8624;</span>
+            Awning
+            <span class="tile-price">$400-$950</span>
+          </div>
+          <div class="tile" data-value="picture" onclick="selectTile(this)">
+            <span class="tile-icon">&#9634;</span>
+            Picture (Fixed)
+            <span class="tile-price">$200-$700</span>
+          </div>
+          <div class="tile" data-value="bay" onclick="selectTile(this)">
+            <span class="tile-icon">&#9186;</span>
+            Bay
+            <span class="tile-price">$1,200-$4,500</span>
+          </div>
+          <div class="tile" data-value="bow" onclick="selectTile(this)">
+            <span class="tile-icon">&#9180;</span>
+            Bow
+            <span class="tile-price">$1,500-$5,500</span>
+          </div>
+        </div>
+
+        <!-- Frame Material -->
+        <h3>Frame Material</h3>
+        <div class="tile-group" id="frameMaterial">
+          <div class="tile" data-value="aluminum" onclick="selectTile(this)">
+            <span class="tile-icon">&#9881;</span>
+            Aluminum
+            <span class="tile-price">$200-$800</span>
+          </div>
+          <div class="tile selected" data-value="vinyl" onclick="selectTile(this)">
+            <span class="tile-icon">&#9724;</span>
+            Vinyl
+            <span class="tile-price">$287-$1,081</span>
+          </div>
+          <div class="tile" data-value="fiberglass" onclick="selectTile(this)">
+            <span class="tile-icon">&#9670;</span>
+            Fiberglass
+            <span class="tile-price">$400-$1,500</span>
+          </div>
+          <div class="tile" data-value="wood" onclick="selectTile(this)">
+            <span class="tile-icon">&#9649;</span>
+            Wood
+            <span class="tile-price">$600-$2,800</span>
+          </div>
+          <div class="tile" data-value="composite" onclick="selectTile(this)">
+            <span class="tile-icon">&#9641;</span>
+            Composite
+            <span class="tile-price">$450-$2,000</span>
+          </div>
+          <div class="tile" data-value="clad_wood" onclick="selectTile(this)">
+            <span class="tile-icon">&#9638;</span>
+            Clad Wood
+            <span class="tile-price">$700-$3,000</span>
+          </div>
+        </div>
+
+        <!-- Glass Type -->
+        <h3>Glass Configuration</h3>
+        <div class="form-row three">
+          <div class="field">
+            <label>Panes</label>
+            <select id="glassPanes">
+              <option value="single">Single Pane</option>
+              <option value="double" selected>Double Pane</option>
+              <option value="triple">Triple Pane</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Gas Fill</label>
+            <select id="gasFill">
+              <option value="air">Air (Standard)</option>
+              <option value="argon" selected>Argon (+$40-$60)</option>
+              <option value="krypton">Krypton (+$80-$120)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Grid Pattern</label>
+            <select id="gridPattern">
+              <option value="none">No Grids</option>
+              <option value="colonial">Colonial</option>
+              <option value="prairie">Prairie</option>
+              <option value="custom">Custom Grids</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Glass Add-ons -->
+        <h3>Glass Upgrades <span class="hint">(select all that apply)</span></h3>
+        <div class="check-group" id="glassUpgrades">
+          <label class="check-item checked" onclick="toggleCheck(this)">
+            <input type="checkbox" value="low_e" checked>
+            <div>
+              <div class="check-label">Low-E Coating</div>
+              <div class="check-desc">Reflects heat, blocks UV. +15% on glass cost</div>
+            </div>
+          </label>
+          <label class="check-item" onclick="toggleCheck(this)">
+            <input type="checkbox" value="tempered">
+            <div>
+              <div class="check-label">Tempered Glass</div>
+              <div class="check-desc">Safety glass, 4x stronger. +$50-$100</div>
+            </div>
+          </label>
+          <label class="check-item" onclick="toggleCheck(this)">
+            <input type="checkbox" value="tinted">
+            <div>
+              <div class="check-label">Tinted Glass</div>
+              <div class="check-desc">Reduces glare & solar heat. +$80-$150</div>
+            </div>
+          </label>
+          <label class="check-item" onclick="toggleCheck(this)">
+            <input type="checkbox" value="impact">
+            <div>
+              <div class="check-label">Impact Resistant</div>
+              <div class="check-desc">Hurricane/security rated. +$200-$500</div>
+            </div>
+          </label>
+          <label class="check-item" onclick="toggleCheck(this)">
+            <input type="checkbox" value="obscure">
+            <div>
+              <div class="check-label">Obscure / Privacy</div>
+              <div class="check-desc">Frosted or textured. +$30-$60</div>
+            </div>
+          </label>
+          <label class="check-item" onclick="toggleCheck(this)">
+            <input type="checkbox" value="sound">
+            <div>
+              <div class="check-label">Sound Reduction</div>
+              <div class="check-desc">Laminated acoustic glass. +$100-$200</div>
+            </div>
+          </label>
+        </div>
+
+        <!-- Dimensions -->
+        <h3>Window Dimensions</h3>
+        <div class="dim-row">
+          <div class="field">
+            <label>Width (inches)</label>
+            <input type="number" id="winWidth" value="36" min="12" max="120" step="1">
+          </div>
+          <div class="dim-x">&times;</div>
+          <div class="field">
+            <label>Height (inches)</label>
+            <input type="number" id="winHeight" value="48" min="12" max="120" step="1">
+          </div>
+        </div>
+        <p style="font-size:0.78rem; color:var(--text-light); margin-top:0.3rem;">Standard sizes are most affordable. Custom sizes add 15-30% to cost.</p>
+
+        <!-- Quantity -->
+        <h3>Quantity</h3>
+        <div class="qty-control">
+          <button onclick="adjustQty(-1)">&#8722;</button>
+          <input type="number" id="winQty" value="1" min="1" max="50">
+          <button onclick="adjustQty(1)">+</button>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-secondary" onclick="goToStep(1)">&larr; Back</button>
+          <div style="display:flex; gap:0.5rem;">
+            <button class="btn btn-accent" onclick="addWindow()">Add Window to Estimate</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Added windows list -->
+      <div class="card">
+        <h2>Windows in Estimate</h2>
+        <div id="windowList" class="window-list">
+          <div class="empty-state">No windows added yet. Configure a window above and click "Add Window to Estimate".</div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-secondary" onclick="goToStep(1)">&larr; Project Details</button>
+          <button class="btn btn-primary" id="btnToSummary" onclick="goToStep(3)" disabled>View Full Estimate &rarr;</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== STEP 3: SUMMARY ========== -->
+    <div class="section" id="section-3">
+      <div class="card">
+        <h2>Detailed Cost Estimate</h2>
+        <div id="summaryContent"></div>
+      </div>
+
+      <div class="disclaimer">
+        <strong>Disclaimer:</strong> This estimate is based on national average pricing data from 2025-2026 industry sources including Angi, This Old House, HomeAdvisor, and Fixr. Actual costs may vary based on local market conditions, contractor pricing, brand selection, and site-specific factors. Always obtain at least 3 quotes from licensed contractors. Prices do not include potential tax credits or rebates for energy-efficient windows.
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="goToStep(2)">&larr; Edit Windows</button>
+        <div style="display:flex; gap:0.5rem;">
+          <button class="btn btn-print" onclick="window.print()">Print Estimate</button>
+          <button class="btn btn-accent" onclick="exportCSV()">Export CSV</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Running total -->
+  <div class="running-total" id="runningTotal">
+    Estimated Total: <span>$0</span>
+  </div>
+
+  <script>
+    // ============================================================
+    //  PRICING DATABASE — based on 2025-2026 industry research
+    // ============================================================
+
+    const PRICING = {
+      // Window style base costs (materials only, per window at standard 36x48 size)
+      windowStyle: {
+        single_hung:  { min: 250,  max: 600,  base: 380  },
+        double_hung:  { min: 350,  max: 850,  base: 520  },
+        casement:     { min: 350,  max: 1000, base: 575  },
+        sliding:      { min: 300,  max: 800,  base: 450  },
+        awning:       { min: 400,  max: 950,  base: 580  },
+        picture:      { min: 200,  max: 700,  base: 350  },
+        bay:          { min: 1200, max: 4500, base: 2400 },
+        bow:          { min: 1500, max: 5500, base: 3000 }
+      },
+
+      // Frame material multipliers (relative to base price)
+      frameMaterial: {
+        aluminum:   { mult: 0.70, label: 'Aluminum'   },
+        vinyl:      { mult: 1.00, label: 'Vinyl'      },
+        fiberglass: { mult: 1.35, label: 'Fiberglass' },
+        wood:       { mult: 1.75, label: 'Wood'       },
+        composite:  { mult: 1.45, label: 'Composite'  },
+        clad_wood:  { mult: 2.00, label: 'Clad Wood'  }
+      },
+
+      // Glass pane costs (added to base)
+      glassPanes: {
+        single: { add: -80, label: 'Single Pane' },
+        double: { add: 0,   label: 'Double Pane' },
+        triple: { add: 200, label: 'Triple Pane' }
+      },
+
+      // Gas fill (added per window)
+      gasFill: {
+        air:     { add: 0,   label: 'Air (Standard)' },
+        argon:   { add: 50,  label: 'Argon Gas Fill'  },
+        krypton: { add: 100, label: 'Krypton Gas Fill' }
+      },
+
+      // Grid pattern (added per window)
+      gridPattern: {
+        none:     { add: 0,   label: 'No Grids'     },
+        colonial: { add: 35,  label: 'Colonial Grid' },
+        prairie:  { add: 40,  label: 'Prairie Grid'  },
+        custom:   { add: 80,  label: 'Custom Grid'   }
+      },
+
+      // Glass upgrades (added per window)
+      glassUpgrades: {
+        low_e:    { add: 0, pct: 0.15, label: 'Low-E Coating'     }, // % of glass cost
+        tempered: { add: 75,  pct: 0,  label: 'Tempered Glass'    },
+        tinted:   { add: 115, pct: 0,  label: 'Tinted Glass'      },
+        impact:   { add: 350, pct: 0,  label: 'Impact Resistant'  },
+        obscure:  { add: 45,  pct: 0,  label: 'Obscure / Privacy' },
+        sound:    { add: 150, pct: 0,  label: 'Sound Reduction'   }
+      },
+
+      // Labor base cost ranges per window by installation type
+      labor: {
+        retrofit:  { min: 100, max: 225, base: 160 },
+        fullframe: { min: 250, max: 600, base: 380 },
+        new:       { min: 200, max: 450, base: 300 }
+      },
+
+      // Regional labor multipliers
+      region: {
+        midwest:      { mult: 1.00, label: 'Midwest'          },
+        south:        { mult: 0.90, label: 'South'            },
+        northeast:    { mult: 1.18, label: 'Northeast'        },
+        westcoast:    { mult: 1.22, label: 'West Coast'       },
+        hawaii_alaska:{ mult: 1.35, label: 'Hawaii / Alaska'  }
+      },
+
+      // Story surcharge (labor addition per window)
+      stories: {
+        '1': 0,
+        '2': 45,
+        '3': 90
+      },
+
+      // Season discount (applied to labor)
+      season: {
+        peak:      { mult: 1.00, label: 'Peak Season'      },
+        shoulder:  { mult: 0.95, label: 'Shoulder Season'   },
+        offseason: { mult: 0.90, label: 'Off-Season'        }
+      },
+
+      // Permits
+      permits: {
+        none:     0,
+        basic:    75,
+        standard: 150,
+        full:     250
+      },
+
+      // Disposal
+      disposal: {
+        included:   0,
+        per_window: 40,   // per window
+        dumpster:   400,  // flat
+        self:       0
+      },
+
+      // Standard reference size (sq inches) for scaling
+      standardArea: 36 * 48  // 1,728 sq in
+    };
+
+    // ============================================================
+    //  STATE
+    // ============================================================
+    let windows = [];
+    let editingIndex = -1;
+
+    // ============================================================
+    //  UI HELPERS
+    // ============================================================
+
+    function selectTile(el) {
+      const group = el.parentElement;
+      group.querySelectorAll('.tile').forEach(t => t.classList.remove('selected'));
+      el.classList.add('selected');
+    }
+
+    function toggleCheck(el) {
+      // Handled by native checkbox + CSS
+      setTimeout(() => {
+        const cb = el.querySelector('input[type="checkbox"]');
+        el.classList.toggle('checked', cb.checked);
+      }, 0);
+    }
+
+    function adjustQty(delta) {
+      const inp = document.getElementById('winQty');
+      let v = parseInt(inp.value) + delta;
+      if (v < 1) v = 1;
+      if (v > 50) v = 50;
+      inp.value = v;
+    }
+
+    function goToStep(n) {
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('visible'));
+      document.getElementById('section-' + n).classList.add('visible');
+
+      document.querySelectorAll('.stepper .step').forEach(s => {
+        const sn = parseInt(s.dataset.step);
+        s.classList.remove('active', 'done');
+        if (sn < n) s.classList.add('done');
+        if (sn === n) s.classList.add('active');
+      });
+
+      if (n === 3) buildSummary();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function getSelectedTile(groupId) {
+      const sel = document.querySelector('#' + groupId + ' .tile.selected');
+      return sel ? sel.dataset.value : null;
+    }
+
+    function getCheckedUpgrades() {
+      const upgrades = [];
+      document.querySelectorAll('#glassUpgrades .check-item input[type="checkbox"]').forEach(cb => {
+        if (cb.checked && !upgrades.includes(cb.value)) upgrades.push(cb.value);
+      });
+      return upgrades;
+    }
+
+    // ============================================================
+    //  COST CALCULATION ENGINE
+    // ============================================================
+
+    function calculateWindowCost(config) {
+      const style = PRICING.windowStyle[config.style];
+      const frame = PRICING.frameMaterial[config.frame];
+      const panes = PRICING.glassPanes[config.panes];
+      const gas   = PRICING.gasFill[config.gas];
+      const grid  = PRICING.gridPattern[config.grid];
+      const labor = PRICING.labor[config.installType];
+      const region = PRICING.region[config.region];
+      const storySurcharge = PRICING.stories[config.stories];
+      const seasonMult = PRICING.season[config.season].mult;
+
+      // 1) Base material cost from style
+      let materialCost = style.base;
+
+      // 2) Apply frame material multiplier
+      materialCost *= frame.mult;
+
+      // 3) Size scaling: scale cost relative to standard 36x48
+      const area = config.width * config.height;
+      const sizeRatio = area / PRICING.standardArea;
+      materialCost *= sizeRatio;
+
+      // 4) Custom size surcharge (non-standard dims)
+      const isStandard = isStandardSize(config.style, config.width, config.height);
+      if (!isStandard) {
+        materialCost *= 1.20; // 20% custom surcharge
+      }
+
+      // 5) Glass panes add-on
+      let glassCost = panes.add;
+      // Scale glass add cost by size too
+      if (panes.add > 0) {
+        glassCost *= sizeRatio;
+      }
+      materialCost += glassCost;
+
+      // 6) Gas fill
+      materialCost += gas.add;
+
+      // 7) Grid pattern
+      materialCost += grid.add;
+
+      // 8) Glass upgrades
+      let upgradesCost = 0;
+      let lowEApplied = false;
+      config.upgrades.forEach(u => {
+        const up = PRICING.glassUpgrades[u];
+        if (!up) return;
+        if (u === 'low_e' && !lowEApplied) {
+          upgradesCost += materialCost * up.pct;
+          lowEApplied = true;
+        } else if (u !== 'low_e') {
+          let addCost = up.add;
+          // Scale impact/tempered/sound by size
+          if (['impact', 'tempered', 'sound'].includes(u)) {
+            addCost *= Math.max(0.8, sizeRatio);
+          }
+          upgradesCost += addCost;
+        }
+      });
+
+      const totalMaterial = materialCost + upgradesCost;
+
+      // 9) Labor cost
+      let laborCost = labor.base;
+      // Scale labor slightly for larger windows
+      if (sizeRatio > 1.3) {
+        laborCost *= 1 + (sizeRatio - 1.3) * 0.3;
+      }
+      // Bay/bow have higher labor
+      if (['bay', 'bow'].includes(config.style)) {
+        laborCost *= 2.2;
+      }
+      // Story surcharge
+      laborCost += storySurcharge;
+      // Regional adjustment
+      laborCost *= region.mult;
+      // Season discount
+      laborCost *= seasonMult;
+      // Custom size labor increase
+      if (!isStandard) {
+        laborCost *= 1.10;
+      }
+
+      const perWindowTotal = totalMaterial + laborCost;
+
+      return {
+        materialCost: round2(totalMaterial),
+        laborCost: round2(laborCost),
+        perWindowCost: round2(perWindowTotal),
+        totalCost: round2(perWindowTotal * config.qty),
+        qty: config.qty,
+        isStandard,
+        sizeRatio: round2(sizeRatio),
+        breakdown: {
+          baseStyle: round2(style.base * frame.mult * sizeRatio * (isStandard ? 1 : 1.20)),
+          glassPanes: round2(Math.max(0, glassCost)),
+          gasFill: gas.add,
+          grid: grid.add,
+          upgrades: round2(upgradesCost),
+          laborBase: round2(labor.base),
+          laborAdjusted: round2(laborCost)
+        }
+      };
+    }
+
+    function isStandardSize(style, w, h) {
+      const standards = {
+        single_hung: { w: [24,28,32,36,40,44,48], h: [36,44,48,52,54,60,62,72] },
+        double_hung: { w: [24,28,32,36,40,44,48], h: [36,44,48,52,54,60,62,72] },
+        casement:    { w: [16,20,24,28,32,36,40,44,48], h: [24,36,48,54,60,72,84] },
+        sliding:     { w: [36,48,60,72,84], h: [24,36,48,60] },
+        awning:      { w: [20,24,28,32,36,40,48,60], h: [20,24,28,36,48] },
+        picture:     { w: [24,36,48,60,72,96], h: [24,36,48,60,72,96] },
+        bay:         { w: [36,48,60,72,84,96,108,120], h: [36,48,60,72] },
+        bow:         { w: [48,60,72,84,96,108,120], h: [36,48,60,72] }
+      };
+      const s = standards[style];
+      if (!s) return false;
+      return s.w.includes(w) && s.h.includes(h);
+    }
+
+    function round2(n) { return Math.round(n * 100) / 100; }
+    function fmt(n) { return '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+
+    // ============================================================
+    //  WINDOW LIST MANAGEMENT
+    // ============================================================
+
+    function getWindowConfig() {
+      return {
+        style: getSelectedTile('windowStyle') || 'single_hung',
+        frame: getSelectedTile('frameMaterial') || 'vinyl',
+        panes: document.getElementById('glassPanes').value,
+        gas: document.getElementById('gasFill').value,
+        grid: document.getElementById('gridPattern').value,
+        upgrades: getCheckedUpgrades(),
+        width: parseInt(document.getElementById('winWidth').value) || 36,
+        height: parseInt(document.getElementById('winHeight').value) || 48,
+        qty: parseInt(document.getElementById('winQty').value) || 1,
+        installType: document.getElementById('installType').value,
+        region: document.getElementById('region').value,
+        stories: document.getElementById('stories').value,
+        season: document.getElementById('season').value
+      };
+    }
+
+    function getWindowLabel(config) {
+      const styleLabels = {
+        single_hung: 'Single-Hung', double_hung: 'Double-Hung', casement: 'Casement',
+        sliding: 'Sliding', awning: 'Awning', picture: 'Picture', bay: 'Bay', bow: 'Bow'
+      };
+      const frameLabels = PRICING.frameMaterial[config.frame].label;
+      return `${styleLabels[config.style]} - ${frameLabels} - ${config.width}"x${config.height}"`;
+    }
+
+    function addWindow() {
+      const config = getWindowConfig();
+      const cost = calculateWindowCost(config);
+
+      if (editingIndex >= 0) {
+        windows[editingIndex] = { config, cost };
+        editingIndex = -1;
+      } else {
+        windows.push({ config, cost });
+      }
+
+      renderWindowList();
+      updateRunningTotal();
+      // Reset qty
+      document.getElementById('winQty').value = 1;
+    }
+
+    function editWindow(idx) {
+      const w = windows[idx];
+      const c = w.config;
+      editingIndex = idx;
+
+      // Restore selections
+      document.querySelectorAll('#windowStyle .tile').forEach(t => {
+        t.classList.toggle('selected', t.dataset.value === c.style);
+      });
+      document.querySelectorAll('#frameMaterial .tile').forEach(t => {
+        t.classList.toggle('selected', t.dataset.value === c.frame);
+      });
+      document.getElementById('glassPanes').value = c.panes;
+      document.getElementById('gasFill').value = c.gas;
+      document.getElementById('gridPattern').value = c.grid;
+      document.getElementById('winWidth').value = c.width;
+      document.getElementById('winHeight').value = c.height;
+      document.getElementById('winQty').value = c.qty;
+
+      // Restore upgrades
+      document.querySelectorAll('#glassUpgrades .check-item').forEach(item => {
+        const cb = item.querySelector('input[type="checkbox"]');
+        const checked = c.upgrades.includes(cb.value);
+        cb.checked = checked;
+        item.classList.toggle('checked', checked);
+      });
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function removeWindow(idx) {
+      windows.splice(idx, 1);
+      renderWindowList();
+      updateRunningTotal();
+    }
+
+    function renderWindowList() {
+      const list = document.getElementById('windowList');
+      if (windows.length === 0) {
+        list.innerHTML = '<div class="empty-state">No windows added yet. Configure a window above and click "Add Window to Estimate".</div>';
+        document.getElementById('btnToSummary').disabled = true;
+        return;
+      }
+
+      document.getElementById('btnToSummary').disabled = false;
+      let html = '';
+      windows.forEach((w, i) => {
+        const label = getWindowLabel(w.config);
+        html += `
+          <div class="window-entry">
+            <div class="we-info">
+              <strong>#${i+1}</strong> ${label}
+              ${w.config.qty > 1 ? ' &times; ' + w.config.qty : ''}
+              ${!w.cost.isStandard ? ' <span style="color:var(--accent);font-size:0.75rem;">(Custom Size)</span>' : ''}
+            </div>
+            <div class="we-cost">${fmt(w.cost.totalCost)}</div>
+            <div class="we-actions">
+              <button class="btn-sm btn-edit" onclick="editWindow(${i})">Edit</button>
+              <button class="btn-sm btn-delete" onclick="removeWindow(${i})">Remove</button>
+            </div>
+          </div>`;
+      });
+      list.innerHTML = html;
+    }
+
+    function updateRunningTotal() {
+      let total = 0;
+      windows.forEach(w => { total += w.cost.totalCost; });
+      // Add project-level costs
+      total += getProjectCosts().total;
+      document.querySelector('#runningTotal span').textContent = fmt(total);
+    }
+
+    function getProjectCosts() {
+      const permitCost = PRICING.permits[document.getElementById('permits').value];
+      const disposalType = document.getElementById('disposal').value;
+      let disposalCost = 0;
+      const totalWindowCount = windows.reduce((sum, w) => sum + w.config.qty, 0);
+
+      if (disposalType === 'per_window') {
+        disposalCost = PRICING.disposal.per_window * totalWindowCount;
+      } else if (disposalType === 'dumpster') {
+        disposalCost = PRICING.disposal.dumpster;
+      }
+
+      // Bulk discount: 5% off materials for 6+ windows, 10% for 10+
+      let bulkDiscount = 0;
+      if (totalWindowCount >= 10) {
+        bulkDiscount = 0.10;
+      } else if (totalWindowCount >= 6) {
+        bulkDiscount = 0.05;
+      }
+
+      return {
+        permit: permitCost,
+        disposal: disposalCost,
+        bulkDiscountRate: bulkDiscount,
+        total: permitCost + disposalCost,
+        windowCount: totalWindowCount
+      };
+    }
+
+    // ============================================================
+    //  SUMMARY BUILDER
+    // ============================================================
+
+    function buildSummary() {
+      const project = getProjectCosts();
+      let totalMaterials = 0;
+      let totalLabor = 0;
+      let totalWindows = 0;
+
+      let windowRows = '';
+      windows.forEach((w, i) => {
+        const c = w.config;
+        const cost = w.cost;
+        const label = getWindowLabel(c);
+        const matPerUnit = cost.materialCost;
+        const labPerUnit = cost.laborCost;
+        const matTotal = matPerUnit * c.qty;
+        const labTotal = labPerUnit * c.qty;
+
+        totalMaterials += matTotal;
+        totalLabor += labTotal;
+        totalWindows += c.qty;
+
+        // Detail rows per window config
+        windowRows += `
+          <tr>
+            <td colspan="4" style="font-weight:600; background:#f0f4f8; color:var(--primary);">
+              #${i+1} ${label} ${c.qty > 1 ? '&times; ' + c.qty : ''}
+              ${!cost.isStandard ? '<span style="color:var(--accent);">(Custom)</span>' : ''}
+            </td>
+          </tr>
+          <tr><td style="padding-left:1.5rem;">Base (${PRICING.frameMaterial[c.frame].label} ${getStyleLabel(c.style)})</td><td>${fmt(cost.breakdown.baseStyle)}</td><td>&times; ${c.qty}</td><td>${fmt(cost.breakdown.baseStyle * c.qty)}</td></tr>`;
+
+        if (cost.breakdown.glassPanes > 0) {
+          windowRows += `<tr><td style="padding-left:1.5rem;">${PRICING.glassPanes[c.panes].label} Upgrade</td><td>${fmt(cost.breakdown.glassPanes)}</td><td>&times; ${c.qty}</td><td>${fmt(cost.breakdown.glassPanes * c.qty)}</td></tr>`;
+        }
+        if (cost.breakdown.gasFill > 0) {
+          windowRows += `<tr><td style="padding-left:1.5rem;">${PRICING.gasFill[c.gas].label}</td><td>${fmt(cost.breakdown.gasFill)}</td><td>&times; ${c.qty}</td><td>${fmt(cost.breakdown.gasFill * c.qty)}</td></tr>`;
+        }
+        if (cost.breakdown.grid > 0) {
+          windowRows += `<tr><td style="padding-left:1.5rem;">${PRICING.gridPattern[c.grid].label}</td><td>${fmt(cost.breakdown.grid)}</td><td>&times; ${c.qty}</td><td>${fmt(cost.breakdown.grid * c.qty)}</td></tr>`;
+        }
+        if (cost.breakdown.upgrades > 0) {
+          const upgradeLabels = c.upgrades.map(u => PRICING.glassUpgrades[u] ? PRICING.glassUpgrades[u].label : u).join(', ');
+          windowRows += `<tr><td style="padding-left:1.5rem;">Upgrades (${upgradeLabels})</td><td>${fmt(cost.breakdown.upgrades)}</td><td>&times; ${c.qty}</td><td>${fmt(cost.breakdown.upgrades * c.qty)}</td></tr>`;
+        }
+        windowRows += `<tr><td style="padding-left:1.5rem;">Labor (${getInstallLabel(c.installType)}, ${PRICING.region[c.region].label})</td><td>${fmt(cost.breakdown.laborAdjusted)}</td><td>&times; ${c.qty}</td><td>${fmt(cost.breakdown.laborAdjusted * c.qty)}</td></tr>`;
+        windowRows += `<tr class="subtotal"><td style="padding-left:1.5rem;">Subtotal</td><td>${fmt(cost.perWindowCost)}</td><td>&times; ${c.qty}</td><td>${fmt(cost.totalCost)}</td></tr>`;
+      });
+
+      // Bulk discount
+      let bulkDiscountAmt = 0;
+      if (project.bulkDiscountRate > 0) {
+        bulkDiscountAmt = round2(totalMaterials * project.bulkDiscountRate);
+      }
+
+      const grandTotal = round2(totalMaterials + totalLabor - bulkDiscountAmt + project.permit + project.disposal);
+
+      // Cost range (low and high estimates)
+      const lowEstimate = round2(grandTotal * 0.85);
+      const highEstimate = round2(grandTotal * 1.18);
+
+      let html = `
+        <div class="summary-section">
+          <h3>Project Overview</h3>
+          <table class="summary-table">
+            <tr><td>Total Windows</td><td>${totalWindows}</td></tr>
+            <tr><td>Installation Type</td><td>${getInstallLabel(document.getElementById('installType').value)}</td></tr>
+            <tr><td>Region</td><td>${PRICING.region[document.getElementById('region').value].label}</td></tr>
+            <tr><td>Season</td><td>${PRICING.season[document.getElementById('season').value].label}</td></tr>
+          </table>
+        </div>
+
+        <div class="summary-section">
+          <h3>Itemized Breakdown</h3>
+          <table class="summary-table">
+            <thead><tr><th>Item</th><th>Per Unit</th><th>Qty</th><th>Total</th></tr></thead>
+            <tbody>
+              ${windowRows}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="summary-section">
+          <h3>Project Costs</h3>
+          <table class="summary-table">
+            <tr><td>Total Materials</td><td>${fmt(totalMaterials)}</td></tr>
+            <tr><td>Total Labor</td><td>${fmt(totalLabor)}</td></tr>`;
+
+      if (bulkDiscountAmt > 0) {
+        html += `<tr><td>Bulk Discount (${Math.round(project.bulkDiscountRate*100)}% off materials for ${totalWindows} windows)</td><td style="color:var(--success);">-${fmt(bulkDiscountAmt)}</td></tr>`;
+      }
+      if (project.permit > 0) {
+        html += `<tr><td>Permit</td><td>${fmt(project.permit)}</td></tr>`;
+      }
+      if (project.disposal > 0) {
+        html += `<tr><td>Disposal</td><td>${fmt(project.disposal)}</td></tr>`;
+      }
+
+      html += `
+            <tr class="total"><td>Estimated Total</td><td>${fmt(grandTotal)}</td></tr>
+          </table>
+        </div>
+
+        <div class="summary-section">
+          <h3>Cost Range</h3>
+          <table class="summary-table">
+            <tr><td>Low Estimate (-15%)</td><td>${fmt(lowEstimate)}</td></tr>
+            <tr class="subtotal"><td>Mid Estimate</td><td>${fmt(grandTotal)}</td></tr>
+            <tr><td>High Estimate (+18%)</td><td>${fmt(highEstimate)}</td></tr>
+          </table>
+          <p style="font-size:0.78rem; color:var(--text-light); margin-top:0.5rem;">
+            Range accounts for brand variance, local market conditions, and contractor pricing differences.
+          </p>
+        </div>
+
+        <div class="summary-section">
+          <h3>Potential Savings</h3>
+          <table class="summary-table">
+            <tr><td>ENERGY STAR Tax Credit (up to 30%, max $600/yr)</td><td style="color:var(--success);">Up to -${fmt(Math.min(totalMaterials * 0.30, 600))}</td></tr>
+            <tr><td>Energy Savings (est. 12% on heating/cooling bills annually)</td><td style="color:var(--success);">Varies by home</td></tr>
+          </table>
+        </div>`;
+
+      document.getElementById('summaryContent').innerHTML = html;
+      updateRunningTotal();
+    }
+
+    function getStyleLabel(style) {
+      const labels = {
+        single_hung: 'Single-Hung', double_hung: 'Double-Hung', casement: 'Casement',
+        sliding: 'Sliding', awning: 'Awning', picture: 'Picture', bay: 'Bay', bow: 'Bow'
+      };
+      return labels[style] || style;
+    }
+
+    function getInstallLabel(type) {
+      const labels = { retrofit: 'Retrofit', fullframe: 'Full-Frame', new: 'New Construction' };
+      return labels[type] || type;
+    }
+
+    // ============================================================
+    //  CSV EXPORT
+    // ============================================================
+
+    function exportCSV() {
+      let csv = 'Window,Style,Frame,Dimensions,Panes,Qty,Material/Unit,Labor/Unit,Total\n';
+      windows.forEach((w, i) => {
+        const c = w.config;
+        const cost = w.cost;
+        csv += `"#${i+1}","${getStyleLabel(c.style)}","${PRICING.frameMaterial[c.frame].label}","${c.width}x${c.height}","${PRICING.glassPanes[c.panes].label}",${c.qty},${cost.materialCost},${cost.laborCost},${cost.totalCost}\n`;
+      });
+
+      const project = getProjectCosts();
+      const totalMaterials = windows.reduce((s,w) => s + w.cost.materialCost * w.config.qty, 0);
+      const totalLabor = windows.reduce((s,w) => s + w.cost.laborCost * w.config.qty, 0);
+      const bulkDiscount = round2(totalMaterials * project.bulkDiscountRate);
+      const grandTotal = round2(totalMaterials + totalLabor - bulkDiscount + project.permit + project.disposal);
+
+      csv += `\n"","","","","","","","",\n`;
+      csv += `"Permit","","","","","","","",${project.permit}\n`;
+      csv += `"Disposal","","","","","","","",${project.disposal}\n`;
+      if (bulkDiscount > 0) csv += `"Bulk Discount","","","","","","","",${-bulkDiscount}\n`;
+      csv += `"GRAND TOTAL","","","","","","","",${grandTotal}\n`;
+
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'window-estimate-' + new Date().toISOString().slice(0,10) + '.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // ============================================================
+    //  INIT — fix duplicate Low-E checkbox issue
+    // ============================================================
+    (function init() {
+      // Ensure initial check-item states match checkboxes
+      document.querySelectorAll('#glassUpgrades .check-item').forEach(item => {
+        const cb = item.querySelector('input[type="checkbox"]');
+        item.classList.toggle('checked', cb.checked);
+      });
+      updateRunningTotal();
+    })();
+  </script>
+</body>
+</html>
