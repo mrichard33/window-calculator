@@ -3,59 +3,98 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Window Cost Estimator</title>
+  <title>Reece Windows & Doors — Window Cost Estimator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --primary: #1a5276;
-      --primary-light: #2980b9;
-      --accent: #e67e22;
-      --bg: #f4f6f8;
-      --card: #ffffff;
-      --text: #2c3e50;
-      --text-light: #7f8c8d;
-      --border: #dce1e6;
-      --success: #27ae60;
-      --danger: #c0392b;
-      --shadow: 0 2px 12px rgba(0,0,0,0.08);
-      --radius: 8px;
+      --reece-red: #ED1F24;
+      --cta-red: #FF0012;
+      --deep-navy: #0D2240;
+      --dark-navy: #122738;
+      --steel-blue: #6488A0;
+      --mist: #C1D5DB;
+      --text-gray: #87898B;
+      --light-bg: #F2F3F7;
+      --deep-red: #A00000;
+      --charcoal: #636060;
+      --powder-blue: #C7DAE4;
+      --white: #FFFFFF;
+      --shadow: 0 2px 12px rgba(13,34,64,0.10);
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-      background: var(--bg);
-      color: var(--text);
+      font-family: 'Nunito Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--light-bg);
+      color: var(--text-gray);
       line-height: 1.6;
       min-height: 100vh;
+      font-size: 17px;
+      font-weight: 400;
     }
 
+    /* ===== HEADER ===== */
     header {
-      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
-      color: #fff;
-      padding: 2rem 1rem;
+      background: var(--deep-navy);
+      color: var(--white);
+      padding: 2.2rem 1rem 2.5rem;
       text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    header::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 50%;
+      height: 100%;
+      background: var(--reece-red);
+      opacity: 0.5;
+      clip-path: polygon(45% 0, 100% 0, 100% 100%, 0 100%);
+      pointer-events: none;
+    }
+
+    header .header-content {
+      position: relative;
+      z-index: 1;
+    }
+
+    header .brand-name {
+      font-size: 1rem;
+      font-weight: 300;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      opacity: 0.85;
+      margin-bottom: 0.3rem;
     }
 
     header h1 {
-      font-size: 1.8rem;
+      font-size: 2rem;
       font-weight: 700;
+      color: var(--white);
       letter-spacing: -0.5px;
     }
 
     header p {
-      opacity: 0.85;
+      color: var(--mist);
       margin-top: 0.4rem;
       font-size: 0.95rem;
+      font-weight: 400;
     }
 
+    /* ===== CONTAINER ===== */
     .container {
       max-width: 960px;
       margin: 0 auto;
-      padding: 1.5rem 1rem 3rem;
+      padding: 1.5rem 15px 3rem;
     }
 
-    /* Stepper */
+    /* ===== STEPPER ===== */
     .stepper {
       display: flex;
       justify-content: center;
@@ -68,62 +107,65 @@
       align-items: center;
       gap: 0.4rem;
       font-size: 0.82rem;
-      color: var(--text-light);
-      font-weight: 500;
+      color: var(--text-gray);
+      font-weight: 400;
     }
 
-    .stepper .step.active { color: var(--primary); font-weight: 700; }
-    .stepper .step.done { color: var(--success); }
+    .stepper .step.active { color: var(--deep-navy); font-weight: 700; }
+    .stepper .step.done { color: var(--cta-red); }
 
     .stepper .step .num {
-      width: 26px;
-      height: 26px;
+      width: 28px;
+      height: 28px;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 0.75rem;
-      border: 2px solid var(--border);
-      background: #fff;
+      border: 2px solid var(--mist);
+      background: var(--white);
       flex-shrink: 0;
+      font-weight: 600;
     }
 
-    .stepper .step.active .num { border-color: var(--primary); background: var(--primary); color: #fff; }
-    .stepper .step.done .num { border-color: var(--success); background: var(--success); color: #fff; }
+    .stepper .step.active .num { border-color: var(--deep-navy); background: var(--deep-navy); color: var(--white); }
+    .stepper .step.done .num { border-color: var(--cta-red); background: var(--cta-red); color: var(--white); }
 
     .stepper .connector {
       width: 30px;
       height: 2px;
-      background: var(--border);
+      background: var(--mist);
       align-self: center;
     }
 
-    .stepper .step.done + .connector { background: var(--success); }
+    .stepper .step.done + .connector { background: var(--cta-red); }
 
-    /* Cards */
+    /* ===== CARDS ===== */
     .card {
-      background: var(--card);
-      border-radius: var(--radius);
+      background: var(--white);
+      border-radius: 0;
       box-shadow: var(--shadow);
       padding: 1.5rem;
       margin-bottom: 1.25rem;
     }
 
     .card h2 {
-      font-size: 1.1rem;
+      font-size: 1.2rem;
+      font-weight: 700;
       margin-bottom: 1rem;
       padding-bottom: 0.6rem;
-      border-bottom: 2px solid var(--bg);
-      color: var(--primary);
+      border-bottom: 2px solid var(--light-bg);
+      color: var(--deep-navy);
     }
 
     .card h3 {
       font-size: 0.95rem;
+      font-weight: 700;
       margin: 1rem 0 0.5rem;
-      color: var(--text);
+      color: var(--deep-navy);
     }
 
-    /* Form elements */
+    /* ===== FORM ELEMENTS ===== */
     .form-row {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -146,12 +188,12 @@
       font-size: 0.82rem;
       font-weight: 600;
       margin-bottom: 0.3rem;
-      color: var(--text);
+      color: var(--deep-navy);
     }
 
     .field label .hint {
       font-weight: 400;
-      color: var(--text-light);
+      color: var(--text-gray);
       font-size: 0.78rem;
     }
 
@@ -159,22 +201,23 @@
     .field input[type="number"],
     .field input[type="text"] {
       padding: 0.55rem 0.7rem;
-      border: 1.5px solid var(--border);
-      border-radius: 6px;
+      border: 1.5px solid var(--mist);
+      border-radius: 0;
       font-size: 0.9rem;
-      color: var(--text);
-      background: #fff;
+      font-family: 'Nunito Sans', sans-serif;
+      color: var(--charcoal);
+      background: var(--white);
       transition: border-color 0.2s;
     }
 
     .field select:focus,
     .field input:focus {
       outline: none;
-      border-color: var(--primary-light);
-      box-shadow: 0 0 0 3px rgba(41,128,185,0.12);
+      border-color: var(--steel-blue);
+      box-shadow: 0 0 0 3px rgba(100,136,160,0.15);
     }
 
-    /* Tile selectors */
+    /* ===== TILE SELECTORS ===== */
     .tile-group {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
@@ -183,23 +226,24 @@
     }
 
     .tile {
-      border: 2px solid var(--border);
-      border-radius: var(--radius);
+      border: 2px solid var(--mist);
+      border-radius: 0;
       padding: 0.7rem 0.5rem;
       text-align: center;
       cursor: pointer;
-      transition: all 0.2s;
-      background: #fff;
+      transition: all 0.3s ease;
+      background: var(--white);
       font-size: 0.82rem;
+      color: var(--charcoal);
     }
 
-    .tile:hover { border-color: var(--primary-light); background: #f0f7fc; }
-    .tile.selected { border-color: var(--primary); background: #eaf2f8; font-weight: 600; }
+    .tile:hover { border-color: var(--steel-blue); background: #f0f5f8; }
+    .tile.selected { border-color: var(--deep-navy); background: var(--light-bg); font-weight: 600; color: var(--deep-navy); }
 
     .tile .tile-icon { font-size: 1.4rem; display: block; margin-bottom: 0.3rem; }
-    .tile .tile-price { font-size: 0.72rem; color: var(--text-light); margin-top: 0.2rem; display: block; }
+    .tile .tile-price { font-size: 0.72rem; color: var(--text-gray); margin-top: 0.2rem; display: block; }
 
-    /* Checkbox group */
+    /* ===== CHECKBOX GROUP ===== */
     .check-group {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -213,25 +257,25 @@
       align-items: flex-start;
       gap: 0.5rem;
       padding: 0.6rem;
-      border: 1.5px solid var(--border);
-      border-radius: 6px;
+      border: 1.5px solid var(--mist);
+      border-radius: 0;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.3s ease;
       font-size: 0.85rem;
     }
 
-    .check-item:hover { border-color: var(--primary-light); }
-    .check-item.checked { border-color: var(--primary); background: #eaf2f8; }
+    .check-item:hover { border-color: var(--steel-blue); }
+    .check-item.checked { border-color: var(--deep-navy); background: var(--light-bg); }
 
-    .check-item input { margin-top: 2px; accent-color: var(--primary); }
-    .check-item .check-label { font-weight: 500; }
-    .check-item .check-desc { font-size: 0.75rem; color: var(--text-light); }
+    .check-item input { margin-top: 2px; accent-color: var(--cta-red); }
+    .check-item .check-label { font-weight: 600; color: var(--deep-navy); }
+    .check-item .check-desc { font-size: 0.75rem; color: var(--text-gray); }
 
-    /* Section visibility */
+    /* ===== SECTION VISIBILITY ===== */
     .section { display: none; }
     .section.visible { display: block; }
 
-    /* Buttons */
+    /* ===== BUTTONS ===== */
     .btn-row {
       display: flex;
       justify-content: space-between;
@@ -240,25 +284,28 @@
     }
 
     .btn {
-      padding: 0.65rem 1.6rem;
+      padding: 12px 60px;
       border: none;
-      border-radius: 6px;
+      border-radius: 0;
       font-size: 0.9rem;
+      font-family: 'Nunito Sans', sans-serif;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
 
-    .btn-primary { background: var(--primary); color: #fff; }
-    .btn-primary:hover { background: var(--primary-light); }
-    .btn-secondary { background: var(--border); color: var(--text); }
-    .btn-secondary:hover { background: #c5ccd3; }
-    .btn-accent { background: var(--accent); color: #fff; }
-    .btn-accent:hover { background: #d35400; }
+    .btn-primary { background: var(--cta-red); color: var(--white); }
+    .btn-primary:hover { background: var(--deep-navy); }
+    .btn-secondary { background: var(--deep-navy); color: var(--white); }
+    .btn-secondary:hover { background: var(--steel-blue); }
+    .btn-accent { background: var(--cta-red); color: var(--white); }
+    .btn-accent:hover { background: var(--deep-navy); }
 
     .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-    /* Window list */
+    /* ===== WINDOW LIST ===== */
     .window-list { margin-top: 1rem; }
 
     .window-entry {
@@ -266,16 +313,16 @@
       align-items: center;
       justify-content: space-between;
       padding: 0.7rem 0.8rem;
-      border: 1.5px solid var(--border);
-      border-radius: 6px;
+      border: 1.5px solid var(--mist);
+      border-radius: 0;
       margin-bottom: 0.5rem;
-      background: #fafbfc;
+      background: var(--light-bg);
       font-size: 0.85rem;
     }
 
     .window-entry .we-info { flex: 1; }
-    .window-entry .we-info strong { color: var(--primary); }
-    .window-entry .we-cost { font-weight: 700; color: var(--success); margin: 0 1rem; white-space: nowrap; }
+    .window-entry .we-info strong { color: var(--deep-navy); }
+    .window-entry .we-cost { font-weight: 700; color: var(--cta-red); margin: 0 1rem; white-space: nowrap; }
 
     .window-entry .we-actions { display: flex; gap: 0.4rem; }
 
@@ -283,15 +330,21 @@
       padding: 0.3rem 0.6rem;
       font-size: 0.78rem;
       border: none;
-      border-radius: 4px;
+      border-radius: 0;
       cursor: pointer;
-      font-weight: 500;
+      font-weight: 600;
+      font-family: 'Nunito Sans', sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      transition: all 0.3s ease;
     }
 
-    .btn-edit { background: #eaf2f8; color: var(--primary); }
-    .btn-delete { background: #fdecea; color: var(--danger); }
+    .btn-edit { background: var(--powder-blue); color: var(--deep-navy); }
+    .btn-edit:hover { background: var(--steel-blue); color: var(--white); }
+    .btn-delete { background: #fdecea; color: var(--deep-red); }
+    .btn-delete:hover { background: var(--deep-red); color: var(--white); }
 
-    /* Summary */
+    /* ===== SUMMARY TABLE ===== */
     .summary-table {
       width: 100%;
       border-collapse: collapse;
@@ -301,79 +354,103 @@
     .summary-table td {
       padding: 0.55rem 0.75rem;
       text-align: left;
-      border-bottom: 1px solid var(--border);
+      border-bottom: 1px solid var(--mist);
       font-size: 0.88rem;
     }
 
-    .summary-table th { background: #f8f9fa; font-weight: 600; color: var(--primary); }
+    .summary-table th { background: var(--light-bg); font-weight: 700; color: var(--deep-navy); }
     .summary-table td:last-child { text-align: right; font-weight: 500; }
 
     .summary-table tr.total td {
       font-weight: 700;
       font-size: 1rem;
-      border-top: 2px solid var(--primary);
+      border-top: 2px solid var(--deep-navy);
       border-bottom: none;
-      color: var(--primary);
+      color: var(--deep-navy);
     }
 
     .summary-table tr.subtotal td {
       font-weight: 600;
-      color: var(--text);
+      color: var(--dark-navy);
     }
 
     .summary-section { margin-bottom: 1.5rem; }
     .summary-section h3 {
       font-size: 0.9rem;
-      color: var(--primary);
+      color: var(--deep-navy);
+      font-weight: 700;
       margin-bottom: 0.5rem;
     }
 
-    /* Disclaimer */
+    /* ===== DISCLAIMER ===== */
     .disclaimer {
-      background: #fef9e7;
-      border-left: 4px solid var(--accent);
+      background: var(--light-bg);
+      border-left: 4px solid var(--reece-red);
       padding: 0.8rem 1rem;
       font-size: 0.8rem;
-      color: #7d6608;
-      border-radius: 0 6px 6px 0;
+      color: var(--charcoal);
+      border-radius: 0;
       margin-top: 1rem;
     }
 
-    /* Print */
-    .btn-print { background: #2c3e50; color: #fff; }
-    .btn-print:hover { background: #34495e; }
+    .disclaimer strong { color: var(--deep-navy); }
+
+    /* ===== PRINT BUTTON ===== */
+    .btn-print { background: var(--dark-navy); color: var(--white); }
+    .btn-print:hover { background: var(--steel-blue); }
 
     @media print {
       header { padding: 1rem; }
+      header::after { display: none; }
       .btn-row, .stepper, .btn-print { display: none; }
       .section { display: block !important; }
-      .card { box-shadow: none; border: 1px solid #ddd; }
+      .card { box-shadow: none; border: 1px solid var(--mist); }
     }
 
-    /* Running total bar */
+    /* ===== RUNNING TOTAL BAR ===== */
     .running-total {
       position: sticky;
       bottom: 0;
-      background: var(--primary);
-      color: #fff;
+      background: var(--deep-navy);
+      color: var(--white);
       text-align: center;
-      padding: 0.65rem 1rem;
+      padding: 0.75rem 1rem;
       font-size: 0.95rem;
       font-weight: 600;
-      box-shadow: 0 -2px 12px rgba(0,0,0,0.15);
+      box-shadow: 0 -2px 12px rgba(13,34,64,0.2);
       z-index: 100;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .running-total::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 40%;
+      height: 100%;
+      background: var(--reece-red);
+      opacity: 0.5;
+      clip-path: polygon(45% 0, 100% 0, 100% 100%, 0 100%);
+      pointer-events: none;
+    }
+
+    .running-total .total-content {
+      position: relative;
+      z-index: 1;
     }
 
     .running-total span { font-size: 1.15rem; }
 
-    /* Info tooltip */
+    /* ===== INFO TOOLTIP ===== */
     .info-tip {
       display: inline-block;
       width: 16px;
       height: 16px;
       border-radius: 50%;
-      background: var(--border);
-      color: var(--text-light);
+      background: var(--mist);
+      color: var(--deep-navy);
       font-size: 0.68rem;
       text-align: center;
       line-height: 16px;
@@ -381,6 +458,7 @@
       margin-left: 4px;
       position: relative;
       vertical-align: middle;
+      font-weight: 700;
     }
 
     .info-tip:hover::after {
@@ -389,10 +467,10 @@
       bottom: 120%;
       left: 50%;
       transform: translateX(-50%);
-      background: var(--text);
-      color: #fff;
+      background: var(--dark-navy);
+      color: var(--white);
       padding: 0.5rem 0.7rem;
-      border-radius: 6px;
+      border-radius: 0;
       font-size: 0.75rem;
       white-space: normal;
       width: 220px;
@@ -402,7 +480,7 @@
       line-height: 1.4;
     }
 
-    /* Quantity stepper */
+    /* ===== QUANTITY STEPPER ===== */
     .qty-control {
       display: flex;
       align-items: center;
@@ -412,37 +490,39 @@
     .qty-control button {
       width: 30px;
       height: 30px;
-      border: 1.5px solid var(--border);
-      border-radius: 4px;
-      background: #fff;
+      border: 1.5px solid var(--mist);
+      border-radius: 0;
+      background: var(--white);
       font-size: 1.1rem;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: var(--primary);
+      color: var(--deep-navy);
       font-weight: 700;
+      transition: all 0.3s ease;
     }
 
-    .qty-control button:hover { background: #eaf2f8; }
+    .qty-control button:hover { background: var(--light-bg); border-color: var(--steel-blue); }
 
     .qty-control input {
       width: 50px;
       text-align: center;
       padding: 0.35rem;
-      border: 1.5px solid var(--border);
-      border-radius: 4px;
+      border: 1.5px solid var(--mist);
+      border-radius: 0;
       font-size: 0.9rem;
+      font-family: 'Nunito Sans', sans-serif;
     }
 
     .empty-state {
       text-align: center;
       padding: 2rem;
-      color: var(--text-light);
+      color: var(--text-gray);
       font-size: 0.9rem;
     }
 
-    /* Grid display for dimensions */
+    /* ===== DIMENSION ROW ===== */
     .dim-row {
       display: flex;
       align-items: end;
@@ -450,13 +530,22 @@
     }
 
     .dim-row .field { flex: 1; }
-    .dim-row .dim-x { font-size: 1.1rem; font-weight: 600; align-self: center; padding-top: 1.2rem; color: var(--text-light); }
+    .dim-row .dim-x { font-size: 1.1rem; font-weight: 600; align-self: center; padding-top: 1.2rem; color: var(--text-gray); }
+
+    /* ===== CUSTOM SIZE BADGE ===== */
+    .custom-size-badge { color: var(--reece-red); font-size: 0.75rem; }
+
+    /* ===== SUCCESS COLOR ===== */
+    .text-success { color: var(--cta-red); }
   </style>
 </head>
 <body>
   <header>
-    <h1>Window Cost Estimator</h1>
-    <p>Accurate pricing based on 2025-2026 industry data</p>
+    <div class="header-content">
+      <div class="brand-name">Reece Windows &amp; Doors &bull; Est. 1972</div>
+      <h1>Window Cost Estimator</h1>
+      <p>Protecting Families for Over 50 Years</p>
+    </div>
   </header>
 
   <div class="container">
@@ -717,7 +806,7 @@
             <input type="number" id="winHeight" value="48" min="12" max="120" step="1">
           </div>
         </div>
-        <p style="font-size:0.78rem; color:var(--text-light); margin-top:0.3rem;">Standard sizes are most affordable. Custom sizes add 15-30% to cost.</p>
+        <p style="font-size:0.78rem; color:var(--text-gray); margin-top:0.3rem;">Standard sizes are most affordable. Custom sizes add 15-30% to cost.</p>
 
         <!-- Quantity -->
         <h3>Quantity</h3>
@@ -771,7 +860,9 @@
 
   <!-- Running total -->
   <div class="running-total" id="runningTotal">
-    Estimated Total: <span>$0</span>
+    <div class="total-content">
+      Estimated Total: <span>$0</span>
+    </div>
   </div>
 
   <script>
@@ -1174,7 +1265,7 @@
             <div class="we-info">
               <strong>#${i+1}</strong> ${label}
               ${w.config.qty > 1 ? ' &times; ' + w.config.qty : ''}
-              ${!w.cost.isStandard ? ' <span style="color:var(--accent);font-size:0.75rem;">(Custom Size)</span>' : ''}
+              ${!w.cost.isStandard ? ' <span class="custom-size-badge">(Custom Size)</span>' : ''}
             </div>
             <div class="we-cost">${fmt(w.cost.totalCost)}</div>
             <div class="we-actions">
@@ -1250,9 +1341,9 @@
         // Detail rows per window config
         windowRows += `
           <tr>
-            <td colspan="4" style="font-weight:600; background:#f0f4f8; color:var(--primary);">
+            <td colspan="4" style="font-weight:700; background:var(--light-bg); color:var(--deep-navy);">
               #${i+1} ${label} ${c.qty > 1 ? '&times; ' + c.qty : ''}
-              ${!cost.isStandard ? '<span style="color:var(--accent);">(Custom)</span>' : ''}
+              ${!cost.isStandard ? '<span class="custom-size-badge">(Custom)</span>' : ''}
             </td>
           </tr>
           <tr><td style="padding-left:1.5rem;">Base (${PRICING.frameMaterial[c.frame].label} ${getStyleLabel(c.style)})</td><td>${fmt(cost.breakdown.baseStyle)}</td><td>&times; ${c.qty}</td><td>${fmt(cost.breakdown.baseStyle * c.qty)}</td></tr>`;
@@ -1314,7 +1405,7 @@
             <tr><td>Total Labor</td><td>${fmt(totalLabor)}</td></tr>`;
 
       if (bulkDiscountAmt > 0) {
-        html += `<tr><td>Bulk Discount (${Math.round(project.bulkDiscountRate*100)}% off materials for ${totalWindows} windows)</td><td style="color:var(--success);">-${fmt(bulkDiscountAmt)}</td></tr>`;
+        html += `<tr><td>Bulk Discount (${Math.round(project.bulkDiscountRate*100)}% off materials for ${totalWindows} windows)</td><td style="color:var(--cta-red);">-${fmt(bulkDiscountAmt)}</td></tr>`;
       }
       if (project.permit > 0) {
         html += `<tr><td>Permit</td><td>${fmt(project.permit)}</td></tr>`;
@@ -1335,7 +1426,7 @@
             <tr class="subtotal"><td>Mid Estimate</td><td>${fmt(grandTotal)}</td></tr>
             <tr><td>High Estimate (+18%)</td><td>${fmt(highEstimate)}</td></tr>
           </table>
-          <p style="font-size:0.78rem; color:var(--text-light); margin-top:0.5rem;">
+          <p style="font-size:0.78rem; color:var(--text-gray); margin-top:0.5rem;">
             Range accounts for brand variance, local market conditions, and contractor pricing differences.
           </p>
         </div>
@@ -1343,8 +1434,8 @@
         <div class="summary-section">
           <h3>Potential Savings</h3>
           <table class="summary-table">
-            <tr><td>ENERGY STAR Tax Credit (up to 30%, max $600/yr)</td><td style="color:var(--success);">Up to -${fmt(Math.min(totalMaterials * 0.30, 600))}</td></tr>
-            <tr><td>Energy Savings (est. 12% on heating/cooling bills annually)</td><td style="color:var(--success);">Varies by home</td></tr>
+            <tr><td>ENERGY STAR Tax Credit (up to 30%, max $600/yr)</td><td style="color:var(--cta-red);">Up to -${fmt(Math.min(totalMaterials * 0.30, 600))}</td></tr>
+            <tr><td>Energy Savings (est. 12% on heating/cooling bills annually)</td><td style="color:var(--cta-red);">Varies by home</td></tr>
           </table>
         </div>`;
 
@@ -1393,13 +1484,13 @@
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'window-estimate-' + new Date().toISOString().slice(0,10) + '.csv';
+      a.download = 'reece-window-estimate-' + new Date().toISOString().slice(0,10) + '.csv';
       a.click();
       URL.revokeObjectURL(url);
     }
 
     // ============================================================
-    //  INIT — fix duplicate Low-E checkbox issue
+    //  INIT
     // ============================================================
     (function init() {
       // Ensure initial check-item states match checkboxes
