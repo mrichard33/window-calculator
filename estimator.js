@@ -80,8 +80,8 @@ const PRICING = {
     sliding:      { min: 800,  max: 1300, base: 950  },
     awning:       { min: 900,  max: 1450, base: 1080 },
     picture:      { min: 700,  max: 1200, base: 850  },
-    bay:          { min: 1700, max: 5000, base: 2900 },
-    bow:          { min: 2000, max: 6000, base: 3500 }
+    three_lite:   { min: 1750, max: 2100, base: 1925 },
+    custom_shape: { min: 1750, max: 2100, base: 1925 }
   },
 
   // Frame material multipliers (relative to base price)
@@ -445,7 +445,7 @@ function calculateWindowCost(config) {
   if (sizeRatio > 1.3) {
     laborCost *= 1 + (sizeRatio - 1.3) * 0.3;
   }
-  if (['bay', 'bow'].includes(config.style)) {
+  if (['three_lite', 'custom_shape'].includes(config.style)) {
     laborCost *= 2.2;
   }
   laborCost += storySurcharge;
@@ -485,8 +485,8 @@ function isStandardSize(style, w, h) {
     sliding:     { w: [36,48,60,72,84], h: [24,36,48,60] },
     awning:      { w: [20,24,28,32,36,40,48,60], h: [20,24,28,36,48] },
     picture:     { w: [24,36,48,60,72,96], h: [24,36,48,60,72,96] },
-    bay:         { w: [36,48,60,72,84,96,108,120], h: [36,48,60,72] },
-    bow:         { w: [48,60,72,84,96,108,120], h: [36,48,60,72] }
+    three_lite:  { w: [36,48,60,72,84,96,108,120], h: [36,48,60,72] },
+    custom_shape:{ w: [24,36,48,60,72,96], h: [24,36,48,60,72,96] }
   };
   const s = standards[style];
   if (!s) return false;
@@ -521,7 +521,7 @@ function getWindowConfig() {
 function getWindowLabel(config) {
   const styleLabels = {
     single_hung: 'Single-Hung', double_hung: 'Double-Hung', casement: 'Casement',
-    sliding: 'Sliding', awning: 'Awning', picture: 'Picture', bay: 'Bay', bow: 'Bow'
+    sliding: 'Sliding', awning: 'Awning', picture: 'Picture', three_lite: 'Three Lite Slider', custom_shape: 'Custom Shape'
   };
   const frameLabels = PRICING.frameMaterial[config.frame].label;
   return styleLabels[config.style] + ' - ' + frameLabels + ' - ' + config.width + '"x' + config.height + '"';
@@ -824,7 +824,7 @@ function buildSummary() {
 function getStyleLabel(style) {
   const labels = {
     single_hung: 'Single-Hung', double_hung: 'Double-Hung', casement: 'Casement',
-    sliding: 'Sliding', awning: 'Awning', picture: 'Picture', bay: 'Bay', bow: 'Bow'
+    sliding: 'Sliding', awning: 'Awning', picture: 'Picture', three_lite: 'Three Lite Slider', custom_shape: 'Custom Shape'
   };
   return labels[style] || style;
 }
