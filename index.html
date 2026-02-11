@@ -537,6 +537,40 @@
 
     /* ===== SUCCESS COLOR ===== */
     .text-success { color: var(--cta-red); }
+
+    /* ===== VALIDATION ===== */
+    .field-error input,
+    .field-error select {
+      border-color: var(--cta-red) !important;
+    }
+
+    .field-error-msg {
+      color: var(--cta-red);
+      font-size: 0.75rem;
+      margin-top: 0.2rem;
+      display: none;
+    }
+
+    .field-error .field-error-msg {
+      display: block;
+    }
+
+    .form-row.full { grid-template-columns: 1fr; }
+
+    .form-row.four { grid-template-columns: 1fr 1fr 1fr 1fr; }
+
+    @media (max-width: 600px) {
+      .form-row.four { grid-template-columns: 1fr 1fr; }
+    }
+
+    .install-type-display {
+      padding: 0.55rem 0.7rem;
+      background: var(--light-bg);
+      border: 1.5px solid var(--mist);
+      font-size: 0.9rem;
+      color: var(--deep-navy);
+      font-weight: 600;
+    }
   </style>
 </head>
 <body>
@@ -561,50 +595,62 @@
     <!-- ========== STEP 1: PROJECT DETAILS ========== -->
     <div class="section visible" id="section-1">
       <div class="card">
+        <h2>Customer Information</h2>
+
+        <div class="form-row full">
+          <div class="field" id="field-fullName">
+            <label>Full Name <span style="color:var(--cta-red);">*</span></label>
+            <input type="text" id="fullName" placeholder="First and Last Name">
+            <div class="field-error-msg">Full name is required.</div>
+          </div>
+        </div>
+
+        <div class="form-row full">
+          <div class="field" id="field-streetAddress">
+            <label>Street Address <span style="color:var(--cta-red);">*</span></label>
+            <input type="text" id="streetAddress" placeholder="123 Main St">
+            <div class="field-error-msg">Street address is required.</div>
+          </div>
+        </div>
+
+        <div class="form-row four">
+          <div class="field" id="field-city">
+            <label>City <span style="color:var(--cta-red);">*</span></label>
+            <input type="text" id="city" placeholder="City">
+            <div class="field-error-msg">City is required.</div>
+          </div>
+          <div class="field" id="field-state">
+            <label>State <span style="color:var(--cta-red);">*</span></label>
+            <input type="text" id="state" placeholder="FL">
+            <div class="field-error-msg">State is required.</div>
+          </div>
+          <div class="field" id="field-postalCode">
+            <label>Postal Code <span style="color:var(--cta-red);">*</span></label>
+            <input type="text" id="postalCode" placeholder="33601">
+            <div class="field-error-msg">Postal code is required.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
         <h2>Project Details</h2>
 
         <div class="form-row">
           <div class="field">
-            <label>Installation Type <span class="info-tip" data-tip="Retrofit fits into the existing frame. Full-frame removes everything down to the rough opening for a complete replacement.">?</span></label>
-            <select id="installType">
-              <option value="retrofit">Retrofit / Insert ($100-$225 labor)</option>
-              <option value="fullframe">Full-Frame Replacement ($250-$600 labor)</option>
-              <option value="new">New Construction ($200-$450 labor)</option>
-            </select>
+            <label>Installation Type</label>
+            <div class="install-type-display">Full-Frame Replacement</div>
           </div>
           <div class="field">
-            <label>Region <span class="info-tip" data-tip="Regional labor rates vary significantly. West Coast and Northeast have the highest costs.">?</span></label>
-            <select id="region">
-              <option value="midwest">Midwest (Baseline)</option>
-              <option value="south">South (-10%)</option>
-              <option value="northeast">Northeast (+18%)</option>
-              <option value="westcoast">West Coast (+22%)</option>
-              <option value="hawaii_alaska">Hawaii / Alaska (+35%)</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="field">
-            <label>Building Stories <span class="info-tip" data-tip="Upper-story windows cost more due to scaffolding, ladders, and added labor time.">?</span></label>
+            <label>Building Stories <span class="info-tip" data-tip="Upper-story windows cost more due to scaffolding, ladders, and added labor time. 2-story adds $35/window, 3+ story adds $65/window.">?</span></label>
             <select id="stories">
               <option value="1">1 Story (Ground Floor)</option>
-              <option value="2">2 Stories</option>
-              <option value="3">3+ Stories</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>Permits Required? <span class="info-tip" data-tip="Some jurisdictions require permits for window replacement, especially for structural or egress changes. Typical permit cost is $50-$250.">?</span></label>
-            <select id="permits">
-              <option value="none">No Permit Needed</option>
-              <option value="basic">Basic Permit (~$75)</option>
-              <option value="standard">Standard Permit (~$150)</option>
-              <option value="full">Full Permit (~$250)</option>
+              <option value="2">2 Stories (+$35/window)</option>
+              <option value="3">3+ Stories (+$65/window)</option>
             </select>
           </div>
         </div>
 
-        <div class="form-row">
+        <div class="form-row full">
           <div class="field">
             <label>Disposal of Old Windows <span class="info-tip" data-tip="Cost to haul away and dispose of old windows. Some contractors include this; others charge extra.">?</span></label>
             <select id="disposal">
@@ -614,20 +660,14 @@
               <option value="self">Self-Disposal (No Cost)</option>
             </select>
           </div>
-          <div class="field">
-            <label>Season <span class="info-tip" data-tip="Off-season installation (late fall/winter) can save 5-15% on labor as contractors have more availability.">?</span></label>
-            <select id="season">
-              <option value="peak">Peak Season (Spring/Summer)</option>
-              <option value="shoulder">Shoulder Season (Early Fall)</option>
-              <option value="offseason">Off-Season (Late Fall/Winter, -10% labor)</option>
-            </select>
-          </div>
         </div>
+
+        <p style="font-size:0.8rem; color:var(--text-gray); margin-top:0.5rem;">A 3% permit fee is automatically included in every estimate.</p>
       </div>
 
       <div class="btn-row">
         <div></div>
-        <button class="btn btn-primary" onclick="goToStep(2)">Next: Configure Windows &rarr;</button>
+        <button class="btn btn-primary" onclick="validateAndGoToStep2()">Next: Configure Windows &rarr;</button>
       </div>
     </div>
 
@@ -941,11 +981,11 @@
         hawaii_alaska:{ mult: 1.35, label: 'Hawaii / Alaska'  }
       },
 
-      // Story surcharge (labor addition per window)
+      // Story surcharge (per window)
       stories: {
         '1': 0,
-        '2': 45,
-        '3': 90
+        '2': 35,
+        '3': 65
       },
 
       // Season discount (applied to labor)
@@ -1005,6 +1045,35 @@
       if (v < 1) v = 1;
       if (v > 50) v = 50;
       inp.value = v;
+    }
+
+    function validateAndGoToStep2() {
+      const fields = [
+        { id: 'fullName', fieldId: 'field-fullName' },
+        { id: 'streetAddress', fieldId: 'field-streetAddress' },
+        { id: 'city', fieldId: 'field-city' },
+        { id: 'state', fieldId: 'field-state' },
+        { id: 'postalCode', fieldId: 'field-postalCode' }
+      ];
+
+      let valid = true;
+      fields.forEach(f => {
+        const el = document.getElementById(f.id);
+        const wrapper = document.getElementById(f.fieldId);
+        if (!el.value.trim()) {
+          wrapper.classList.add('field-error');
+          valid = false;
+        } else {
+          wrapper.classList.remove('field-error');
+        }
+      });
+
+      if (!valid) {
+        const firstError = document.querySelector('.field-error input');
+        if (firstError) firstError.focus();
+        return;
+      }
+      goToStep(2);
     }
 
     function goToStep(n) {
@@ -1179,10 +1248,10 @@
         width: parseInt(document.getElementById('winWidth').value) || 36,
         height: parseInt(document.getElementById('winHeight').value) || 48,
         qty: parseInt(document.getElementById('winQty').value) || 1,
-        installType: document.getElementById('installType').value,
-        region: document.getElementById('region').value,
+        installType: 'fullframe',
+        region: 'south',
         stories: document.getElementById('stories').value,
-        season: document.getElementById('season').value
+        season: 'peak'
       };
     }
 
@@ -1278,15 +1347,24 @@
     }
 
     function updateRunningTotal() {
-      let total = 0;
-      windows.forEach(w => { total += w.cost.totalCost; });
-      // Add project-level costs
-      total += getProjectCosts().total;
+      let windowTotal = 0;
+      windows.forEach(w => { windowTotal += w.cost.totalCost; });
+      // 3% permit fee on window subtotal
+      const permitFee = round2(windowTotal * 0.03);
+      // Disposal costs
+      const disposalType = document.getElementById('disposal').value;
+      const totalWindowCount = windows.reduce((sum, w) => sum + w.config.qty, 0);
+      let disposalCost = 0;
+      if (disposalType === 'per_window') {
+        disposalCost = PRICING.disposal.per_window * totalWindowCount;
+      } else if (disposalType === 'dumpster') {
+        disposalCost = PRICING.disposal.dumpster;
+      }
+      const total = windowTotal + permitFee + disposalCost;
       document.querySelector('#runningTotal span').textContent = fmt(total);
     }
 
     function getProjectCosts() {
-      const permitCost = PRICING.permits[document.getElementById('permits').value];
       const disposalType = document.getElementById('disposal').value;
       let disposalCost = 0;
       const totalWindowCount = windows.reduce((sum, w) => sum + w.config.qty, 0);
@@ -1304,6 +1382,11 @@
       } else if (totalWindowCount >= 6) {
         bulkDiscount = 0.05;
       }
+
+      // Calculate subtotal for 3% permit fee
+      let windowSubtotal = 0;
+      windows.forEach(w => { windowSubtotal += w.cost.totalCost; });
+      const permitCost = round2(windowSubtotal * 0.03);
 
       return {
         permit: permitCost,
@@ -1361,7 +1444,7 @@
           const upgradeLabels = c.upgrades.map(u => PRICING.glassUpgrades[u] ? PRICING.glassUpgrades[u].label : u).join(', ');
           windowRows += `<tr><td style="padding-left:1.5rem;">Upgrades (${upgradeLabels})</td><td>${fmt(cost.breakdown.upgrades)}</td><td>&times; ${c.qty}</td><td>${fmt(cost.breakdown.upgrades * c.qty)}</td></tr>`;
         }
-        windowRows += `<tr><td style="padding-left:1.5rem;">Labor (${getInstallLabel(c.installType)}, ${PRICING.region[c.region].label})</td><td>${fmt(cost.breakdown.laborAdjusted)}</td><td>&times; ${c.qty}</td><td>${fmt(cost.breakdown.laborAdjusted * c.qty)}</td></tr>`;
+        windowRows += `<tr><td style="padding-left:1.5rem;">Labor (${getInstallLabel(c.installType)})</td><td>${fmt(cost.breakdown.laborAdjusted)}</td><td>&times; ${c.qty}</td><td>${fmt(cost.breakdown.laborAdjusted * c.qty)}</td></tr>`;
         windowRows += `<tr class="subtotal"><td style="padding-left:1.5rem;">Subtotal</td><td>${fmt(cost.perWindowCost)}</td><td>&times; ${c.qty}</td><td>${fmt(cost.totalCost)}</td></tr>`;
       });
 
@@ -1371,20 +1454,36 @@
         bulkDiscountAmt = round2(totalMaterials * project.bulkDiscountRate);
       }
 
-      const grandTotal = round2(totalMaterials + totalLabor - bulkDiscountAmt + project.permit + project.disposal);
+      const subtotalBeforePermit = round2(totalMaterials + totalLabor - bulkDiscountAmt);
+      const permitFee = round2(subtotalBeforePermit * 0.03);
+      const grandTotal = round2(subtotalBeforePermit + permitFee + project.disposal);
 
       // Cost range (low and high estimates)
       const lowEstimate = round2(grandTotal * 0.85);
       const highEstimate = round2(grandTotal * 1.18);
 
+      // Customer info
+      const custName = document.getElementById('fullName').value.trim();
+      const custAddress = document.getElementById('streetAddress').value.trim();
+      const custCity = document.getElementById('city').value.trim();
+      const custState = document.getElementById('state').value.trim();
+      const custPostal = document.getElementById('postalCode').value.trim();
+
       let html = `
+        <div class="summary-section">
+          <h3>Customer</h3>
+          <table class="summary-table">
+            <tr><td>Name</td><td>${custName}</td></tr>
+            <tr><td>Address</td><td>${custAddress}, ${custCity}, ${custState} ${custPostal}</td></tr>
+          </table>
+        </div>
+
         <div class="summary-section">
           <h3>Project Overview</h3>
           <table class="summary-table">
             <tr><td>Total Windows</td><td>${totalWindows}</td></tr>
-            <tr><td>Installation Type</td><td>${getInstallLabel(document.getElementById('installType').value)}</td></tr>
-            <tr><td>Region</td><td>${PRICING.region[document.getElementById('region').value].label}</td></tr>
-            <tr><td>Season</td><td>${PRICING.season[document.getElementById('season').value].label}</td></tr>
+            <tr><td>Installation Type</td><td>Full-Frame Replacement</td></tr>
+            <tr><td>Building Stories</td><td>${document.getElementById('stories').value === '1' ? '1 Story' : document.getElementById('stories').value === '2' ? '2 Stories' : '3+ Stories'}</td></tr>
           </table>
         </div>
 
@@ -1407,9 +1506,7 @@
       if (bulkDiscountAmt > 0) {
         html += `<tr><td>Bulk Discount (${Math.round(project.bulkDiscountRate*100)}% off materials for ${totalWindows} windows)</td><td style="color:var(--cta-red);">-${fmt(bulkDiscountAmt)}</td></tr>`;
       }
-      if (project.permit > 0) {
-        html += `<tr><td>Permit</td><td>${fmt(project.permit)}</td></tr>`;
-      }
+      html += `<tr><td>Permit Fee (3%)</td><td>${fmt(permitFee)}</td></tr>`;
       if (project.disposal > 0) {
         html += `<tr><td>Disposal</td><td>${fmt(project.disposal)}</td></tr>`;
       }
@@ -1472,10 +1569,12 @@
       const totalMaterials = windows.reduce((s,w) => s + w.cost.materialCost * w.config.qty, 0);
       const totalLabor = windows.reduce((s,w) => s + w.cost.laborCost * w.config.qty, 0);
       const bulkDiscount = round2(totalMaterials * project.bulkDiscountRate);
-      const grandTotal = round2(totalMaterials + totalLabor - bulkDiscount + project.permit + project.disposal);
+      const subtotalBeforePermit = round2(totalMaterials + totalLabor - bulkDiscount);
+      const permitFee = round2(subtotalBeforePermit * 0.03);
+      const grandTotal = round2(subtotalBeforePermit + permitFee + project.disposal);
 
       csv += `\n"","","","","","","","",\n`;
-      csv += `"Permit","","","","","","","",${project.permit}\n`;
+      csv += `"Permit Fee (3%)","","","","","","","",${permitFee}\n`;
       csv += `"Disposal","","","","","","","",${project.disposal}\n`;
       if (bulkDiscount > 0) csv += `"Bulk Discount","","","","","","","",${-bulkDiscount}\n`;
       csv += `"GRAND TOTAL","","","","","","","",${grandTotal}\n`;
