@@ -7,625 +7,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    :root {
-      --reece-red: #ED1F24;
-      --cta-red: #FF0012;
-      --deep-navy: #0D2240;
-      --dark-navy: #122738;
-      --steel-blue: #6488A0;
-      --mist: #C1D5DB;
-      --text-gray: #87898B;
-      --light-bg: #F2F3F7;
-      --deep-red: #A00000;
-      --charcoal: #636060;
-      --powder-blue: #C7DAE4;
-      --white: #FFFFFF;
-      --shadow: 0 2px 12px rgba(13,34,64,0.10);
-    }
-
-    body {
-      font-family: 'Nunito Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: var(--light-bg);
-      color: var(--text-gray);
-      line-height: 1.6;
-      min-height: 100vh;
-      font-size: 17px;
-      font-weight: 400;
-    }
-
-    /* ===== HEADER ===== */
-    header {
-      background: var(--deep-navy);
-      color: var(--white);
-      padding: 2.2rem 1rem 2.5rem;
-      text-align: center;
-      position: relative;
-      overflow: hidden;
-    }
-
-    header::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      right: 0;
-      width: 50%;
-      height: 100%;
-      background: var(--reece-red);
-      opacity: 0.5;
-      clip-path: polygon(45% 0, 100% 0, 100% 100%, 0 100%);
-      pointer-events: none;
-    }
-
-    header .header-content {
-      position: relative;
-      z-index: 1;
-    }
-
-    header .brand-name {
-      font-size: 1rem;
-      font-weight: 300;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      opacity: 0.85;
-      margin-bottom: 0.3rem;
-    }
-
-    header h1 {
-      font-size: 2rem;
-      font-weight: 700;
-      color: var(--white);
-      letter-spacing: -0.5px;
-    }
-
-    header p {
-      color: var(--mist);
-      margin-top: 0.4rem;
-      font-size: 0.95rem;
-      font-weight: 400;
-    }
-
-    /* ===== CONTAINER ===== */
-    .container {
-      max-width: 960px;
-      margin: 0 auto;
-      padding: 1.5rem 15px 3rem;
-    }
-
-    /* ===== STEPPER ===== */
-    .stepper {
-      display: flex;
-      justify-content: center;
-      gap: 0.25rem;
-      margin-bottom: 2rem;
-    }
-
-    .stepper .step {
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
-      font-size: 0.82rem;
-      color: var(--text-gray);
-      font-weight: 400;
-    }
-
-    .stepper .step.active { color: var(--deep-navy); font-weight: 700; }
-    .stepper .step.done { color: var(--cta-red); }
-
-    .stepper .step .num {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.75rem;
-      border: 2px solid var(--mist);
-      background: var(--white);
-      flex-shrink: 0;
-      font-weight: 600;
-    }
-
-    .stepper .step.active .num { border-color: var(--deep-navy); background: var(--deep-navy); color: var(--white); }
-    .stepper .step.done .num { border-color: var(--cta-red); background: var(--cta-red); color: var(--white); }
-
-    .stepper .connector {
-      width: 30px;
-      height: 2px;
-      background: var(--mist);
-      align-self: center;
-    }
-
-    .stepper .step.done + .connector { background: var(--cta-red); }
-
-    /* ===== CARDS ===== */
-    .card {
-      background: var(--white);
-      border-radius: 0;
-      box-shadow: var(--shadow);
-      padding: 1.5rem;
-      margin-bottom: 1.25rem;
-    }
-
-    .card h2 {
-      font-size: 1.2rem;
-      font-weight: 700;
-      margin-bottom: 1rem;
-      padding-bottom: 0.6rem;
-      border-bottom: 2px solid var(--light-bg);
-      color: var(--deep-navy);
-    }
-
-    .card h3 {
-      font-size: 0.95rem;
-      font-weight: 700;
-      margin: 1rem 0 0.5rem;
-      color: var(--deep-navy);
-    }
-
-    /* ===== FORM ELEMENTS ===== */
-    .form-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1rem;
-      margin-bottom: 0.75rem;
-    }
-
-    .form-row.three { grid-template-columns: 1fr 1fr 1fr; }
-
-    @media (max-width: 600px) {
-      .form-row, .form-row.three { grid-template-columns: 1fr; }
-    }
-
-    .field {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .field label {
-      font-size: 0.82rem;
-      font-weight: 600;
-      margin-bottom: 0.3rem;
-      color: var(--deep-navy);
-    }
-
-    .field label .hint {
-      font-weight: 400;
-      color: var(--text-gray);
-      font-size: 0.78rem;
-    }
-
-    .field select,
-    .field input[type="number"],
-    .field input[type="text"] {
-      padding: 0.55rem 0.7rem;
-      border: 1.5px solid var(--mist);
-      border-radius: 0;
-      font-size: 0.9rem;
-      font-family: 'Nunito Sans', sans-serif;
-      color: var(--charcoal);
-      background: var(--white);
-      transition: border-color 0.2s;
-    }
-
-    .field select:focus,
-    .field input:focus {
-      outline: none;
-      border-color: var(--steel-blue);
-      box-shadow: 0 0 0 3px rgba(100,136,160,0.15);
-    }
-
-    /* ===== TILE SELECTORS ===== */
-    .tile-group {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-      gap: 0.6rem;
-      margin-bottom: 0.75rem;
-    }
-
-    .tile {
-      border: 2px solid var(--mist);
-      border-radius: 0;
-      padding: 0.7rem 0.5rem;
-      text-align: center;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      background: var(--white);
-      font-size: 0.82rem;
-      color: var(--charcoal);
-    }
-
-    .tile:hover { border-color: var(--steel-blue); background: #f0f5f8; }
-    .tile.selected { border-color: var(--deep-navy); background: var(--light-bg); font-weight: 600; color: var(--deep-navy); }
-
-    .tile .tile-icon { display: block; margin-bottom: 0.3rem; line-height: 1; }
-    .tile .tile-icon svg { width: 40px; height: 40px; display: inline-block; }
-    .tile .tile-price { font-size: 0.72rem; color: var(--text-gray); margin-top: 0.2rem; display: block; }
-
-    /* ===== CHECKBOX GROUP ===== */
-    .check-group {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 0.5rem;
-    }
-
-    @media (max-width: 600px) { .check-group { grid-template-columns: 1fr; } }
-
-    .check-item {
-      display: flex;
-      align-items: flex-start;
-      gap: 0.5rem;
-      padding: 0.6rem;
-      border: 1.5px solid var(--mist);
-      border-radius: 0;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      font-size: 0.85rem;
-    }
-
-    .check-item:hover { border-color: var(--steel-blue); }
-    .check-item.checked { border-color: var(--deep-navy); background: var(--light-bg); }
-
-    .check-item input { margin-top: 2px; accent-color: var(--cta-red); }
-    .check-item .check-label { font-weight: 600; color: var(--deep-navy); }
-    .check-item .check-desc { font-size: 0.75rem; color: var(--text-gray); }
-
-    /* ===== SECTION VISIBILITY ===== */
-    .section { display: none; }
-    .section.visible { display: block; }
-
-    /* ===== BUTTONS ===== */
-    .btn-row {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 1.5rem;
-      gap: 0.75rem;
-    }
-
-    .btn {
-      padding: 12px 60px;
-      border: none;
-      border-radius: 0;
-      font-size: 0.9rem;
-      font-family: 'Nunito Sans', sans-serif;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .btn-primary { background: var(--cta-red); color: var(--white); }
-    .btn-primary:hover { background: var(--deep-navy); }
-    .btn-secondary { background: var(--deep-navy); color: var(--white); }
-    .btn-secondary:hover { background: var(--steel-blue); }
-    .btn-accent { background: var(--cta-red); color: var(--white); }
-    .btn-accent:hover { background: var(--deep-navy); }
-
-    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-
-    /* ===== WINDOW LIST ===== */
-    .window-list { margin-top: 1rem; }
-
-    .window-entry {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0.7rem 0.8rem;
-      border: 1.5px solid var(--mist);
-      border-radius: 0;
-      margin-bottom: 0.5rem;
-      background: var(--light-bg);
-      font-size: 0.85rem;
-    }
-
-    .window-entry .we-info { flex: 1; }
-    .window-entry .we-info strong { color: var(--deep-navy); }
-    .window-entry .we-cost { font-weight: 700; color: var(--cta-red); margin: 0 1rem; white-space: nowrap; }
-
-    .window-entry .we-actions { display: flex; gap: 0.4rem; }
-
-    .btn-sm {
-      padding: 0.3rem 0.6rem;
-      font-size: 0.78rem;
-      border: none;
-      border-radius: 0;
-      cursor: pointer;
-      font-weight: 600;
-      font-family: 'Nunito Sans', sans-serif;
-      text-transform: uppercase;
-      letter-spacing: 0.3px;
-      transition: all 0.3s ease;
-    }
-
-    .btn-edit { background: var(--powder-blue); color: var(--deep-navy); }
-    .btn-edit:hover { background: var(--steel-blue); color: var(--white); }
-    .btn-delete { background: #fdecea; color: var(--deep-red); }
-    .btn-delete:hover { background: var(--deep-red); color: var(--white); }
-
-    /* ===== SUMMARY TABLE ===== */
-    .summary-table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-
-    .summary-table th,
-    .summary-table td {
-      padding: 0.55rem 0.75rem;
-      text-align: left;
-      border-bottom: 1px solid var(--mist);
-      font-size: 0.88rem;
-    }
-
-    .summary-table th { background: var(--light-bg); font-weight: 700; color: var(--deep-navy); }
-    .summary-table td:last-child { text-align: right; font-weight: 500; }
-
-    .summary-table tr.total td {
-      font-weight: 700;
-      font-size: 1rem;
-      border-top: 2px solid var(--deep-navy);
-      border-bottom: none;
-      color: var(--deep-navy);
-    }
-
-    .summary-table tr.subtotal td {
-      font-weight: 600;
-      color: var(--dark-navy);
-    }
-
-    .summary-section { margin-bottom: 1.5rem; }
-    .summary-section h3 {
-      font-size: 0.9rem;
-      color: var(--deep-navy);
-      font-weight: 700;
-      margin-bottom: 0.5rem;
-    }
-
-    /* ===== DISCLAIMER ===== */
-    .disclaimer {
-      background: var(--light-bg);
-      border-left: 4px solid var(--reece-red);
-      padding: 0.8rem 1rem;
-      font-size: 0.8rem;
-      color: var(--charcoal);
-      border-radius: 0;
-      margin-top: 1rem;
-    }
-
-    .disclaimer strong { color: var(--deep-navy); }
-
-    /* ===== PRINT BUTTON ===== */
-    .btn-print { background: var(--dark-navy); color: var(--white); }
-    .btn-print:hover { background: var(--steel-blue); }
-
-    @media print {
-      header { padding: 1rem; }
-      header::after { display: none; }
-      .btn-row, .stepper, .btn-print { display: none; }
-      .section { display: block !important; }
-      .card { box-shadow: none; border: 1px solid var(--mist); }
-    }
-
-    /* ===== RUNNING TOTAL BAR ===== */
-    .running-total {
-      position: sticky;
-      bottom: 0;
-      background: var(--deep-navy);
-      color: var(--white);
-      text-align: center;
-      padding: 0.75rem 1rem;
-      font-size: 0.95rem;
-      font-weight: 600;
-      box-shadow: 0 -2px 12px rgba(13,34,64,0.2);
-      z-index: 100;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .running-total::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      right: 0;
-      width: 40%;
-      height: 100%;
-      background: var(--reece-red);
-      opacity: 0.5;
-      clip-path: polygon(45% 0, 100% 0, 100% 100%, 0 100%);
-      pointer-events: none;
-    }
-
-    .running-total .total-content {
-      position: relative;
-      z-index: 1;
-    }
-
-    .running-total span { font-size: 1.15rem; }
-
-    /* ===== INFO TOOLTIP ===== */
-    .info-tip {
-      display: inline-block;
-      width: 16px;
-      height: 16px;
-      border-radius: 50%;
-      background: var(--mist);
-      color: var(--deep-navy);
-      font-size: 0.68rem;
-      text-align: center;
-      line-height: 16px;
-      cursor: help;
-      margin-left: 4px;
-      position: relative;
-      vertical-align: middle;
-      font-weight: 700;
-    }
-
-    .info-tip:hover::after {
-      content: attr(data-tip);
-      position: absolute;
-      bottom: 120%;
-      left: 50%;
-      transform: translateX(-50%);
-      background: var(--dark-navy);
-      color: var(--white);
-      padding: 0.5rem 0.7rem;
-      border-radius: 0;
-      font-size: 0.75rem;
-      white-space: normal;
-      width: 220px;
-      text-align: left;
-      font-weight: 400;
-      z-index: 999;
-      line-height: 1.4;
-    }
-
-    /* ===== QUANTITY STEPPER ===== */
-    .qty-control {
-      display: flex;
-      align-items: center;
-      gap: 0.3rem;
-    }
-
-    .qty-control button {
-      width: 30px;
-      height: 30px;
-      border: 1.5px solid var(--mist);
-      border-radius: 0;
-      background: var(--white);
-      font-size: 1.1rem;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--deep-navy);
-      font-weight: 700;
-      transition: all 0.3s ease;
-    }
-
-    .qty-control button:hover { background: var(--light-bg); border-color: var(--steel-blue); }
-
-    .qty-control input {
-      width: 50px;
-      text-align: center;
-      padding: 0.35rem;
-      border: 1.5px solid var(--mist);
-      border-radius: 0;
-      font-size: 0.9rem;
-      font-family: 'Nunito Sans', sans-serif;
-    }
-
-    .empty-state {
-      text-align: center;
-      padding: 2rem;
-      color: var(--text-gray);
-      font-size: 0.9rem;
-    }
-
-    /* ===== DIMENSION ROW ===== */
-    .dim-row {
-      display: flex;
-      align-items: end;
-      gap: 0.5rem;
-    }
-
-    .dim-row .field { flex: 1; }
-    .dim-row .dim-x { font-size: 1.1rem; font-weight: 600; align-self: center; padding-top: 1.2rem; color: var(--text-gray); }
-
-    /* ===== CUSTOM SIZE BADGE ===== */
-    .custom-size-badge { color: var(--reece-red); font-size: 0.75rem; }
-
-    /* ===== SUCCESS COLOR ===== */
-    .text-success { color: var(--cta-red); }
-
-    /* ===== VALIDATION ===== */
-    .field-error input,
-    .field-error select {
-      border-color: var(--cta-red) !important;
-    }
-
-    .field-error-msg {
-      color: var(--cta-red);
-      font-size: 0.75rem;
-      margin-top: 0.2rem;
-      display: none;
-    }
-
-    .field-error .field-error-msg {
-      display: block;
-    }
-
-    .form-row.full { grid-template-columns: 1fr; }
-
-    .form-row.four { grid-template-columns: 1fr 1fr 1fr 1fr; }
-
-    @media (max-width: 600px) {
-      .form-row.four { grid-template-columns: 1fr 1fr; }
-    }
-
-    .install-type-display {
-      padding: 0.55rem 0.7rem;
-      background: var(--light-bg);
-      border: 1.5px solid var(--mist);
-      font-size: 0.9rem;
-      color: var(--deep-navy);
-      font-weight: 600;
-    }
-  </style>
-  <script>
-    function initializeAddressForm() {
-      var input = document.getElementById('streetAddress');
-      var autocomplete = new google.maps.places.Autocomplete(input, {
-        types: ['address'],
-        componentRestrictions: { country: 'us' }
-      });
-
-      autocomplete.setFields(['address_components', 'formatted_address']);
-
-      autocomplete.addListener('place_changed', function() {
-        var place = autocomplete.getPlace();
-        if (!place.address_components) return;
-
-        var streetNumber = '';
-        var route = '';
-        var city = '';
-        var state = '';
-        var postalCode = '';
-
-        for (var i = 0; i < place.address_components.length; i++) {
-          var component = place.address_components[i];
-          var types = component.types;
-
-          if (types.indexOf('street_number') !== -1) {
-            streetNumber = component.long_name;
-          }
-          if (types.indexOf('route') !== -1) {
-            route = component.long_name;
-          }
-          if (types.indexOf('locality') !== -1) {
-            city = component.long_name;
-          }
-          if (types.indexOf('administrative_area_level_1') !== -1) {
-            state = component.short_name;
-          }
-          if (types.indexOf('postal_code') !== -1) {
-            postalCode = component.long_name;
-          }
-        }
-
-        document.getElementById('streetAddress').value = (streetNumber + ' ' + route).trim();
-        document.getElementById('city').value = city;
-        document.getElementById('state').value = state;
-        document.getElementById('postalCode').value = postalCode;
-
-        // Clear validation errors on autofilled fields
-        ['field-streetAddress', 'field-city', 'field-state', 'field-postalCode'].forEach(function(id) {
-          document.getElementById(id).classList.remove('field-error');
-        });
-      });
-    }
-  </script>
+  <link rel="stylesheet" href="styles.css">
+  <script src="estimator.js" defer></script>
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDHEXJFX600__uKskBl1RVs2wensuUW4c4&libraries=places&callback=initializeAddressForm" async defer></script>
 </head>
 <body>
@@ -638,13 +21,15 @@
   </header>
 
   <div class="container">
-    <!-- Stepper -->
+    <!-- Stepper — 4 Steps -->
     <div class="stepper" id="stepper">
       <div class="step active" data-step="1"><span class="num">1</span> Project</div>
       <div class="connector"></div>
       <div class="step" data-step="2"><span class="num">2</span> Windows</div>
       <div class="connector"></div>
-      <div class="step" data-step="3"><span class="num">3</span> Estimate</div>
+      <div class="step" data-step="3"><span class="num">3</span> Contact</div>
+      <div class="connector"></div>
+      <div class="step" data-step="4"><span class="num">4</span> Estimate</div>
     </div>
 
     <!-- ========== STEP 1: PROJECT DETAILS ========== -->
@@ -737,43 +122,139 @@
         <!-- Window Style -->
         <h3>Window Style</h3>
         <div class="tile-group" id="windowStyle">
+
+          <!-- Single-Hung: bottom sash slides UP, top fixed -->
           <div class="tile selected" data-value="single_hung" onclick="selectTile(this)">
-            <span class="tile-icon"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="6" y="3" width="28" height="34" rx="1"/><line x1="6" y1="20" x2="34" y2="20"/><line x1="20" y1="20" x2="20" y2="37"/><path d="M18 16 L20 14 L22 16" stroke-width="1.2"/></svg></span>
+            <span class="tile-icon"><svg viewBox="0 0 80 80" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="10" y="5" width="60" height="70" rx="1"/>
+              <rect x="14" y="9" width="52" height="62" stroke-width="1"/>
+              <line x1="14" y1="40" x2="66" y2="40" stroke-width="2.5"/>
+              <line x1="40" y1="9" x2="40" y2="40" stroke-width="0.8" opacity="0.3" stroke-dasharray="3 2"/>
+              <line x1="14" y1="24" x2="66" y2="24" stroke-width="0.8" opacity="0.3" stroke-dasharray="3 2"/>
+              <path d="M35 54 L40 46 L45 54" stroke-width="2.5" fill="none"/>
+              <line x1="40" y1="46" x2="40" y2="64" stroke-width="2"/>
+              <rect x="37" y="37" width="6" height="6" rx="1" fill="currentColor" opacity="0.4"/>
+            </svg></span>
             Single-Hung
             <span class="tile-price">$1,250-$1,600</span>
           </div>
+
+          <!-- Double-Hung: both sashes slide -->
           <div class="tile" data-value="double_hung" onclick="selectTile(this)">
-            <span class="tile-icon"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="6" y="3" width="28" height="34" rx="1"/><line x1="6" y1="20" x2="34" y2="20"/><line x1="20" y1="3" x2="20" y2="37"/><path d="M18 16 L20 14 L22 16" stroke-width="1.2"/><path d="M18 24 L20 26 L22 24" stroke-width="1.2"/></svg></span>
+            <span class="tile-icon"><svg viewBox="0 0 80 80" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="10" y="5" width="60" height="70" rx="1"/>
+              <rect x="14" y="9" width="52" height="62" stroke-width="1"/>
+              <line x1="14" y1="40" x2="66" y2="40" stroke-width="2.5"/>
+              <path d="M35 28 L40 20 L45 28" stroke-width="2" fill="none"/>
+              <line x1="40" y1="20" x2="40" y2="12" stroke-width="2"/>
+              <path d="M35 52 L40 60 L45 52" stroke-width="2" fill="none"/>
+              <line x1="40" y1="60" x2="40" y2="68" stroke-width="2"/>
+              <rect x="37" y="37" width="6" height="6" rx="1" fill="currentColor" opacity="0.4"/>
+            </svg></span>
             Double-Hung
             <span class="tile-price">$1,350-$1,850</span>
           </div>
+
+          <!-- Casement: side-hinged, cranks outward -->
           <div class="tile" data-value="casement" onclick="selectTile(this)">
-            <span class="tile-icon"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="6" y="3" width="28" height="34" rx="1"/><line x1="20" y1="3" x2="20" y2="37"/><path d="M10 18 L6 20 L10 22" stroke-width="1.2"/><circle cx="17" cy="20" r="1.2" fill="currentColor"/></svg></span>
+            <span class="tile-icon"><svg viewBox="0 0 80 80" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="10" y="5" width="60" height="70" rx="1"/>
+              <rect x="14" y="9" width="52" height="62" stroke-width="1"/>
+              <circle cx="14" cy="18" r="2.5" fill="currentColor" opacity="0.5"/>
+              <circle cx="14" cy="40" r="2.5" fill="currentColor" opacity="0.5"/>
+              <circle cx="14" cy="62" r="2.5" fill="currentColor" opacity="0.5"/>
+              <path d="M60 22 Q72 40 60 58" stroke-width="1.5" stroke-dasharray="4 2" fill="none" opacity="0.5"/>
+              <path d="M56 38 L62 40 L56 42" stroke-width="1.5" fill="none"/>
+              <circle cx="62" cy="40" r="2" fill="currentColor" opacity="0.4"/>
+              <line x1="56" y1="68" x2="62" y2="68" stroke-width="2.5"/>
+              <circle cx="64" cy="68" r="2" fill="currentColor" opacity="0.4"/>
+            </svg></span>
             Casement
             <span class="tile-price">$1,350-$2,000</span>
           </div>
+
+          <!-- Sliding: horizontal slide -->
           <div class="tile" data-value="sliding" onclick="selectTile(this)">
-            <span class="tile-icon"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="6" y="3" width="28" height="34" rx="1"/><line x1="20" y1="3" x2="20" y2="37"/><path d="M24 18 L26 20 L24 22" stroke-width="1.2"/></svg></span>
+            <span class="tile-icon"><svg viewBox="0 0 80 80" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="10" y="5" width="60" height="70" rx="1"/>
+              <rect x="14" y="9" width="52" height="62" stroke-width="1"/>
+              <line x1="40" y1="9" x2="40" y2="71" stroke-width="2.5"/>
+              <path d="M50 36 L58 40 L50 44" stroke-width="2.5" fill="none"/>
+              <line x1="44" y1="40" x2="58" y2="40" stroke-width="2"/>
+              <line x1="14" y1="68" x2="66" y2="68" stroke-width="1" opacity="0.3"/>
+              <line x1="14" y1="70" x2="66" y2="70" stroke-width="1" opacity="0.3"/>
+            </svg></span>
             Sliding
             <span class="tile-price">$1,300-$1,800</span>
           </div>
+
+          <!-- Awning: top-hinged, bottom pushes outward -->
           <div class="tile" data-value="awning" onclick="selectTile(this)">
-            <span class="tile-icon"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="6" y="3" width="28" height="34" rx="1"/><line x1="6" y1="20" x2="34" y2="20"/><path d="M18 26 L20 28 L22 26" stroke-width="1.2"/><circle cx="20" cy="7" r="1.2" fill="currentColor"/></svg></span>
+            <span class="tile-icon"><svg viewBox="0 0 80 80" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="10" y="5" width="60" height="70" rx="1"/>
+              <rect x="14" y="9" width="52" height="62" stroke-width="1"/>
+              <circle cx="26" cy="9" r="2.5" fill="currentColor" opacity="0.5"/>
+              <circle cx="40" cy="9" r="2.5" fill="currentColor" opacity="0.5"/>
+              <circle cx="54" cy="9" r="2.5" fill="currentColor" opacity="0.5"/>
+              <path d="M22 62 Q40 78 58 62" stroke-width="1.5" stroke-dasharray="4 2" fill="none" opacity="0.5"/>
+              <path d="M36 60 L40 66 L44 60" stroke-width="2" fill="none"/>
+              <line x1="40" y1="52" x2="40" y2="66" stroke-width="2"/>
+              <line x1="36" y1="68" x2="44" y2="68" stroke-width="2.5"/>
+              <circle cx="40" cy="70" r="1.5" fill="currentColor" opacity="0.4"/>
+            </svg></span>
             Awning
             <span class="tile-price">$1,400-$1,950</span>
           </div>
+
+          <!-- Picture: fixed, no moving parts -->
           <div class="tile" data-value="picture" onclick="selectTile(this)">
-            <span class="tile-icon"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="6" y="3" width="28" height="34" rx="1"/><line x1="6" y1="20" x2="34" y2="20"/><line x1="20" y1="3" x2="20" y2="37"/></svg></span>
+            <span class="tile-icon"><svg viewBox="0 0 80 80" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="8" y="4" width="64" height="72" rx="1" stroke-width="3"/>
+              <rect x="14" y="10" width="52" height="60" stroke-width="2"/>
+              <rect x="18" y="14" width="44" height="52" stroke-width="0.8" opacity="0.2"/>
+              <line x1="20" y1="14" x2="56" y2="56" stroke-width="0.5" opacity="0.15"/>
+              <line x1="24" y1="14" x2="60" y2="54" stroke-width="0.5" opacity="0.1"/>
+              <rect x="36" y="36" width="8" height="8" rx="1" stroke-width="1.5" opacity="0.4"/>
+              <line x1="40" y1="37" x2="40" y2="43" stroke-width="1" opacity="0.4"/>
+              <line x1="37" y1="40" x2="43" y2="40" stroke-width="1" opacity="0.4"/>
+            </svg></span>
             Picture (Fixed)
             <span class="tile-price">$1,200-$1,700</span>
           </div>
+
+          <!-- Bay: 3-panel angular projection -->
           <div class="tile" data-value="bay" onclick="selectTile(this)">
-            <span class="tile-icon"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="4,6 12,3 28,3 36,6"/><rect x="12" y="3" width="16" height="34" rx="0"/><line x1="4" y1="6" x2="4" y2="37"/><line x1="36" y1="6" x2="36" y2="37"/><line x1="4" y1="37" x2="12" y2="37"/><line x1="36" y1="37" x2="28" y2="37"/><line x1="20" y1="3" x2="20" y2="37"/></svg></span>
+            <span class="tile-icon"><svg viewBox="0 0 80 80" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="22" y="5" width="36" height="62" rx="0" stroke-width="2"/>
+              <line x1="40" y1="5" x2="40" y2="67" stroke-width="1"/>
+              <polygon points="22,10 8,18 8,62 22,67" fill="none" stroke-width="2"/>
+              <polygon points="58,10 72,18 72,62 58,67" fill="none" stroke-width="2"/>
+              <line x1="15" y1="40" x2="8" y2="40" stroke-width="0.8" opacity="0.3"/>
+              <line x1="65" y1="40" x2="72" y2="40" stroke-width="0.8" opacity="0.3"/>
+              <line x1="6" y1="70" x2="74" y2="70" stroke-width="2.5"/>
+              <line x1="6" y1="70" x2="8" y2="62" stroke-width="1.5"/>
+              <line x1="74" y1="70" x2="72" y2="62" stroke-width="1.5"/>
+              <line x1="22" y1="67" x2="20" y2="70" stroke-width="1"/>
+              <line x1="58" y1="67" x2="60" y2="70" stroke-width="1"/>
+            </svg></span>
             Bay
             <span class="tile-price">$2,200-$5,500</span>
           </div>
+
+          <!-- Bow: curved multi-panel projection -->
           <div class="tile" data-value="bow" onclick="selectTile(this)">
-            <span class="tile-icon"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 8 Q8 2 20 2 Q32 2 36 8"/><line x1="4" y1="8" x2="4" y2="37"/><line x1="36" y1="8" x2="36" y2="37"/><line x1="4" y1="37" x2="36" y2="37"/><line x1="12" y1="4" x2="12" y2="37"/><line x1="20" y1="2" x2="20" y2="37"/><line x1="28" y1="4" x2="28" y2="37"/></svg></span>
+            <span class="tile-icon"><svg viewBox="0 0 80 80" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M8 18 Q18 4 40 4 Q62 4 72 18" stroke-width="2.5" fill="none"/>
+              <line x1="8" y1="18" x2="8" y2="62" stroke-width="2"/>
+              <line x1="72" y1="18" x2="72" y2="62" stroke-width="2"/>
+              <line x1="8" y1="62" x2="72" y2="62" stroke-width="2"/>
+              <line x1="24" y1="8" x2="24" y2="62" stroke-width="1.5"/>
+              <line x1="40" y1="4" x2="40" y2="62" stroke-width="1.5"/>
+              <line x1="56" y1="8" x2="56" y2="62" stroke-width="1.5"/>
+              <path d="M6 70 L74 70" stroke-width="2.5"/>
+              <path d="M6 70 Q6 62 8 62" stroke-width="1.5" fill="none"/>
+              <path d="M74 70 Q74 62 72 62" stroke-width="1.5" fill="none"/>
+            </svg></span>
             Bow
             <span class="tile-price">$2,500-$6,500</span>
           </div>
@@ -904,7 +385,7 @@
         </div>
       </div>
 
-      <!-- Added windows list -->
+      <!-- Cart Summary -->
       <div class="card">
         <h2>Windows in Estimate</h2>
         <div id="windowList" class="window-list">
@@ -912,13 +393,44 @@
         </div>
         <div class="btn-row">
           <button class="btn btn-secondary" onclick="goToStep(1)">&larr; Project Details</button>
-          <button class="btn btn-primary" id="btnToSummary" onclick="goToStep(3)" disabled>View Full Estimate &rarr;</button>
+          <button class="btn btn-primary" id="btnToStep3" onclick="goToStep(3)" disabled>Next: Contact Info &rarr;</button>
         </div>
       </div>
     </div>
 
-    <!-- ========== STEP 3: SUMMARY ========== -->
+    <!-- ========== STEP 3: CONTACT INFORMATION ========== -->
     <div class="section" id="section-3">
+      <div class="card">
+        <h2>Contact Information</h2>
+        <p class="contact-note">We'll use your contact information to send you the detailed estimate. Your phone number is required so we can text you the results.</p>
+
+        <div class="form-row full">
+          <div class="field" id="field-phone">
+            <label>Phone Number <span style="color:var(--cta-red);">*</span></label>
+            <input type="tel" id="phone" placeholder="(555) 555-5555" inputmode="numeric">
+            <div class="field-error-msg">A valid 10-digit phone number is required.</div>
+            <p class="field-hint">We'll text your estimate to this number.</p>
+          </div>
+        </div>
+
+        <div class="form-row full">
+          <div class="field" id="field-email">
+            <label>Email Address <span class="hint">(optional)</span></label>
+            <input type="email" id="email" placeholder="you@example.com" inputmode="email">
+            <div class="field-error-msg">Please enter a valid email address.</div>
+            <p class="field-hint">If provided, we'll email a PDF copy of your estimate.</p>
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-secondary" onclick="goToStep(2)">&larr; Edit Windows</button>
+          <button class="btn btn-primary" onclick="validateAndGoToStep4()">View My Estimate &rarr;</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== STEP 4: ESTIMATE SUMMARY ========== -->
+    <div class="section" id="section-4">
       <div class="card">
         <h2>Detailed Cost Estimate</h2>
         <div id="summaryContent"></div>
@@ -929,7 +441,7 @@
       </div>
 
       <div class="btn-row">
-        <button class="btn btn-secondary" onclick="goToStep(2)">&larr; Edit Windows</button>
+        <button class="btn btn-secondary" onclick="goToStep(3)">&larr; Back</button>
         <div style="display:flex; gap:0.5rem;">
           <button class="btn btn-print" onclick="window.print()">Print Estimate</button>
           <button class="btn btn-accent" onclick="exportCSV()">Export CSV</button>
@@ -938,702 +450,11 @@
     </div>
   </div>
 
-  <!-- Running total -->
+  <!-- Running total — visible only on Step 4 (estimate) -->
   <div class="running-total" id="runningTotal">
     <div class="total-content">
       Estimated Total: <span>$0</span>
     </div>
   </div>
-
-  <script>
-    // ============================================================
-    //  PRICING DATABASE — based on 2025-2026 industry research
-    // ============================================================
-
-    const PRICING = {
-      // Window style base costs (materials only, per window at standard 36x48 size, +$1,000 modifier)
-      windowStyle: {
-        single_hung:  { min: 1250, max: 1600, base: 1380 },
-        double_hung:  { min: 1350, max: 1850, base: 1520 },
-        casement:     { min: 1350, max: 2000, base: 1575 },
-        sliding:      { min: 1300, max: 1800, base: 1450 },
-        awning:       { min: 1400, max: 1950, base: 1580 },
-        picture:      { min: 1200, max: 1700, base: 1350 },
-        bay:          { min: 2200, max: 5500, base: 3400 },
-        bow:          { min: 2500, max: 6500, base: 4000 }
-      },
-
-      // Frame material multipliers (relative to base price)
-      frameMaterial: {
-        aluminum:   { mult: 0.70, label: 'Aluminum'   },
-        vinyl:      { mult: 1.00, label: 'Vinyl'      },
-        fiberglass: { mult: 1.35, label: 'Fiberglass' },
-        wood:       { mult: 1.75, label: 'Wood'       },
-        composite:  { mult: 1.45, label: 'Composite'  },
-        clad_wood:  { mult: 2.00, label: 'Clad Wood'  }
-      },
-
-      // Glass pane costs (added to base)
-      glassPanes: {
-        single: { add: -80, label: 'Single Pane' },
-        double: { add: 0,   label: 'Double Pane' },
-        triple: { add: 200, label: 'Triple Pane' }
-      },
-
-      // Gas fill (added per window)
-      gasFill: {
-        air:     { add: 0,   label: 'Air (Standard)' },
-        argon:   { add: 50,  label: 'Argon Gas Fill'  },
-        krypton: { add: 100, label: 'Krypton Gas Fill' }
-      },
-
-      // Grid pattern (added per window)
-      gridPattern: {
-        none:     { add: 0,   label: 'No Grids'     },
-        colonial: { add: 35,  label: 'Colonial Grid' },
-        prairie:  { add: 40,  label: 'Prairie Grid'  },
-        custom:   { add: 80,  label: 'Custom Grid'   }
-      },
-
-      // Glass upgrades (added per window)
-      glassUpgrades: {
-        low_e:    { add: 0, pct: 0.15, label: 'Low-E Coating'     }, // % of glass cost
-        tempered: { add: 75,  pct: 0,  label: 'Tempered Glass'    },
-        tinted:   { add: 115, pct: 0,  label: 'Tinted Glass'      },
-        impact:   { add: 350, pct: 0,  label: 'Impact Resistant'  },
-        obscure:  { add: 45,  pct: 0,  label: 'Obscure / Privacy' },
-        sound:    { add: 150, pct: 0,  label: 'Sound Reduction'   }
-      },
-
-      // Labor base cost ranges per window by installation type
-      labor: {
-        retrofit:  { min: 100, max: 225, base: 160 },
-        fullframe: { min: 250, max: 600, base: 380 },
-        new:       { min: 200, max: 450, base: 300 }
-      },
-
-      // Regional labor multipliers
-      region: {
-        midwest:      { mult: 1.00, label: 'Midwest'          },
-        south:        { mult: 0.90, label: 'South'            },
-        northeast:    { mult: 1.18, label: 'Northeast'        },
-        westcoast:    { mult: 1.22, label: 'West Coast'       },
-        hawaii_alaska:{ mult: 1.35, label: 'Hawaii / Alaska'  }
-      },
-
-      // Story surcharge (per window)
-      stories: {
-        '1': 0,
-        '2': 35,
-        '3': 65
-      },
-
-      // Season discount (applied to labor)
-      season: {
-        peak:      { mult: 1.00, label: 'Peak Season'      },
-        shoulder:  { mult: 0.95, label: 'Shoulder Season'   },
-        offseason: { mult: 0.90, label: 'Off-Season'        }
-      },
-
-      // Permits
-      permits: {
-        none:     0,
-        basic:    75,
-        standard: 150,
-        full:     250
-      },
-
-      // Disposal
-      disposal: {
-        included:   0,
-        per_window: 40,   // per window
-        dumpster:   400,  // flat
-        self:       0
-      },
-
-      // Standard reference size (sq inches) for scaling
-      standardArea: 36 * 48  // 1,728 sq in
-    };
-
-    // ============================================================
-    //  STATE
-    // ============================================================
-    let windows = [];
-    let editingIndex = -1;
-
-    // ============================================================
-    //  UI HELPERS
-    // ============================================================
-
-    function selectTile(el) {
-      const group = el.parentElement;
-      group.querySelectorAll('.tile').forEach(t => t.classList.remove('selected'));
-      el.classList.add('selected');
-    }
-
-    function toggleCheck(el) {
-      // Handled by native checkbox + CSS
-      setTimeout(() => {
-        const cb = el.querySelector('input[type="checkbox"]');
-        el.classList.toggle('checked', cb.checked);
-      }, 0);
-    }
-
-    function adjustQty(delta) {
-      const inp = document.getElementById('winQty');
-      let v = parseInt(inp.value) + delta;
-      if (v < 1) v = 1;
-      if (v > 50) v = 50;
-      inp.value = v;
-    }
-
-    function handlePaneChange() {
-      const panes = document.getElementById('glassPanes').value;
-      const gasFillField = document.getElementById('gasFillField');
-      const gasFill = document.getElementById('gasFill');
-      if (panes === 'single') {
-        gasFill.value = 'air';
-        gasFillField.style.display = 'none';
-      } else {
-        gasFillField.style.display = '';
-        gasFill.value = 'air';
-      }
-    }
-
-    function validateAndGoToStep2() {
-      const fields = [
-        { id: 'fullName', fieldId: 'field-fullName' },
-        { id: 'streetAddress', fieldId: 'field-streetAddress' },
-        { id: 'city', fieldId: 'field-city' },
-        { id: 'state', fieldId: 'field-state' },
-        { id: 'postalCode', fieldId: 'field-postalCode' }
-      ];
-
-      let valid = true;
-      fields.forEach(f => {
-        const el = document.getElementById(f.id);
-        const wrapper = document.getElementById(f.fieldId);
-        if (!el.value.trim()) {
-          wrapper.classList.add('field-error');
-          valid = false;
-        } else {
-          wrapper.classList.remove('field-error');
-        }
-      });
-
-      if (!valid) {
-        const firstError = document.querySelector('.field-error input');
-        if (firstError) firstError.focus();
-        return;
-      }
-      goToStep(2);
-    }
-
-    function goToStep(n) {
-      document.querySelectorAll('.section').forEach(s => s.classList.remove('visible'));
-      document.getElementById('section-' + n).classList.add('visible');
-
-      document.querySelectorAll('.stepper .step').forEach(s => {
-        const sn = parseInt(s.dataset.step);
-        s.classList.remove('active', 'done');
-        if (sn < n) s.classList.add('done');
-        if (sn === n) s.classList.add('active');
-      });
-
-      if (n === 3) buildSummary();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
-    function getSelectedTile(groupId) {
-      const sel = document.querySelector('#' + groupId + ' .tile.selected');
-      return sel ? sel.dataset.value : null;
-    }
-
-    function getCheckedUpgrades() {
-      const upgrades = [];
-      document.querySelectorAll('#glassUpgrades .check-item input[type="checkbox"]').forEach(cb => {
-        if (cb.checked && !upgrades.includes(cb.value)) upgrades.push(cb.value);
-      });
-      return upgrades;
-    }
-
-    // ============================================================
-    //  COST CALCULATION ENGINE
-    // ============================================================
-
-    function calculateWindowCost(config) {
-      const style = PRICING.windowStyle[config.style];
-      const frame = PRICING.frameMaterial[config.frame];
-      const panes = PRICING.glassPanes[config.panes];
-      const gas   = PRICING.gasFill[config.gas];
-      const grid  = PRICING.gridPattern[config.grid];
-      const labor = PRICING.labor[config.installType];
-      const region = PRICING.region[config.region];
-      const storySurcharge = PRICING.stories[config.stories];
-      const seasonMult = PRICING.season[config.season].mult;
-
-      // 1) Base material cost from style
-      let materialCost = style.base;
-
-      // 2) Apply frame material multiplier
-      materialCost *= frame.mult;
-
-      // 3) Size scaling: scale cost relative to standard 36x48
-      const area = config.width * config.height;
-      const sizeRatio = area / PRICING.standardArea;
-      materialCost *= sizeRatio;
-
-      // 4) Custom size surcharge (non-standard dims)
-      const isStandard = isStandardSize(config.style, config.width, config.height);
-      if (!isStandard) {
-        materialCost *= 1.20; // 20% custom surcharge
-      }
-
-      // 5) Glass panes add-on
-      let glassCost = panes.add;
-      // Scale glass add cost by size too
-      if (panes.add > 0) {
-        glassCost *= sizeRatio;
-      }
-      materialCost += glassCost;
-
-      // 6) Gas fill
-      materialCost += gas.add;
-
-      // 7) Grid pattern
-      materialCost += grid.add;
-
-      // 8) Glass upgrades
-      let upgradesCost = 0;
-      let lowEApplied = false;
-      config.upgrades.forEach(u => {
-        const up = PRICING.glassUpgrades[u];
-        if (!up) return;
-        if (u === 'low_e' && !lowEApplied) {
-          upgradesCost += materialCost * up.pct;
-          lowEApplied = true;
-        } else if (u !== 'low_e') {
-          let addCost = up.add;
-          // Scale impact/tempered/sound by size
-          if (['impact', 'tempered', 'sound'].includes(u)) {
-            addCost *= Math.max(0.8, sizeRatio);
-          }
-          upgradesCost += addCost;
-        }
-      });
-
-      const totalMaterial = materialCost + upgradesCost;
-
-      // 9) Labor cost
-      let laborCost = labor.base;
-      // Scale labor slightly for larger windows
-      if (sizeRatio > 1.3) {
-        laborCost *= 1 + (sizeRatio - 1.3) * 0.3;
-      }
-      // Bay/bow have higher labor
-      if (['bay', 'bow'].includes(config.style)) {
-        laborCost *= 2.2;
-      }
-      // Story surcharge
-      laborCost += storySurcharge;
-      // Regional adjustment
-      laborCost *= region.mult;
-      // Season discount
-      laborCost *= seasonMult;
-      // Custom size labor increase
-      if (!isStandard) {
-        laborCost *= 1.10;
-      }
-
-      const perWindowTotal = totalMaterial + laborCost;
-
-      return {
-        materialCost: round2(totalMaterial),
-        laborCost: round2(laborCost),
-        perWindowCost: round2(perWindowTotal),
-        totalCost: round2(perWindowTotal * config.qty),
-        qty: config.qty,
-        isStandard,
-        sizeRatio: round2(sizeRatio),
-        breakdown: {
-          baseStyle: round2(style.base * frame.mult * sizeRatio * (isStandard ? 1 : 1.20)),
-          glassPanes: round2(Math.max(0, glassCost)),
-          gasFill: gas.add,
-          grid: grid.add,
-          upgrades: round2(upgradesCost),
-          laborBase: round2(labor.base),
-          laborAdjusted: round2(laborCost)
-        }
-      };
-    }
-
-    function isStandardSize(style, w, h) {
-      const standards = {
-        single_hung: { w: [24,28,32,36,40,44,48], h: [36,44,48,52,54,60,62,72] },
-        double_hung: { w: [24,28,32,36,40,44,48], h: [36,44,48,52,54,60,62,72] },
-        casement:    { w: [16,20,24,28,32,36,40,44,48], h: [24,36,48,54,60,72,84] },
-        sliding:     { w: [36,48,60,72,84], h: [24,36,48,60] },
-        awning:      { w: [20,24,28,32,36,40,48,60], h: [20,24,28,36,48] },
-        picture:     { w: [24,36,48,60,72,96], h: [24,36,48,60,72,96] },
-        bay:         { w: [36,48,60,72,84,96,108,120], h: [36,48,60,72] },
-        bow:         { w: [48,60,72,84,96,108,120], h: [36,48,60,72] }
-      };
-      const s = standards[style];
-      if (!s) return false;
-      return s.w.includes(w) && s.h.includes(h);
-    }
-
-    function round2(n) { return Math.round(n * 100) / 100; }
-    function fmt(n) { return '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
-
-    // ============================================================
-    //  WINDOW LIST MANAGEMENT
-    // ============================================================
-
-    function getWindowConfig() {
-      return {
-        style: getSelectedTile('windowStyle') || 'single_hung',
-        frame: getSelectedTile('frameMaterial') || 'vinyl',
-        panes: document.getElementById('glassPanes').value,
-        gas: document.getElementById('gasFill').value,
-        grid: document.getElementById('gridPattern').value,
-        upgrades: getCheckedUpgrades(),
-        width: parseInt(document.getElementById('winWidth').value) || 36,
-        height: parseInt(document.getElementById('winHeight').value) || 48,
-        qty: parseInt(document.getElementById('winQty').value) || 1,
-        installType: 'fullframe',
-        region: 'south',
-        stories: document.getElementById('stories').value,
-        season: 'peak'
-      };
-    }
-
-    function getWindowLabel(config) {
-      const styleLabels = {
-        single_hung: 'Single-Hung', double_hung: 'Double-Hung', casement: 'Casement',
-        sliding: 'Sliding', awning: 'Awning', picture: 'Picture', bay: 'Bay', bow: 'Bow'
-      };
-      const frameLabels = PRICING.frameMaterial[config.frame].label;
-      return `${styleLabels[config.style]} - ${frameLabels} - ${config.width}"x${config.height}"`;
-    }
-
-    function addWindow() {
-      const config = getWindowConfig();
-      const cost = calculateWindowCost(config);
-
-      if (editingIndex >= 0) {
-        windows[editingIndex] = { config, cost };
-        editingIndex = -1;
-      } else {
-        windows.push({ config, cost });
-      }
-
-      renderWindowList();
-      updateRunningTotal();
-      // Reset qty
-      document.getElementById('winQty').value = 1;
-    }
-
-    function editWindow(idx) {
-      const w = windows[idx];
-      const c = w.config;
-      editingIndex = idx;
-
-      // Restore selections
-      document.querySelectorAll('#windowStyle .tile').forEach(t => {
-        t.classList.toggle('selected', t.dataset.value === c.style);
-      });
-      document.querySelectorAll('#frameMaterial .tile').forEach(t => {
-        t.classList.toggle('selected', t.dataset.value === c.frame);
-      });
-      document.getElementById('glassPanes').value = c.panes;
-      handlePaneChange();
-      document.getElementById('gasFill').value = c.gas;
-      document.getElementById('gridPattern').value = c.grid;
-      document.getElementById('winWidth').value = c.width;
-      document.getElementById('winHeight').value = c.height;
-      document.getElementById('winQty').value = c.qty;
-
-      // Restore upgrades
-      document.querySelectorAll('#glassUpgrades .check-item').forEach(item => {
-        const cb = item.querySelector('input[type="checkbox"]');
-        const checked = c.upgrades.includes(cb.value);
-        cb.checked = checked;
-        item.classList.toggle('checked', checked);
-      });
-
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
-    function removeWindow(idx) {
-      windows.splice(idx, 1);
-      renderWindowList();
-      updateRunningTotal();
-    }
-
-    function renderWindowList() {
-      const list = document.getElementById('windowList');
-      if (windows.length === 0) {
-        list.innerHTML = '<div class="empty-state">No windows added yet. Configure a window above and click "Add Window to Estimate".</div>';
-        document.getElementById('btnToSummary').disabled = true;
-        return;
-      }
-
-      document.getElementById('btnToSummary').disabled = false;
-      let html = '';
-      windows.forEach((w, i) => {
-        const label = getWindowLabel(w.config);
-        html += `
-          <div class="window-entry">
-            <div class="we-info">
-              <strong>#${i+1}</strong> ${label}
-              ${w.config.qty > 1 ? ' &times; ' + w.config.qty : ''}
-              ${!w.cost.isStandard ? ' <span class="custom-size-badge">(Custom Size)</span>' : ''}
-            </div>
-            <div class="we-cost">${fmt(w.cost.totalCost)}</div>
-            <div class="we-actions">
-              <button class="btn-sm btn-edit" onclick="editWindow(${i})">Edit</button>
-              <button class="btn-sm btn-delete" onclick="removeWindow(${i})">Remove</button>
-            </div>
-          </div>`;
-      });
-      list.innerHTML = html;
-    }
-
-    function updateRunningTotal() {
-      let windowTotal = 0;
-      windows.forEach(w => { windowTotal += w.cost.totalCost; });
-      // 3% permit fee on window subtotal
-      const permitFee = round2(windowTotal * 0.03);
-      const total = windowTotal + permitFee;
-      document.querySelector('#runningTotal span').textContent = fmt(total);
-    }
-
-    function getProjectCosts() {
-      const totalWindowCount = windows.reduce((sum, w) => sum + w.config.qty, 0);
-
-      // Bulk discount: 5% off materials for 6+ windows, 10% for 10+
-      let bulkDiscount = 0;
-      if (totalWindowCount >= 10) {
-        bulkDiscount = 0.10;
-      } else if (totalWindowCount >= 6) {
-        bulkDiscount = 0.05;
-      }
-
-      // Calculate subtotal for 3% permit fee
-      let windowSubtotal = 0;
-      windows.forEach(w => { windowSubtotal += w.cost.totalCost; });
-      const permitCost = round2(windowSubtotal * 0.03);
-
-      return {
-        permit: permitCost,
-        bulkDiscountRate: bulkDiscount,
-        total: permitCost,
-        windowCount: totalWindowCount
-      };
-    }
-
-    // ============================================================
-    //  SUMMARY BUILDER
-    // ============================================================
-
-    function buildSummary() {
-      const project = getProjectCosts();
-      let totalMaterials = 0;
-      let totalLabor = 0;
-      let totalWindows = 0;
-
-      let windowRows = '';
-      windows.forEach((w, i) => {
-        const c = w.config;
-        const cost = w.cost;
-        const label = getWindowLabel(c);
-        const matPerUnit = cost.materialCost;
-        const labPerUnit = cost.laborCost;
-        const matTotal = matPerUnit * c.qty;
-        const labTotal = labPerUnit * c.qty;
-
-        totalMaterials += matTotal;
-        totalLabor += labTotal;
-        totalWindows += c.qty;
-
-        // Detail rows per window config
-        windowRows += `
-          <tr>
-            <td colspan="4" style="font-weight:700; background:var(--light-bg); color:var(--deep-navy);">
-              #${i+1} ${label} ${c.qty > 1 ? '&times; ' + c.qty : ''}
-              ${!cost.isStandard ? '<span class="custom-size-badge">(Custom)</span>' : ''}
-            </td>
-          </tr>
-          <tr><td style="padding-left:1.5rem;">Base (${PRICING.frameMaterial[c.frame].label} ${getStyleLabel(c.style)})</td><td>${fmt(cost.breakdown.baseStyle)}</td><td>&times; ${c.qty}</td><td>${fmt(cost.breakdown.baseStyle * c.qty)}</td></tr>`;
-
-        if (cost.breakdown.glassPanes > 0) {
-          windowRows += `<tr><td style="padding-left:1.5rem;">${PRICING.glassPanes[c.panes].label} Upgrade</td><td>${fmt(cost.breakdown.glassPanes)}</td><td>&times; ${c.qty}</td><td>${fmt(cost.breakdown.glassPanes * c.qty)}</td></tr>`;
-        }
-        if (cost.breakdown.gasFill > 0) {
-          windowRows += `<tr><td style="padding-left:1.5rem;">${PRICING.gasFill[c.gas].label}</td><td>${fmt(cost.breakdown.gasFill)}</td><td>&times; ${c.qty}</td><td>${fmt(cost.breakdown.gasFill * c.qty)}</td></tr>`;
-        }
-        if (cost.breakdown.grid > 0) {
-          windowRows += `<tr><td style="padding-left:1.5rem;">${PRICING.gridPattern[c.grid].label}</td><td>${fmt(cost.breakdown.grid)}</td><td>&times; ${c.qty}</td><td>${fmt(cost.breakdown.grid * c.qty)}</td></tr>`;
-        }
-        if (cost.breakdown.upgrades > 0) {
-          const upgradeLabels = c.upgrades.map(u => PRICING.glassUpgrades[u] ? PRICING.glassUpgrades[u].label : u).join(', ');
-          windowRows += `<tr><td style="padding-left:1.5rem;">Upgrades (${upgradeLabels})</td><td>${fmt(cost.breakdown.upgrades)}</td><td>&times; ${c.qty}</td><td>${fmt(cost.breakdown.upgrades * c.qty)}</td></tr>`;
-        }
-        windowRows += `<tr><td style="padding-left:1.5rem;">Labor (${getInstallLabel(c.installType)})</td><td>${fmt(cost.breakdown.laborAdjusted)}</td><td>&times; ${c.qty}</td><td>${fmt(cost.breakdown.laborAdjusted * c.qty)}</td></tr>`;
-        windowRows += `<tr class="subtotal"><td style="padding-left:1.5rem;">Subtotal</td><td>${fmt(cost.perWindowCost)}</td><td>&times; ${c.qty}</td><td>${fmt(cost.totalCost)}</td></tr>`;
-      });
-
-      // Bulk discount
-      let bulkDiscountAmt = 0;
-      if (project.bulkDiscountRate > 0) {
-        bulkDiscountAmt = round2(totalMaterials * project.bulkDiscountRate);
-      }
-
-      const subtotalBeforePermit = round2(totalMaterials + totalLabor - bulkDiscountAmt);
-      const permitFee = round2(subtotalBeforePermit * 0.03);
-      const grandTotal = round2(subtotalBeforePermit + permitFee);
-
-      // Cost range (low and high estimates)
-      const lowEstimate = round2(grandTotal * 0.85);
-      const highEstimate = round2(grandTotal * 1.18);
-
-      // Customer info
-      const custName = document.getElementById('fullName').value.trim();
-      const custAddress = document.getElementById('streetAddress').value.trim();
-      const custCity = document.getElementById('city').value.trim();
-      const custState = document.getElementById('state').value.trim();
-      const custPostal = document.getElementById('postalCode').value.trim();
-      const regionEl = document.getElementById('serviceRegion');
-      const regionLabel = regionEl.selectedIndex > 0 ? regionEl.options[regionEl.selectedIndex].text : '';
-
-      let html = `
-        <div class="summary-section">
-          <h3>Customer</h3>
-          <table class="summary-table">
-            <tr><td>Name</td><td>${custName}</td></tr>
-            <tr><td>Address</td><td>${custAddress}, ${custCity}, ${custState} ${custPostal}</td></tr>
-            ${regionLabel ? '<tr><td>Region</td><td>' + regionLabel + '</td></tr>' : ''}
-          </table>
-        </div>
-
-        <div class="summary-section">
-          <h3>Project Overview</h3>
-          <table class="summary-table">
-            <tr><td>Total Windows</td><td>${totalWindows}</td></tr>
-            <tr><td>Installation Type</td><td>Full-Frame Replacement</td></tr>
-            <tr><td>Building Stories</td><td>${document.getElementById('stories').value === '1' ? '1 Story' : document.getElementById('stories').value === '2' ? '2 Stories' : '3+ Stories'}</td></tr>
-          </table>
-        </div>
-
-        <div class="summary-section">
-          <h3>Itemized Breakdown</h3>
-          <table class="summary-table">
-            <thead><tr><th>Item</th><th>Per Unit</th><th>Qty</th><th>Total</th></tr></thead>
-            <tbody>
-              ${windowRows}
-            </tbody>
-          </table>
-        </div>
-
-        <div class="summary-section">
-          <h3>Project Costs</h3>
-          <table class="summary-table">
-            <tr><td>Total Materials</td><td>${fmt(totalMaterials)}</td></tr>
-            <tr><td>Total Labor</td><td>${fmt(totalLabor)}</td></tr>`;
-
-      if (bulkDiscountAmt > 0) {
-        html += `<tr><td>Bulk Discount (${Math.round(project.bulkDiscountRate*100)}% off materials for ${totalWindows} windows)</td><td style="color:var(--cta-red);">-${fmt(bulkDiscountAmt)}</td></tr>`;
-      }
-      html += `<tr><td>Permit Fee (3%)</td><td>${fmt(permitFee)}</td></tr>`;
-
-      html += `
-            <tr class="total"><td>Estimated Total</td><td>${fmt(grandTotal)}</td></tr>
-          </table>
-        </div>
-
-        <div class="summary-section">
-          <h3>Cost Range</h3>
-          <table class="summary-table">
-            <tr><td>Low Estimate (-15%)</td><td>${fmt(lowEstimate)}</td></tr>
-            <tr class="subtotal"><td>Mid Estimate</td><td>${fmt(grandTotal)}</td></tr>
-            <tr><td>High Estimate (+18%)</td><td>${fmt(highEstimate)}</td></tr>
-          </table>
-          <p style="font-size:0.78rem; color:var(--text-gray); margin-top:0.5rem;">
-            Range accounts for brand variance, local market conditions, and contractor pricing differences.
-          </p>
-        </div>
-
-        <div class="summary-section">
-          <h3>Potential Savings</h3>
-          <table class="summary-table">
-            <tr><td>ENERGY STAR Tax Credit (up to 30%, max $600/yr)</td><td style="color:var(--cta-red);">Up to -${fmt(Math.min(totalMaterials * 0.30, 600))}</td></tr>
-            <tr><td>Energy Savings (est. 12% on heating/cooling bills annually)</td><td style="color:var(--cta-red);">Varies by home</td></tr>
-          </table>
-        </div>`;
-
-      document.getElementById('summaryContent').innerHTML = html;
-      updateRunningTotal();
-    }
-
-    function getStyleLabel(style) {
-      const labels = {
-        single_hung: 'Single-Hung', double_hung: 'Double-Hung', casement: 'Casement',
-        sliding: 'Sliding', awning: 'Awning', picture: 'Picture', bay: 'Bay', bow: 'Bow'
-      };
-      return labels[style] || style;
-    }
-
-    function getInstallLabel(type) {
-      const labels = { retrofit: 'Retrofit', fullframe: 'Full-Frame', new: 'New Construction' };
-      return labels[type] || type;
-    }
-
-    // ============================================================
-    //  CSV EXPORT
-    // ============================================================
-
-    function exportCSV() {
-      let csv = 'Window,Style,Frame,Dimensions,Panes,Qty,Material/Unit,Labor/Unit,Total\n';
-      windows.forEach((w, i) => {
-        const c = w.config;
-        const cost = w.cost;
-        csv += `"#${i+1}","${getStyleLabel(c.style)}","${PRICING.frameMaterial[c.frame].label}","${c.width}x${c.height}","${PRICING.glassPanes[c.panes].label}",${c.qty},${cost.materialCost},${cost.laborCost},${cost.totalCost}\n`;
-      });
-
-      const project = getProjectCosts();
-      const totalMaterials = windows.reduce((s,w) => s + w.cost.materialCost * w.config.qty, 0);
-      const totalLabor = windows.reduce((s,w) => s + w.cost.laborCost * w.config.qty, 0);
-      const bulkDiscount = round2(totalMaterials * project.bulkDiscountRate);
-      const subtotalBeforePermit = round2(totalMaterials + totalLabor - bulkDiscount);
-      const permitFee = round2(subtotalBeforePermit * 0.03);
-      const grandTotal = round2(subtotalBeforePermit + permitFee);
-
-      csv += `\n"","","","","","","","",\n`;
-      csv += `"Permit Fee (3%)","","","","","","","",${permitFee}\n`;
-      if (bulkDiscount > 0) csv += `"Bulk Discount","","","","","","","",${-bulkDiscount}\n`;
-      csv += `"GRAND TOTAL","","","","","","","",${grandTotal}\n`;
-
-      const blob = new Blob([csv], { type: 'text/csv' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'reece-window-estimate-' + new Date().toISOString().slice(0,10) + '.csv';
-      a.click();
-      URL.revokeObjectURL(url);
-    }
-
-    // ============================================================
-    //  INIT
-    // ============================================================
-    (function init() {
-      // Ensure initial check-item states match checkboxes
-      document.querySelectorAll('#glassUpgrades .check-item').forEach(item => {
-        const cb = item.querySelector('input[type="checkbox"]');
-        item.classList.toggle('checked', cb.checked);
-      });
-      updateRunningTotal();
-    })();
-  </script>
 </body>
 </html>
