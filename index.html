@@ -240,7 +240,8 @@
     .tile:hover { border-color: var(--steel-blue); background: #f0f5f8; }
     .tile.selected { border-color: var(--deep-navy); background: var(--light-bg); font-weight: 600; color: var(--deep-navy); }
 
-    .tile .tile-icon { font-size: 1.4rem; display: block; margin-bottom: 0.3rem; }
+    .tile .tile-icon { display: block; margin-bottom: 0.3rem; line-height: 1; }
+    .tile .tile-icon svg { width: 40px; height: 40px; display: inline-block; }
     .tile .tile-price { font-size: 0.72rem; color: var(--text-gray); margin-top: 0.2rem; display: block; }
 
     /* ===== CHECKBOX GROUP ===== */
@@ -737,44 +738,44 @@
         <h3>Window Style</h3>
         <div class="tile-group" id="windowStyle">
           <div class="tile selected" data-value="single_hung" onclick="selectTile(this)">
-            <span class="tile-icon">&#9633;</span>
+            <span class="tile-icon"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="6" y="3" width="28" height="34" rx="1"/><line x1="6" y1="20" x2="34" y2="20"/><line x1="20" y1="20" x2="20" y2="37"/><path d="M18 16 L20 14 L22 16" stroke-width="1.2"/></svg></span>
             Single-Hung
-            <span class="tile-price">$250-$600</span>
+            <span class="tile-price">$1,250-$1,600</span>
           </div>
           <div class="tile" data-value="double_hung" onclick="selectTile(this)">
-            <span class="tile-icon">&#8645;</span>
+            <span class="tile-icon"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="6" y="3" width="28" height="34" rx="1"/><line x1="6" y1="20" x2="34" y2="20"/><line x1="20" y1="3" x2="20" y2="37"/><path d="M18 16 L20 14 L22 16" stroke-width="1.2"/><path d="M18 24 L20 26 L22 24" stroke-width="1.2"/></svg></span>
             Double-Hung
-            <span class="tile-price">$350-$850</span>
+            <span class="tile-price">$1,350-$1,850</span>
           </div>
           <div class="tile" data-value="casement" onclick="selectTile(this)">
-            <span class="tile-icon">&#8635;</span>
+            <span class="tile-icon"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="6" y="3" width="28" height="34" rx="1"/><line x1="20" y1="3" x2="20" y2="37"/><path d="M10 18 L6 20 L10 22" stroke-width="1.2"/><circle cx="17" cy="20" r="1.2" fill="currentColor"/></svg></span>
             Casement
-            <span class="tile-price">$350-$1,000</span>
+            <span class="tile-price">$1,350-$2,000</span>
           </div>
           <div class="tile" data-value="sliding" onclick="selectTile(this)">
-            <span class="tile-icon">&harr;</span>
+            <span class="tile-icon"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="6" y="3" width="28" height="34" rx="1"/><line x1="20" y1="3" x2="20" y2="37"/><path d="M24 18 L26 20 L24 22" stroke-width="1.2"/></svg></span>
             Sliding
-            <span class="tile-price">$300-$800</span>
+            <span class="tile-price">$1,300-$1,800</span>
           </div>
           <div class="tile" data-value="awning" onclick="selectTile(this)">
-            <span class="tile-icon">&#8624;</span>
+            <span class="tile-icon"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="6" y="3" width="28" height="34" rx="1"/><line x1="6" y1="20" x2="34" y2="20"/><path d="M18 26 L20 28 L22 26" stroke-width="1.2"/><circle cx="20" cy="7" r="1.2" fill="currentColor"/></svg></span>
             Awning
-            <span class="tile-price">$400-$950</span>
+            <span class="tile-price">$1,400-$1,950</span>
           </div>
           <div class="tile" data-value="picture" onclick="selectTile(this)">
-            <span class="tile-icon">&#9634;</span>
+            <span class="tile-icon"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="6" y="3" width="28" height="34" rx="1"/><line x1="6" y1="20" x2="34" y2="20"/><line x1="20" y1="3" x2="20" y2="37"/></svg></span>
             Picture (Fixed)
-            <span class="tile-price">$200-$700</span>
+            <span class="tile-price">$1,200-$1,700</span>
           </div>
           <div class="tile" data-value="bay" onclick="selectTile(this)">
-            <span class="tile-icon">&#9186;</span>
+            <span class="tile-icon"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="4,6 12,3 28,3 36,6"/><rect x="12" y="3" width="16" height="34" rx="0"/><line x1="4" y1="6" x2="4" y2="37"/><line x1="36" y1="6" x2="36" y2="37"/><line x1="4" y1="37" x2="12" y2="37"/><line x1="36" y1="37" x2="28" y2="37"/><line x1="20" y1="3" x2="20" y2="37"/></svg></span>
             Bay
-            <span class="tile-price">$1,200-$4,500</span>
+            <span class="tile-price">$2,200-$5,500</span>
           </div>
           <div class="tile" data-value="bow" onclick="selectTile(this)">
-            <span class="tile-icon">&#9180;</span>
+            <span class="tile-icon"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 8 Q8 2 20 2 Q32 2 36 8"/><line x1="4" y1="8" x2="4" y2="37"/><line x1="36" y1="8" x2="36" y2="37"/><line x1="4" y1="37" x2="36" y2="37"/><line x1="12" y1="4" x2="12" y2="37"/><line x1="20" y1="2" x2="20" y2="37"/><line x1="28" y1="4" x2="28" y2="37"/></svg></span>
             Bow
-            <span class="tile-price">$1,500-$5,500</span>
+            <span class="tile-price">$2,500-$6,500</span>
           </div>
         </div>
 
@@ -782,34 +783,19 @@
         <h3>Frame Material</h3>
         <div class="tile-group" id="frameMaterial">
           <div class="tile" data-value="aluminum" onclick="selectTile(this)">
-            <span class="tile-icon">&#9881;</span>
+            <span class="tile-icon"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="6" y="6" width="28" height="28" rx="1"/><rect x="10" y="10" width="20" height="20" rx="0"/><line x1="6" y1="6" x2="10" y2="10"/><line x1="34" y1="6" x2="30" y2="10"/><line x1="6" y1="34" x2="10" y2="30"/><line x1="34" y1="34" x2="30" y2="30"/></svg></span>
             Aluminum
             <span class="tile-price">$200-$800</span>
           </div>
           <div class="tile selected" data-value="vinyl" onclick="selectTile(this)">
-            <span class="tile-icon">&#9724;</span>
+            <span class="tile-icon"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="6" y="6" width="28" height="28" rx="2"/><rect x="10" y="10" width="20" height="20" rx="1"/><line x1="6" y1="6" x2="10" y2="10"/><line x1="34" y1="6" x2="30" y2="10"/><line x1="6" y1="34" x2="10" y2="30"/><line x1="34" y1="34" x2="30" y2="30"/></svg></span>
             Vinyl
             <span class="tile-price">$287-$1,081</span>
           </div>
-          <div class="tile" data-value="fiberglass" onclick="selectTile(this)">
-            <span class="tile-icon">&#9670;</span>
-            Fiberglass
-            <span class="tile-price">$400-$1,500</span>
-          </div>
-          <div class="tile" data-value="wood" onclick="selectTile(this)">
-            <span class="tile-icon">&#9649;</span>
-            Wood
-            <span class="tile-price">$600-$2,800</span>
-          </div>
           <div class="tile" data-value="composite" onclick="selectTile(this)">
-            <span class="tile-icon">&#9641;</span>
+            <span class="tile-icon"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="6" y="6" width="28" height="28" rx="1"/><rect x="10" y="10" width="20" height="20" rx="0"/><line x1="6" y1="6" x2="10" y2="10"/><line x1="34" y1="6" x2="30" y2="10"/><line x1="6" y1="34" x2="10" y2="30"/><line x1="34" y1="34" x2="30" y2="30"/><line x1="10" y1="20" x2="30" y2="20" stroke-dasharray="2 2"/><line x1="20" y1="10" x2="20" y2="30" stroke-dasharray="2 2"/></svg></span>
             Composite
             <span class="tile-price">$450-$2,000</span>
-          </div>
-          <div class="tile" data-value="clad_wood" onclick="selectTile(this)">
-            <span class="tile-icon">&#9638;</span>
-            Clad Wood
-            <span class="tile-price">$700-$3,000</span>
           </div>
         </div>
 
@@ -818,18 +804,15 @@
         <div class="form-row three">
           <div class="field">
             <label>Panes</label>
-            <select id="glassPanes">
+            <select id="glassPanes" onchange="handlePaneChange()">
               <option value="single">Single Pane</option>
               <option value="double" selected>Double Pane</option>
-              <option value="triple">Triple Pane</option>
             </select>
           </div>
-          <div class="field">
+          <div class="field" id="gasFillField">
             <label>Gas Fill</label>
             <select id="gasFill">
-              <option value="air">Air (Standard)</option>
-              <option value="argon" selected>Argon (+$40-$60)</option>
-              <option value="krypton">Krypton (+$80-$120)</option>
+              <option value="air" selected>Air (Standard)</option>
             </select>
           </div>
           <div class="field">
@@ -968,16 +951,16 @@
     // ============================================================
 
     const PRICING = {
-      // Window style base costs (materials only, per window at standard 36x48 size)
+      // Window style base costs (materials only, per window at standard 36x48 size, +$1,000 modifier)
       windowStyle: {
-        single_hung:  { min: 250,  max: 600,  base: 380  },
-        double_hung:  { min: 350,  max: 850,  base: 520  },
-        casement:     { min: 350,  max: 1000, base: 575  },
-        sliding:      { min: 300,  max: 800,  base: 450  },
-        awning:       { min: 400,  max: 950,  base: 580  },
-        picture:      { min: 200,  max: 700,  base: 350  },
-        bay:          { min: 1200, max: 4500, base: 2400 },
-        bow:          { min: 1500, max: 5500, base: 3000 }
+        single_hung:  { min: 1250, max: 1600, base: 1380 },
+        double_hung:  { min: 1350, max: 1850, base: 1520 },
+        casement:     { min: 1350, max: 2000, base: 1575 },
+        sliding:      { min: 1300, max: 1800, base: 1450 },
+        awning:       { min: 1400, max: 1950, base: 1580 },
+        picture:      { min: 1200, max: 1700, base: 1350 },
+        bay:          { min: 2200, max: 5500, base: 3400 },
+        bow:          { min: 2500, max: 6500, base: 4000 }
       },
 
       // Frame material multipliers (relative to base price)
@@ -1102,6 +1085,19 @@
       if (v < 1) v = 1;
       if (v > 50) v = 50;
       inp.value = v;
+    }
+
+    function handlePaneChange() {
+      const panes = document.getElementById('glassPanes').value;
+      const gasFillField = document.getElementById('gasFillField');
+      const gasFill = document.getElementById('gasFill');
+      if (panes === 'single') {
+        gasFill.value = 'air';
+        gasFillField.style.display = 'none';
+      } else {
+        gasFillField.style.display = '';
+        gasFill.value = 'air';
+      }
     }
 
     function validateAndGoToStep2() {
@@ -1351,6 +1347,7 @@
         t.classList.toggle('selected', t.dataset.value === c.frame);
       });
       document.getElementById('glassPanes').value = c.panes;
+      handlePaneChange();
       document.getElementById('gasFill').value = c.gas;
       document.getElementById('gridPattern').value = c.grid;
       document.getElementById('winWidth').value = c.width;
