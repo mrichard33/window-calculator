@@ -775,8 +775,8 @@ function buildSummary() {
   const grandTotal = round2(subtotalBeforePermit + permitFee);
 
   // Cost range
-  const lowEstimate = round2(grandTotal * 0.85);
-  const highEstimate = round2(grandTotal * 1.18);
+  const lowEstimate = round2(grandTotal * 0.80);
+  const highEstimate = round2(grandTotal * 1.20);
 
   // Customer info
   const custName = document.getElementById('fullName').value.trim();
@@ -836,9 +836,9 @@ function buildSummary() {
   html += '<div class="summary-section">' +
     '<h3>Cost Range</h3>' +
     '<table class="summary-table">' +
-      '<tr><td>Low Estimate (-15%)</td><td>' + fmt(lowEstimate) + '</td></tr>' +
+      '<tr><td>Low Estimate (-20%)</td><td>' + fmt(lowEstimate) + '</td></tr>' +
       '<tr class="subtotal"><td>Mid Estimate</td><td>' + fmt(grandTotal) + '</td></tr>' +
-      '<tr><td>High Estimate (+18%)</td><td>' + fmt(highEstimate) + '</td></tr>' +
+      '<tr><td>High Estimate (+20%)</td><td>' + fmt(highEstimate) + '</td></tr>' +
     '</table>' +
     '<p style="font-size:0.78rem; color:var(--text-gray); margin-top:0.5rem;">' +
       'Range accounts for brand variance, local market conditions, and contractor pricing differences.' +
