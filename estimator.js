@@ -281,7 +281,7 @@ function handlePaneChange() {
     // Double pane: show gas fill with Argon option
     gasFill.innerHTML =
       '<option value="air" selected>Air (Standard)</option>' +
-      '<option value="argon">Argon Gas (+$50)</option>';
+      '<option value="argon">Argon Gas</option>';
     gasFillField.style.display = '';
   }
 }
@@ -649,7 +649,7 @@ function renderWindowList() {
     // Modifier tags
     const modifierTags = [];
     if (c.stories !== '1') {
-      modifierTags.push(c.stories === '2' ? '2-Story (+$35/ea)' : '3+ Story (+$65/ea)');
+      modifierTags.push(c.stories === '2' ? '2-Story' : '3+ Story');
     }
     if (cost.isImpact) {
       modifierTags.push('Impact Rated');
@@ -679,7 +679,6 @@ function renderWindowList() {
     });
 
     html += '</div>' +
-      '<div class="cart-item-cost">' + fmt(cost.totalCost) + '</div>' +
     '</div>';
   });
 
