@@ -539,7 +539,7 @@ header p {
   #section-1,
   #section-2,
   #section-3,
-  .hero-video {
+  .config-video {
     display: none !important;
   }
 
@@ -811,18 +811,24 @@ header p {
   font-weight: 600;
 }
 
-/* ===== HERO VIDEO (GREY OUTER AREA) ===== */
-.hero-video {
-  background: var(--light-bg);
-  padding: 1.5rem 15px;
+/* ===== CONFIG LAYOUT (VIDEO BESIDE FORM) ===== */
+.config-layout {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 1.5rem;
+  align-items: start;
 }
 
-.hero-video-inner {
-  max-width: 720px;
-  margin: 0 auto;
+.config-form {
+  min-width: 0;
 }
 
-.hero-video video {
+.config-video {
+  position: sticky;
+  top: 1rem;
+}
+
+.config-video video {
   width: 100%;
   display: block;
   border: 2px solid var(--mist);
@@ -838,8 +844,15 @@ header p {
   font-weight: 600;
 }
 
-@media (max-width: 600px) {
-  .hero-video { padding: 1rem 10px; }
+@media (max-width: 800px) {
+  .config-layout {
+    grid-template-columns: 1fr;
+  }
+  .config-video {
+    position: static;
+    max-width: 480px;
+    margin: 0 auto;
+  }
 }
 
 /* ===== CONTACT STEP ===== */

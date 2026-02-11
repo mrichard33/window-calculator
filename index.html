@@ -20,16 +20,6 @@
     </div>
   </header>
 
-  <div class="hero-video" id="heroVideo">
-    <div class="hero-video-inner">
-      <video id="introVideo" controls preload="metadata">
-        <source src="Reece Lightning Measuring Window.mp4" type="video/mp4">
-        Your browser does not support the video tag.
-      </video>
-      <p class="video-caption">How to Measure Your Windows</p>
-    </div>
-  </div>
-
   <div class="container">
     <!-- Stepper — 4 Steps -->
     <div class="stepper" id="stepper">
@@ -128,6 +118,9 @@
     <div class="section" id="section-2">
       <div class="card">
         <h2>Window Configuration</h2>
+
+        <div class="config-layout">
+        <div class="config-form">
 
         <!-- Window Style -->
         <h3>Window Style</h3>
@@ -393,6 +386,17 @@
             <button class="btn btn-accent" onclick="addWindow()">Add Window to Estimate</button>
           </div>
         </div>
+
+        </div><!-- /.config-form -->
+
+        <div class="config-video">
+          <video id="introVideo" controls preload="metadata">
+            <source src="Reece Lightning Measuring Window.mp4" type="video/mp4">
+            Your browser does not support the video tag.
+          </video>
+          <p class="video-caption">How to Measure Your Windows</p>
+        </div>
+        </div><!-- /.config-layout -->
       </div>
 
       <!-- Cart Summary -->
