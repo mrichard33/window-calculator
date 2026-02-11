@@ -236,6 +236,24 @@ header p {
   margin-bottom: 0.75rem;
 }
 
+.style-section {
+  display: flex;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.style-section .tile-group {
+  flex: 1;
+  min-width: 0;
+}
+
+.style-section .config-video {
+  width: 280px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 1rem;
+}
+
 .tile {
   border: 2px solid var(--mist);
   border-radius: 0;
@@ -821,11 +839,6 @@ header p {
 }
 
 .config-video {
-  position: fixed;
-  top: 1rem;
-  right: 20px;
-  width: 320px;
-  z-index: 50;
   padding-top: 0;
 }
 
@@ -846,13 +859,14 @@ header p {
 }
 
 @media (max-width: 900px) {
-  .config-video {
-    position: static;
+  .style-section {
+    flex-direction: column;
+  }
+  .style-section .config-video {
     width: auto;
     max-width: 480px;
-    margin: 0 auto 1.25rem;
-    right: auto;
-    z-index: auto;
+    margin: 0 auto;
+    position: static;
   }
 }
 
