@@ -6,7 +6,7 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --reece-red: #ED1F24;
+  --reece-red: #9B2E2C;
   --cta-red: #ED1F24;
   --deep-navy: #0D2240;
   --dark-navy: #122738;
