@@ -7,8 +7,6 @@
 //  CENTRALIZED DEFAULTS
 // ============================================================
 const DEFAULTS = {
-  region: 'south',
-  season: 'peak',
   installType: 'fullframe'
 };
 
@@ -68,22 +66,107 @@ window.initializeAddressForm = function() {
 };
 
 // ============================================================
-//  PRICING DATABASE — based on 2025-2026 industry research
+//  PRICE TABLE — united-inches lookup (width + height)
+//  Prices are total installed cost per window (vinyl frame).
+//  Categories: DH 2LS Pic, Case Awn, 3LS, HR Specialty
 // ============================================================
+const PRICE_TABLE = {
+  dh_2ls_pic: [
+    {min:0,max:72,nonImpact:1229,impact:1820},
+    {min:73,max:78,nonImpact:1331,impact:1971},
+    {min:79,max:84,nonImpact:1434,impact:2123},
+    {min:85,max:90,nonImpact:1536,impact:2275},
+    {min:91,max:96,nonImpact:1639,impact:2426},
+    {min:97,max:102,nonImpact:1741,impact:2578},
+    {min:103,max:108,nonImpact:1843,impact:2730},
+    {min:109,max:114,nonImpact:1946,impact:2881},
+    {min:115,max:120,nonImpact:2048,impact:3033},
+    {min:121,max:126,nonImpact:2151,impact:3185},
+    {min:127,max:132,nonImpact:2253,impact:3336},
+    {min:133,max:138,nonImpact:2355,impact:3488},
+    {min:139,max:144,nonImpact:2458,impact:3640},
+    {min:145,max:150,nonImpact:2560,impact:3791},
+    {min:151,max:156,nonImpact:2663,impact:3943},
+    {min:157,max:162,nonImpact:2765,impact:4095},
+    {min:163,max:168,nonImpact:2868,impact:4246},
+    {min:169,max:174,nonImpact:2970,impact:4398}
+  ],
+  three_ls: [
+    {min:0,max:72,nonImpact:1418,impact:2836},
+    {min:73,max:78,nonImpact:1536,impact:3072},
+    {min:79,max:84,nonImpact:1654,impact:3309},
+    {min:85,max:90,nonImpact:1773,impact:3545},
+    {min:91,max:96,nonImpact:1891,impact:3781},
+    {min:97,max:102,nonImpact:2009,impact:4018},
+    {min:103,max:108,nonImpact:2127,impact:4254},
+    {min:109,max:114,nonImpact:2245,impact:4490},
+    {min:115,max:120,nonImpact:2363,impact:4727},
+    {min:121,max:126,nonImpact:2482,impact:4963},
+    {min:127,max:132,nonImpact:2600,impact:5199},
+    {min:133,max:138,nonImpact:2718,impact:5436},
+    {min:139,max:144,nonImpact:2836,impact:5672},
+    {min:145,max:150,nonImpact:2954,impact:5908},
+    {min:151,max:156,nonImpact:3072,impact:6145},
+    {min:157,max:162,nonImpact:3191,impact:6381},
+    {min:163,max:168,nonImpact:3309,impact:6617},
+    {min:169,max:174,nonImpact:3427,impact:6854}
+  ],
+  case_awn: [
+    {min:0,max:72,nonImpact:1323,impact:2009},
+    {min:73,max:78,nonImpact:1434,impact:2176},
+    {min:79,max:84,nonImpact:1544,impact:2344},
+    {min:85,max:90,nonImpact:1654,impact:2511},
+    {min:91,max:96,nonImpact:1765,impact:2678},
+    {min:97,max:102,nonImpact:1875,impact:2846},
+    {min:103,max:108,nonImpact:1985,impact:3013},
+    {min:109,max:114,nonImpact:2096,impact:3181},
+    {min:115,max:120,nonImpact:2206,impact:3348},
+    {min:121,max:126,nonImpact:2316,impact:3515},
+    {min:127,max:132,nonImpact:2426,impact:3683},
+    {min:133,max:138,nonImpact:2537,impact:3850},
+    {min:139,max:144,nonImpact:2647,impact:4018},
+    {min:145,max:150,nonImpact:2757,impact:4185},
+    {min:151,max:156,nonImpact:2868,impact:4353},
+    {min:157,max:162,nonImpact:2978,impact:4520},
+    {min:163,max:168,nonImpact:3088,impact:4687},
+    {min:169,max:174,nonImpact:3198,impact:4855}
+  ],
+  hr_specialty: [
+    {min:0,max:72,nonImpact:1891,impact:2836},
+    {min:73,max:78,nonImpact:2048,impact:3072},
+    {min:79,max:84,nonImpact:2206,impact:3309},
+    {min:85,max:90,nonImpact:2363,impact:3545},
+    {min:91,max:96,nonImpact:2521,impact:3781},
+    {min:97,max:102,nonImpact:2678,impact:4018},
+    {min:103,max:108,nonImpact:2836,impact:4254},
+    {min:109,max:114,nonImpact:2994,impact:4490},
+    {min:115,max:120,nonImpact:3151,impact:4727},
+    {min:121,max:126,nonImpact:3309,impact:4963},
+    {min:127,max:132,nonImpact:3466,impact:5199},
+    {min:133,max:138,nonImpact:3624,impact:5436},
+    {min:139,max:144,nonImpact:3781,impact:5672},
+    {min:145,max:150,nonImpact:3939,impact:5908},
+    {min:151,max:156,nonImpact:4096,impact:6145},
+    {min:157,max:162,nonImpact:4254,impact:6381},
+    {min:163,max:168,nonImpact:4412,impact:6617},
+    {min:169,max:174,nonImpact:4569,impact:6854}
+  ]
+};
 
+// Style-to-category mapping for price table lookup
+const STYLE_CATEGORY = {
+  single_hung: 'dh_2ls_pic',
+  double_hung: 'dh_2ls_pic',
+  sliding:     'dh_2ls_pic',
+  picture:     'dh_2ls_pic',
+  casement:    'case_awn',
+  awning:      'case_awn',
+  three_lite:  'three_ls',
+  custom_shape:'hr_specialty'
+};
+
+// Add-ons, surcharges, and multipliers applied on top of chart prices
 const PRICING = {
-  // Window style base costs (materials only, per window at standard 36x48 size, +$1,000 modifier)
-  windowStyle: {
-    single_hung:  { min: 750,  max: 1100, base: 880  },
-    double_hung:  { min: 850,  max: 1350, base: 1020 },
-    casement:     { min: 850,  max: 1500, base: 1075 },
-    sliding:      { min: 800,  max: 1300, base: 950  },
-    awning:       { min: 900,  max: 1450, base: 1080 },
-    picture:      { min: 700,  max: 1200, base: 850  },
-    three_lite:   { min: 1750, max: 2100, base: 1925 },
-    custom_shape: { min: 1750, max: 2100, base: 1925 }
-  },
-
   // Frame material multipliers (relative to base price)
   frameMaterial: {
     aluminum:   { mult: 0.70, label: 'Aluminum'   },
@@ -121,39 +204,18 @@ const PRICING = {
     low_e:    { add: 0, pct: 0.15, label: 'Low-E Coating'     },
     tempered: { add: 75,  pct: 0,  label: 'Tempered Glass'    },
     tinted:   { add: 115, pct: 0,  label: 'Tinted Glass'      },
-    impact:   { add: 350, pct: 0,  label: 'Impact Resistant'  },
+    impact:   { add: 0, pct: 0,  label: 'Impact Resistant'  },
     obscure:  { add: 45,  pct: 0,  label: 'Obscure / Privacy' },
     sound:    { add: 150, pct: 0,  label: 'Sound Reduction'   }
   },
 
-  // Labor base cost ranges per window by installation type
-  labor: {
-    retrofit:  { min: 100, max: 225, base: 160 },
-    fullframe: { min: 250, max: 600, base: 380 },
-    new:       { min: 200, max: 450, base: 300 }
-  },
-
-  // Regional labor multipliers
-  region: {
-    midwest:      { mult: 1.00, label: 'Midwest'          },
-    south:        { mult: 0.90, label: 'South'            },
-    northeast:    { mult: 1.18, label: 'Northeast'        },
-    westcoast:    { mult: 1.22, label: 'West Coast'       },
-    hawaii_alaska:{ mult: 1.35, label: 'Hawaii / Alaska'  }
-  },
+  // (Labor is included in the PRICE_TABLE chart prices)
 
   // Story surcharge (per window)
   stories: {
     '1': 0,
     '2': 35,
     '3': 65
-  },
-
-  // Season discount (applied to labor)
-  season: {
-    peak:      { mult: 1.00, label: 'Peak Season'      },
-    shoulder:  { mult: 0.95, label: 'Shoulder Season'   },
-    offseason: { mult: 0.90, label: 'Off-Season'        }
   },
 
   // Permits
@@ -172,8 +234,6 @@ const PRICING = {
     self:       0
   },
 
-  // Standard reference size (sq inches) for scaling
-  standardArea: 36 * 48  // 1,728 sq in
 };
 
 // ============================================================
@@ -379,100 +439,80 @@ function getCheckedUpgrades() {
 //  COST CALCULATION ENGINE
 // ============================================================
 
+// Look up base installed price from the chart by united inches
+function lookupBasePrice(unitedInches, category, isImpact) {
+  const table = PRICE_TABLE[category];
+  for (var i = 0; i < table.length; i++) {
+    if (unitedInches >= table[i].min && unitedInches <= table[i].max) {
+      return isImpact ? table[i].impact : table[i].nonImpact;
+    }
+  }
+  // Above max bracket — use last row
+  var last = table[table.length - 1];
+  return isImpact ? last.impact : last.nonImpact;
+}
+
 function calculateWindowCost(config) {
-  const style = PRICING.windowStyle[config.style];
   const frame = PRICING.frameMaterial[config.frame];
   const panes = PRICING.glassPanes[config.panes];
   const gas   = PRICING.gasFill[config.gas];
   const grid  = PRICING.gridPattern[config.grid];
-  const labor = PRICING.labor[config.installType];
-  const region = PRICING.region[config.region];
   const storySurcharge = PRICING.stories[config.stories];
-  const seasonMult = PRICING.season[config.season].mult;
 
-  // 1) Base material cost from style
-  let materialCost = style.base;
+  // 1) United inches and category lookup
+  const unitedInches = config.width + config.height;
+  const category = STYLE_CATEGORY[config.style];
+  const isImpact = config.upgrades.includes('impact');
 
-  // 2) Apply frame material multiplier
-  materialCost *= frame.mult;
+  // 2) Base installed price from chart (includes labor)
+  const chartPrice = lookupBasePrice(unitedInches, category, isImpact);
 
-  // 3) Size scaling: scale cost relative to standard 36x48
-  const area = config.width * config.height;
-  const sizeRatio = area / PRICING.standardArea;
-  materialCost *= sizeRatio;
+  // 3) Apply frame material multiplier (vinyl = 1.0 baseline)
+  let windowCost = chartPrice * frame.mult;
 
-  // 4) Custom size surcharge (non-standard dims)
-  const isStandard = isStandardSize(config.style, config.width, config.height);
-  if (!isStandard) {
-    materialCost *= 1.20; // 20% custom surcharge
-  }
+  // 4) Glass panes add-on
+  const glassCost = panes.add;
+  windowCost += glassCost;
 
-  // 5) Glass panes add-on
-  let glassCost = panes.add;
-  if (panes.add > 0) {
-    glassCost *= sizeRatio;
-  }
-  materialCost += glassCost;
+  // 5) Gas fill
+  windowCost += gas.add;
 
-  // 6) Gas fill
-  materialCost += gas.add;
+  // 6) Grid pattern
+  windowCost += grid.add;
 
-  // 7) Grid pattern
-  materialCost += grid.add;
-
-  // 8) Glass upgrades
+  // 7) Glass upgrades (skip impact — it's in the chart column)
   let upgradesCost = 0;
-  let lowEApplied = false;
   config.upgrades.forEach(u => {
+    if (u === 'impact') return; // handled by chart column
     const up = PRICING.glassUpgrades[u];
     if (!up) return;
-    if (u === 'low_e' && !lowEApplied) {
-      upgradesCost += materialCost * up.pct;
-      lowEApplied = true;
-    } else if (u !== 'low_e') {
-      let addCost = up.add;
-      if (['impact', 'tempered', 'sound'].includes(u)) {
-        addCost *= Math.max(0.8, sizeRatio);
-      }
-      upgradesCost += addCost;
+    if (u === 'low_e') {
+      upgradesCost += windowCost * up.pct;
+    } else {
+      upgradesCost += up.add;
     }
   });
+  windowCost += upgradesCost;
 
-  const totalMaterial = materialCost + upgradesCost;
+  // 8) Story surcharge
+  windowCost += storySurcharge;
 
-  // 9) Labor cost
-  let laborCost = labor.base;
-  if (sizeRatio > 1.3) {
-    laborCost *= 1 + (sizeRatio - 1.3) * 0.3;
-  }
-  if (['three_lite', 'custom_shape'].includes(config.style)) {
-    laborCost *= 2.2;
-  }
-  laborCost += storySurcharge;
-  laborCost *= region.mult;
-  laborCost *= seasonMult;
-  if (!isStandard) {
-    laborCost *= 1.10;
-  }
-
-  const perWindowTotal = totalMaterial + laborCost;
+  const perWindowCost = windowCost;
 
   return {
-    materialCost: round2(totalMaterial),
-    laborCost: round2(laborCost),
-    perWindowCost: round2(perWindowTotal),
-    totalCost: round2(perWindowTotal * config.qty),
+    perWindowCost: round2(perWindowCost),
+    totalCost: round2(perWindowCost * config.qty),
     qty: config.qty,
-    isStandard,
-    sizeRatio: round2(sizeRatio),
+    unitedInches,
+    isImpact,
     breakdown: {
-      baseStyle: round2(style.base * frame.mult * sizeRatio * (isStandard ? 1 : 1.20)),
-      glassPanes: round2(Math.max(0, glassCost)),
+      chartPrice: chartPrice,
+      frameMult: round2(chartPrice * frame.mult - chartPrice),
+      glassPanes: glassCost,
       gasFill: gas.add,
       grid: grid.add,
       upgrades: round2(upgradesCost),
-      laborBase: round2(labor.base),
-      laborAdjusted: round2(laborCost)
+      storySurcharge: storySurcharge
     }
   };
 }
@@ -512,9 +552,7 @@ function getWindowConfig() {
     height: parseInt(document.getElementById('winHeight').value) || 48,
     qty: parseInt(document.getElementById('winQty').value) || 1,
     installType: DEFAULTS.installType,
-    region: DEFAULTS.region,
-    stories: document.getElementById('stories').value,
-    season: DEFAULTS.season
+    stories: document.getElementById('stories').value
   };
 }
 
@@ -613,8 +651,8 @@ function renderWindowList() {
     if (c.stories !== '1') {
       modifierTags.push(c.stories === '2' ? '2-Story (+$35/ea)' : '3+ Story (+$65/ea)');
     }
-    if (!cost.isStandard) {
-      modifierTags.push('Custom Size (+20%)');
+    if (cost.isImpact) {
+      modifierTags.push('Impact Rated');
     }
 
     html += '<div class="cart-item">' +
@@ -684,8 +722,7 @@ function getProjectCosts() {
 
 function buildSummary() {
   const project = getProjectCosts();
-  let totalMaterials = 0;
-  let totalLabor = 0;
+  let windowSubtotal = 0;
   let totalWindows = 0;
 
   let windowRows = '';
@@ -693,25 +730,24 @@ function buildSummary() {
     const c = w.config;
     const cost = w.cost;
     const label = getWindowLabel(c);
-    const matPerUnit = cost.materialCost;
-    const labPerUnit = cost.laborCost;
-    const matTotal = matPerUnit * c.qty;
-    const labTotal = labPerUnit * c.qty;
 
-    totalMaterials += matTotal;
-    totalLabor += labTotal;
+    windowSubtotal += cost.totalCost;
     totalWindows += c.qty;
 
+    const impactLabel = cost.isImpact ? ' (Impact)' : '';
     windowRows += '<tr>' +
       '<td colspan="4" style="font-weight:700; background:var(--light-bg); color:var(--deep-navy);">' +
         '#' + (i + 1) + ' ' + label + ' ' + (c.qty > 1 ? '&times; ' + c.qty : '') +
-        (!cost.isStandard ? ' <span class="custom-size-badge">(Custom)</span>' : '') +
+        impactLabel +
       '</td>' +
     '</tr>';
-    windowRows += '<tr><td style="padding-left:1.5rem;">Base (' + PRICING.frameMaterial[c.frame].label + ' ' + getStyleLabel(c.style) + ')</td><td>' + fmt(cost.breakdown.baseStyle) + '</td><td>&times; ' + c.qty + '</td><td>' + fmt(cost.breakdown.baseStyle * c.qty) + '</td></tr>';
+    windowRows += '<tr><td style="padding-left:1.5rem;">Base Price (' + getStyleLabel(c.style) + (cost.isImpact ? ', Impact' : '') + ', ' + cost.unitedInches + ' UI)</td><td>' + fmt(cost.breakdown.chartPrice) + '</td><td>&times; ' + c.qty + '</td><td>' + fmt(cost.breakdown.chartPrice * c.qty) + '</td></tr>';
 
-    if (cost.breakdown.glassPanes > 0) {
-      windowRows += '<tr><td style="padding-left:1.5rem;">' + PRICING.glassPanes[c.panes].label + ' Upgrade</td><td>' + fmt(cost.breakdown.glassPanes) + '</td><td>&times; ' + c.qty + '</td><td>' + fmt(cost.breakdown.glassPanes * c.qty) + '</td></tr>';
+    if (cost.breakdown.frameMult !== 0) {
+      windowRows += '<tr><td style="padding-left:1.5rem;">Frame Adj. (' + PRICING.frameMaterial[c.frame].label + ')</td><td>' + fmt(cost.breakdown.frameMult) + '</td><td>&times; ' + c.qty + '</td><td>' + fmt(cost.breakdown.frameMult * c.qty) + '</td></tr>';
+    }
+    if (cost.breakdown.glassPanes !== 0) {
+      windowRows += '<tr><td style="padding-left:1.5rem;">' + PRICING.glassPanes[c.panes].label + '</td><td>' + fmt(cost.breakdown.glassPanes) + '</td><td>&times; ' + c.qty + '</td><td>' + fmt(cost.breakdown.glassPanes * c.qty) + '</td></tr>';
     }
     if (cost.breakdown.gasFill > 0) {
       windowRows += '<tr><td style="padding-left:1.5rem;">' + PRICING.gasFill[c.gas].label + '</td><td>' + fmt(cost.breakdown.gasFill) + '</td><td>&times; ' + c.qty + '</td><td>' + fmt(cost.breakdown.gasFill * c.qty) + '</td></tr>';
@@ -720,20 +756,22 @@ function buildSummary() {
       windowRows += '<tr><td style="padding-left:1.5rem;">' + PRICING.gridPattern[c.grid].label + '</td><td>' + fmt(cost.breakdown.grid) + '</td><td>&times; ' + c.qty + '</td><td>' + fmt(cost.breakdown.grid * c.qty) + '</td></tr>';
     }
     if (cost.breakdown.upgrades > 0) {
-      const upgradeLabels = c.upgrades.map(u => PRICING.glassUpgrades[u] ? PRICING.glassUpgrades[u].label : u).join(', ');
+      const upgradeLabels = c.upgrades.filter(u => u !== 'impact').map(u => PRICING.glassUpgrades[u] ? PRICING.glassUpgrades[u].label : u).join(', ');
       windowRows += '<tr><td style="padding-left:1.5rem;">Upgrades (' + upgradeLabels + ')</td><td>' + fmt(cost.breakdown.upgrades) + '</td><td>&times; ' + c.qty + '</td><td>' + fmt(cost.breakdown.upgrades * c.qty) + '</td></tr>';
     }
-    windowRows += '<tr><td style="padding-left:1.5rem;">Labor (' + getInstallLabel(c.installType) + ')</td><td>' + fmt(cost.breakdown.laborAdjusted) + '</td><td>&times; ' + c.qty + '</td><td>' + fmt(cost.breakdown.laborAdjusted * c.qty) + '</td></tr>';
+    if (cost.breakdown.storySurcharge > 0) {
+      windowRows += '<tr><td style="padding-left:1.5rem;">Story Surcharge</td><td>' + fmt(cost.breakdown.storySurcharge) + '</td><td>&times; ' + c.qty + '</td><td>' + fmt(cost.breakdown.storySurcharge * c.qty) + '</td></tr>';
+    }
     windowRows += '<tr class="subtotal"><td style="padding-left:1.5rem;">Subtotal</td><td>' + fmt(cost.perWindowCost) + '</td><td>&times; ' + c.qty + '</td><td>' + fmt(cost.totalCost) + '</td></tr>';
   });
 
   // Bulk discount
   let bulkDiscountAmt = 0;
   if (project.bulkDiscountRate > 0) {
-    bulkDiscountAmt = round2(totalMaterials * project.bulkDiscountRate);
+    bulkDiscountAmt = round2(windowSubtotal * project.bulkDiscountRate);
   }
 
-  const subtotalBeforePermit = round2(totalMaterials + totalLabor - bulkDiscountAmt);
+  const subtotalBeforePermit = round2(windowSubtotal - bulkDiscountAmt);
   const permitFee = round2(subtotalBeforePermit * 0.03);
   const grandTotal = round2(subtotalBeforePermit + permitFee);
 
@@ -785,11 +823,10 @@ function buildSummary() {
   html += '<div class="summary-section">' +
     '<h3>Project Costs</h3>' +
     '<table class="summary-table">' +
-      '<tr><td>Total Materials</td><td>' + fmt(totalMaterials) + '</td></tr>' +
-      '<tr><td>Total Labor</td><td>' + fmt(totalLabor) + '</td></tr>';
+      '<tr><td>Windows Subtotal (incl. installation)</td><td>' + fmt(windowSubtotal) + '</td></tr>';
 
   if (bulkDiscountAmt > 0) {
-    html += '<tr><td>Bulk Discount (' + Math.round(project.bulkDiscountRate * 100) + '% off materials for ' + totalWindows + ' windows)</td><td style="color:var(--cta-red);">-' + fmt(bulkDiscountAmt) + '</td></tr>';
+    html += '<tr><td>Bulk Discount (' + Math.round(project.bulkDiscountRate * 100) + '% for ' + totalWindows + ' windows)</td><td style="color:var(--cta-red);">-' + fmt(bulkDiscountAmt) + '</td></tr>';
   }
   html += '<tr><td>Permit Fee (3%)</td><td>' + fmt(permitFee) + '</td></tr>';
 
@@ -812,7 +849,7 @@ function buildSummary() {
   html += '<div class="summary-section">' +
     '<h3>Potential Savings</h3>' +
     '<table class="summary-table">' +
-      '<tr><td>ENERGY STAR Tax Credit (up to 30%, max $600/yr)</td><td style="color:var(--cta-red);">Up to -' + fmt(Math.min(totalMaterials * 0.30, 600)) + '</td></tr>' +
+      '<tr><td>ENERGY STAR Tax Credit (up to 30%, max $600/yr)</td><td style="color:var(--cta-red);">Up to -' + fmt(Math.min(windowSubtotal * 0.30, 600)) + '</td></tr>' +
       '<tr><td>Energy Savings (est. 12% on heating/cooling bills annually)</td><td style="color:var(--cta-red);">Varies by home</td></tr>' +
     '</table>' +
   '</div>';
