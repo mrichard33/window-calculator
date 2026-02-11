@@ -822,5 +822,23 @@ function getInstallLabel(type) {
   // Set up phone formatter
   setupPhoneFormatter();
 
+  // Delayed autoplay: wait 2s, play once with sound, no loop
+  setTimeout(function() {
+    var video = document.getElementById('introVideo');
+    if (!video) return;
+    video.muted = false;
+    video.loop = false;
+    var playAttempt = video.play();
+    if (playAttempt !== undefined) {
+      playAttempt.catch(function() {
+        // Browser blocked autoplay with sound — mute and try again
+        video.muted = true;
+        video.play().catch(function() {
+          // Still blocked — leave video paused and ready for manual play
+        });
+      });
+    }
+  }, 2000);
+
   updateRunningTotal();
 })();

@@ -481,12 +481,12 @@ header p {
   header {
     background: #0D2240 !important;
     color: #fff !important;
-    padding: 0.6in 0.5in !important;
-    margin: -0.6in -0.7in 0.3in -0.7in;
-    width: calc(100% + 1.4in);
+    padding: 0.4in 0.5in !important;
+    margin: 0 0 0.3in 0;
+    width: 100%;
     text-align: left;
     position: relative;
-    overflow: hidden;
+    overflow: visible;
     page-break-inside: avoid;
   }
 
@@ -539,7 +539,7 @@ header p {
   #section-1,
   #section-2,
   #section-3,
-  .config-video {
+  .hero-video {
     display: none !important;
   }
 
@@ -811,47 +811,35 @@ header p {
   font-weight: 600;
 }
 
-/* ===== CONFIG LAYOUT (VIDEO BESIDE FORM) ===== */
-.config-layout {
-  display: grid;
-  grid-template-columns: 1fr 320px;
-  gap: 1.5rem;
-  align-items: start;
+/* ===== HERO VIDEO (GREY OUTER AREA) ===== */
+.hero-video {
+  background: var(--light-bg);
+  padding: 1.5rem 15px;
 }
 
-.config-form {
-  min-width: 0;
+.hero-video-inner {
+  max-width: 720px;
+  margin: 0 auto;
 }
 
-.config-video {
-  position: sticky;
-  top: 1rem;
-}
-
-.config-video video {
+.hero-video video {
   width: 100%;
   display: block;
-  border: 1.5px solid var(--mist);
+  border: 2px solid var(--mist);
   background: #000;
+  box-shadow: var(--shadow);
 }
 
 .video-caption {
   font-size: 0.78rem;
   color: var(--text-gray);
   text-align: center;
-  margin-top: 0.4rem;
+  margin-top: 0.5rem;
   font-weight: 600;
 }
 
-@media (max-width: 800px) {
-  .config-layout {
-    grid-template-columns: 1fr;
-  }
-  .config-video {
-    position: static;
-    max-width: 400px;
-    margin: 0 auto;
-  }
+@media (max-width: 600px) {
+  .hero-video { padding: 1rem 10px; }
 }
 
 /* ===== CONTACT STEP ===== */
