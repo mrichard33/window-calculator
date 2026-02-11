@@ -49,7 +49,7 @@ header::after {
   width: 50%;
   height: 100%;
   background: var(--reece-red);
-  opacity: 0.5;
+  opacity: 1;
   clip-path: polygon(45% 0, 100% 0, 100% 100%, 0 100%);
   pointer-events: none;
 }
