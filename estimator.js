@@ -74,14 +74,14 @@ window.initializeAddressForm = function() {
 const PRICING = {
   // Window style base costs (materials only, per window at standard 36x48 size, +$1,000 modifier)
   windowStyle: {
-    single_hung:  { min: 1250, max: 1600, base: 1380 },
-    double_hung:  { min: 1350, max: 1850, base: 1520 },
-    casement:     { min: 1350, max: 2000, base: 1575 },
-    sliding:      { min: 1300, max: 1800, base: 1450 },
-    awning:       { min: 1400, max: 1950, base: 1580 },
-    picture:      { min: 1200, max: 1700, base: 1350 },
-    bay:          { min: 2200, max: 5500, base: 3400 },
-    bow:          { min: 2500, max: 6500, base: 4000 }
+    single_hung:  { min: 750,  max: 1100, base: 880  },
+    double_hung:  { min: 850,  max: 1350, base: 1020 },
+    casement:     { min: 850,  max: 1500, base: 1075 },
+    sliding:      { min: 800,  max: 1300, base: 950  },
+    awning:       { min: 900,  max: 1450, base: 1080 },
+    picture:      { min: 700,  max: 1200, base: 850  },
+    bay:          { min: 1700, max: 5000, base: 2900 },
+    bow:          { min: 2000, max: 6000, base: 3500 }
   },
 
   // Frame material multipliers (relative to base price)
