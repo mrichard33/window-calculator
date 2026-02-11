@@ -211,12 +211,17 @@ function handlePaneChange() {
   const panes = document.getElementById('glassPanes').value;
   const gasFillField = document.getElementById('gasFillField');
   const gasFill = document.getElementById('gasFill');
+
   if (panes === 'single') {
-    gasFill.value = 'air';
+    // Single pane: hide gas fill, reset to Standard
+    gasFill.innerHTML = '<option value="air" selected>Air (Standard)</option>';
     gasFillField.style.display = 'none';
   } else {
+    // Double pane: show gas fill with Argon option
+    gasFill.innerHTML =
+      '<option value="air" selected>Air (Standard)</option>' +
+      '<option value="argon">Argon Gas (+$50)</option>';
     gasFillField.style.display = '';
-    gasFill.value = 'air';
   }
 }
 
@@ -799,40 +804,6 @@ function getStyleLabel(style) {
 function getInstallLabel(type) {
   const labels = { retrofit: 'Retrofit', fullframe: 'Full-Frame', new: 'New Construction' };
   return labels[type] || type;
-}
-
-// ============================================================
-//  CSV EXPORT
-// ============================================================
-
-function exportCSV() {
-  let csv = 'Window,Style,Frame,Dimensions,Panes,Qty,Material/Unit,Labor/Unit,Total\n';
-  windows.forEach((w, i) => {
-    const c = w.config;
-    const cost = w.cost;
-    csv += '"#' + (i + 1) + '","' + getStyleLabel(c.style) + '","' + PRICING.frameMaterial[c.frame].label + '","' + c.width + 'x' + c.height + '","' + PRICING.glassPanes[c.panes].label + '",' + c.qty + ',' + cost.materialCost + ',' + cost.laborCost + ',' + cost.totalCost + '\n';
-  });
-
-  const project = getProjectCosts();
-  const totalMaterials = windows.reduce((s, w) => s + w.cost.materialCost * w.config.qty, 0);
-  const totalLabor = windows.reduce((s, w) => s + w.cost.laborCost * w.config.qty, 0);
-  const bulkDiscount = round2(totalMaterials * project.bulkDiscountRate);
-  const subtotalBeforePermit = round2(totalMaterials + totalLabor - bulkDiscount);
-  const permitFee = round2(subtotalBeforePermit * 0.03);
-  const grandTotal = round2(subtotalBeforePermit + permitFee);
-
-  csv += '\n"","","","","","","","",\n';
-  csv += '"Permit Fee (3%)","","","","","","","",'+permitFee+'\n';
-  if (bulkDiscount > 0) csv += '"Bulk Discount","","","","","","","",' + (-bulkDiscount) + '\n';
-  csv += '"GRAND TOTAL","","","","","","","",'+grandTotal+'\n';
-
-  const blob = new Blob([csv], { type: 'text/csv' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'reece-window-estimate-' + new Date().toISOString().slice(0, 10) + '.csv';
-  a.click();
-  URL.revokeObjectURL(url);
 }
 
 // ============================================================

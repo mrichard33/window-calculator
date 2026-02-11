@@ -459,11 +459,198 @@ header p {
 .btn-print:hover { background: var(--steel-blue); }
 
 @media print {
-  header { padding: 1rem; }
-  header::after { display: none; }
-  .btn-row, .stepper, .btn-print { display: none; }
-  .section { display: block !important; }
-  .card { box-shadow: none; border: 1px solid var(--mist); }
+  /* ===== PAGE SETUP ===== */
+  @page {
+    size: letter;
+    margin: 0.6in 0.7in;
+  }
+
+  *, *::before, *::after {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  body {
+    background: #fff !important;
+    font-size: 11pt;
+    color: #333;
+  }
+
+  /* ===== HEADER — BRANDED BANNER ===== */
+  header {
+    background: #0D2240 !important;
+    color: #fff !important;
+    padding: 0.6in 0.5in !important;
+    margin: -0.6in -0.7in 0.3in -0.7in;
+    width: calc(100% + 1.4in);
+    text-align: left;
+    position: relative;
+    overflow: hidden;
+    page-break-inside: avoid;
+  }
+
+  header::after {
+    content: '' !important;
+    display: block !important;
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 50%;
+    height: 100%;
+    background: #ED1F24 !important;
+    opacity: 0.5;
+    clip-path: polygon(45% 0, 100% 0, 100% 100%, 0 100%);
+  }
+
+  header .header-content {
+    position: relative;
+    z-index: 1;
+  }
+
+  header .brand-name {
+    font-size: 9pt;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    opacity: 0.9;
+    margin-bottom: 2pt;
+    color: #fff !important;
+  }
+
+  header h1 {
+    font-size: 20pt;
+    font-weight: 700;
+    color: #fff !important;
+    margin: 0;
+  }
+
+  header p {
+    font-size: 9pt;
+    color: #C1D5DB !important;
+    margin-top: 2pt;
+  }
+
+  /* ===== HIDE UI ELEMENTS ===== */
+  .stepper,
+  .btn-row,
+  .btn-print,
+  .btn,
+  .running-total,
+  #section-1,
+  #section-2,
+  #section-3,
+  .config-video {
+    display: none !important;
+  }
+
+  /* ===== SHOW ONLY ESTIMATE SECTION ===== */
+  .container {
+    max-width: 100%;
+    padding: 0 !important;
+    margin: 0;
+  }
+
+  .section {
+    display: none !important;
+  }
+
+  #section-4 {
+    display: block !important;
+  }
+
+  /* ===== CARD STYLING ===== */
+  .card {
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin-bottom: 0.2in !important;
+    border: none !important;
+  }
+
+  .card h2 {
+    font-size: 14pt;
+    color: #0D2240 !important;
+    border-bottom: 2pt solid #ED1F24 !important;
+    padding-bottom: 4pt;
+    margin-bottom: 10pt;
+  }
+
+  /* ===== SUMMARY SECTIONS ===== */
+  .summary-section {
+    margin-bottom: 0.18in !important;
+    page-break-inside: avoid;
+  }
+
+  .summary-section h3 {
+    font-size: 11pt;
+    color: #0D2240 !important;
+    font-weight: 700;
+    margin-bottom: 4pt;
+    padding: 3pt 6pt;
+    background: #F2F3F7 !important;
+    border-left: 3pt solid #ED1F24 !important;
+  }
+
+  /* ===== SUMMARY TABLES ===== */
+  .summary-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .summary-table th {
+    background: #0D2240 !important;
+    color: #fff !important;
+    font-size: 9pt;
+    font-weight: 600;
+    padding: 5pt 8pt;
+    text-align: left;
+    border: none;
+  }
+
+  .summary-table td {
+    padding: 4pt 8pt;
+    font-size: 9.5pt;
+    border-bottom: 0.5pt solid #C1D5DB !important;
+    color: #333;
+  }
+
+  .summary-table td:last-child {
+    text-align: right;
+    font-weight: 500;
+  }
+
+  .summary-table tr.total td {
+    font-weight: 700;
+    font-size: 11pt;
+    color: #0D2240 !important;
+    border-top: 2pt solid #0D2240 !important;
+    border-bottom: none;
+    padding-top: 6pt;
+  }
+
+  .summary-table tr.subtotal td {
+    font-weight: 600;
+    color: #122738 !important;
+  }
+
+  /* ===== DISCLAIMER ===== */
+  .disclaimer {
+    background: #F2F3F7 !important;
+    border-left: 3pt solid #ED1F24 !important;
+    padding: 8pt 10pt !important;
+    font-size: 8pt;
+    color: #636060 !important;
+    margin-top: 0.15in;
+    page-break-inside: avoid;
+  }
+
+  .disclaimer strong {
+    color: #0D2240 !important;
+  }
+
+  /* ===== CUSTOM SIZE BADGE ===== */
+  .custom-size-badge {
+    color: #ED1F24 !important;
+  }
 }
 
 /* ===== RUNNING TOTAL BAR ===== */
@@ -622,6 +809,49 @@ header p {
   font-size: 0.9rem;
   color: var(--deep-navy);
   font-weight: 600;
+}
+
+/* ===== CONFIG LAYOUT (VIDEO BESIDE FORM) ===== */
+.config-layout {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.config-form {
+  min-width: 0;
+}
+
+.config-video {
+  position: sticky;
+  top: 1rem;
+}
+
+.config-video video {
+  width: 100%;
+  display: block;
+  border: 1.5px solid var(--mist);
+  background: #000;
+}
+
+.video-caption {
+  font-size: 0.78rem;
+  color: var(--text-gray);
+  text-align: center;
+  margin-top: 0.4rem;
+  font-weight: 600;
+}
+
+@media (max-width: 800px) {
+  .config-layout {
+    grid-template-columns: 1fr;
+  }
+  .config-video {
+    position: static;
+    max-width: 400px;
+    margin: 0 auto;
+  }
 }
 
 /* ===== CONTACT STEP ===== */

@@ -119,6 +119,9 @@
       <div class="card">
         <h2>Window Configuration</h2>
 
+        <div class="config-layout">
+        <div class="config-form">
+
         <!-- Window Style -->
         <h3>Window Style</h3>
         <div class="tile-group" id="windowStyle">
@@ -377,6 +380,17 @@
           <button onclick="adjustQty(1)">+</button>
         </div>
 
+        </div><!-- /.config-form -->
+
+        <div class="config-video">
+          <video controls muted preload="metadata">
+            <source src="Reece Lightning Measuring Window.mp4" type="video/mp4">
+            Your browser does not support the video tag.
+          </video>
+          <p class="video-caption">How to Measure Your Windows</p>
+        </div>
+        </div><!-- /.config-layout -->
+
         <div class="btn-row">
           <button class="btn btn-secondary" onclick="goToStep(1)">&larr; Back</button>
           <div style="display:flex; gap:0.5rem;">
@@ -442,10 +456,7 @@
 
       <div class="btn-row">
         <button class="btn btn-secondary" onclick="goToStep(3)">&larr; Back</button>
-        <div style="display:flex; gap:0.5rem;">
-          <button class="btn btn-print" onclick="window.print()">Print Estimate</button>
-          <button class="btn btn-accent" onclick="exportCSV()">Export CSV</button>
-        </div>
+        <button class="btn btn-print" onclick="window.print()">Print Estimate</button>
       </div>
     </div>
   </div>
