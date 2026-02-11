@@ -811,10 +811,10 @@ header p {
   font-weight: 600;
 }
 
-/* ===== CONFIG LAYOUT (VIDEO BESIDE FORM) ===== */
+/* ===== CONFIG LAYOUT (VIDEO BESIDE FORM IN GREY AREA) ===== */
 .config-layout {
   display: grid;
-  grid-template-columns: 1fr 300px;
+  grid-template-columns: 1fr 320px;
   gap: 1.5rem;
   align-items: start;
 }
@@ -826,6 +826,7 @@ header p {
 .config-video {
   position: sticky;
   top: 1rem;
+  padding-top: 0;
 }
 
 .config-video video {
@@ -844,7 +845,7 @@ header p {
   font-weight: 600;
 }
 
-@media (max-width: 800px) {
+@media (max-width: 900px) {
   .config-layout {
     grid-template-columns: 1fr;
   }

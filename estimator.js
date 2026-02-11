@@ -181,6 +181,7 @@ const PRICING = {
 // ============================================================
 let windows = [];
 let editingIndex = -1;
+let videoPlayTimer = null;
 
 // ============================================================
 //  UI HELPERS
@@ -330,6 +331,33 @@ function goToStep(n) {
 
   // Build summary when arriving at estimate step
   if (n === 4) buildSummary();
+
+  // Video playback: play on Step 2, pause on all other steps
+  var video = document.getElementById('introVideo');
+  if (video) {
+    if (n === 2) {
+      // Entering Step 2: wait 2s then play once with sound
+      if (videoPlayTimer) clearTimeout(videoPlayTimer);
+      videoPlayTimer = setTimeout(function() {
+        video.muted = false;
+        video.loop = false;
+        var playAttempt = video.play();
+        if (playAttempt !== undefined) {
+          playAttempt.catch(function() {
+            video.muted = true;
+            video.play().catch(function() {});
+          });
+        }
+      }, 2000);
+    } else {
+      // Leaving Step 2: cancel pending play and pause
+      if (videoPlayTimer) {
+        clearTimeout(videoPlayTimer);
+        videoPlayTimer = null;
+      }
+      video.pause();
+    }
+  }
 
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -822,23 +850,8 @@ function getInstallLabel(type) {
   // Set up phone formatter
   setupPhoneFormatter();
 
-  // Delayed autoplay: wait 2s, play once with sound, no loop
-  setTimeout(function() {
-    var video = document.getElementById('introVideo');
-    if (!video) return;
-    video.muted = false;
-    video.loop = false;
-    var playAttempt = video.play();
-    if (playAttempt !== undefined) {
-      playAttempt.catch(function() {
-        // Browser blocked autoplay with sound — mute and try again
-        video.muted = true;
-        video.play().catch(function() {
-          // Still blocked — leave video paused and ready for manual play
-        });
-      });
-    }
-  }, 2000);
+  // Initialize gas fill options based on default pane selection
+  handlePaneChange();
 
   updateRunningTotal();
 })();
