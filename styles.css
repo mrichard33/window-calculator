@@ -813,10 +813,7 @@ header p {
 
 /* ===== CONFIG LAYOUT (VIDEO BESIDE FORM IN GREY AREA) ===== */
 .config-layout {
-  display: grid;
-  grid-template-columns: 1fr 320px;
-  gap: 1.5rem;
-  align-items: start;
+  display: block;
 }
 
 .config-form {
@@ -824,8 +821,11 @@ header p {
 }
 
 .config-video {
-  position: sticky;
+  position: fixed;
   top: 1rem;
+  right: 20px;
+  width: 320px;
+  z-index: 50;
   padding-top: 0;
 }
 
@@ -846,13 +846,13 @@ header p {
 }
 
 @media (max-width: 900px) {
-  .config-layout {
-    grid-template-columns: 1fr;
-  }
   .config-video {
     position: static;
+    width: auto;
     max-width: 480px;
-    margin: 0 auto;
+    margin: 0 auto 1.25rem;
+    right: auto;
+    z-index: auto;
   }
 }
 
