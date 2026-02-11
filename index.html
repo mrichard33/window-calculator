@@ -572,6 +572,60 @@
       font-weight: 600;
     }
   </style>
+  <script>
+    function initializeAddressForm() {
+      var input = document.getElementById('streetAddress');
+      var autocomplete = new google.maps.places.Autocomplete(input, {
+        types: ['address'],
+        componentRestrictions: { country: 'us' }
+      });
+
+      autocomplete.setFields(['address_components', 'formatted_address']);
+
+      autocomplete.addListener('place_changed', function() {
+        var place = autocomplete.getPlace();
+        if (!place.address_components) return;
+
+        var streetNumber = '';
+        var route = '';
+        var city = '';
+        var state = '';
+        var postalCode = '';
+
+        for (var i = 0; i < place.address_components.length; i++) {
+          var component = place.address_components[i];
+          var types = component.types;
+
+          if (types.indexOf('street_number') !== -1) {
+            streetNumber = component.long_name;
+          }
+          if (types.indexOf('route') !== -1) {
+            route = component.long_name;
+          }
+          if (types.indexOf('locality') !== -1) {
+            city = component.long_name;
+          }
+          if (types.indexOf('administrative_area_level_1') !== -1) {
+            state = component.short_name;
+          }
+          if (types.indexOf('postal_code') !== -1) {
+            postalCode = component.long_name;
+          }
+        }
+
+        document.getElementById('streetAddress').value = (streetNumber + ' ' + route).trim();
+        document.getElementById('city').value = city;
+        document.getElementById('state').value = state;
+        document.getElementById('postalCode').value = postalCode;
+
+        // Clear validation errors on autofilled fields
+        ['field-streetAddress', 'field-city', 'field-state', 'field-postalCode'].forEach(function(id) {
+          document.getElementById(id).classList.remove('field-error');
+        });
+      });
+    }
+  </script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDHEXJFX600__uKskBl1RVs2wensuUW4c4&libraries=places&callback=initializeAddressForm" async defer></script>
 </head>
 <body>
   <header>
@@ -599,16 +653,16 @@
 
         <div class="form-row full">
           <div class="field" id="field-fullName">
-            <label>Full Name <span style="color:var(--cta-red);">*</span></label>
-            <input type="text" id="fullName" placeholder="First and Last Name">
-            <div class="field-error-msg">Full name is required.</div>
+            <label>Name <span style="color:var(--cta-red);">*</span></label>
+            <input type="text" id="fullName" placeholder="Name">
+            <div class="field-error-msg">Name is required.</div>
           </div>
         </div>
 
         <div class="form-row full">
           <div class="field" id="field-streetAddress">
             <label>Street Address <span style="color:var(--cta-red);">*</span></label>
-            <input type="text" id="streetAddress" placeholder="123 Main St">
+            <input type="text" id="streetAddress" placeholder="Start typing your address...">
             <div class="field-error-msg">Street address is required.</div>
           </div>
         </div>
@@ -652,17 +706,20 @@
 
         <div class="form-row full">
           <div class="field">
-            <label>Disposal of Old Windows <span class="info-tip" data-tip="Cost to haul away and dispose of old windows. Some contractors include this; others charge extra.">?</span></label>
-            <select id="disposal">
-              <option value="included">Included by Contractor</option>
-              <option value="per_window">Charge Per Window (~$30-$50 each)</option>
-              <option value="dumpster">Dumpster Rental (~$300-$500)</option>
-              <option value="self">Self-Disposal (No Cost)</option>
+            <label>Region <span class="hint">(optional)</span></label>
+            <select id="serviceRegion">
+              <option value="">-- Select Region --</option>
+              <option value="ft_lauderdale_miami">Ft Lauderdale / Miami</option>
+              <option value="fort_myers">Fort Myers</option>
+              <option value="sarasota">Sarasota</option>
+              <option value="tampa_st_pete">Tampa / St. Petersburg</option>
+              <option value="orlando">Orlando</option>
+              <option value="jacksonville">Jacksonville</option>
             </select>
           </div>
         </div>
 
-        <p style="font-size:0.8rem; color:var(--text-gray); margin-top:0.5rem;">A 3% permit fee is automatically included in every estimate.</p>
+        <p style="font-size:0.8rem; color:var(--text-gray); margin-top:0.5rem;">A 3% permit fee and disposal of old windows are automatically included in every estimate.</p>
       </div>
 
       <div class="btn-row">
@@ -1351,29 +1408,12 @@
       windows.forEach(w => { windowTotal += w.cost.totalCost; });
       // 3% permit fee on window subtotal
       const permitFee = round2(windowTotal * 0.03);
-      // Disposal costs
-      const disposalType = document.getElementById('disposal').value;
-      const totalWindowCount = windows.reduce((sum, w) => sum + w.config.qty, 0);
-      let disposalCost = 0;
-      if (disposalType === 'per_window') {
-        disposalCost = PRICING.disposal.per_window * totalWindowCount;
-      } else if (disposalType === 'dumpster') {
-        disposalCost = PRICING.disposal.dumpster;
-      }
-      const total = windowTotal + permitFee + disposalCost;
+      const total = windowTotal + permitFee;
       document.querySelector('#runningTotal span').textContent = fmt(total);
     }
 
     function getProjectCosts() {
-      const disposalType = document.getElementById('disposal').value;
-      let disposalCost = 0;
       const totalWindowCount = windows.reduce((sum, w) => sum + w.config.qty, 0);
-
-      if (disposalType === 'per_window') {
-        disposalCost = PRICING.disposal.per_window * totalWindowCount;
-      } else if (disposalType === 'dumpster') {
-        disposalCost = PRICING.disposal.dumpster;
-      }
 
       // Bulk discount: 5% off materials for 6+ windows, 10% for 10+
       let bulkDiscount = 0;
@@ -1390,9 +1430,8 @@
 
       return {
         permit: permitCost,
-        disposal: disposalCost,
         bulkDiscountRate: bulkDiscount,
-        total: permitCost + disposalCost,
+        total: permitCost,
         windowCount: totalWindowCount
       };
     }
@@ -1456,7 +1495,7 @@
 
       const subtotalBeforePermit = round2(totalMaterials + totalLabor - bulkDiscountAmt);
       const permitFee = round2(subtotalBeforePermit * 0.03);
-      const grandTotal = round2(subtotalBeforePermit + permitFee + project.disposal);
+      const grandTotal = round2(subtotalBeforePermit + permitFee);
 
       // Cost range (low and high estimates)
       const lowEstimate = round2(grandTotal * 0.85);
@@ -1468,6 +1507,8 @@
       const custCity = document.getElementById('city').value.trim();
       const custState = document.getElementById('state').value.trim();
       const custPostal = document.getElementById('postalCode').value.trim();
+      const regionEl = document.getElementById('serviceRegion');
+      const regionLabel = regionEl.selectedIndex > 0 ? regionEl.options[regionEl.selectedIndex].text : '';
 
       let html = `
         <div class="summary-section">
@@ -1475,6 +1516,7 @@
           <table class="summary-table">
             <tr><td>Name</td><td>${custName}</td></tr>
             <tr><td>Address</td><td>${custAddress}, ${custCity}, ${custState} ${custPostal}</td></tr>
+            ${regionLabel ? '<tr><td>Region</td><td>' + regionLabel + '</td></tr>' : ''}
           </table>
         </div>
 
@@ -1507,9 +1549,6 @@
         html += `<tr><td>Bulk Discount (${Math.round(project.bulkDiscountRate*100)}% off materials for ${totalWindows} windows)</td><td style="color:var(--cta-red);">-${fmt(bulkDiscountAmt)}</td></tr>`;
       }
       html += `<tr><td>Permit Fee (3%)</td><td>${fmt(permitFee)}</td></tr>`;
-      if (project.disposal > 0) {
-        html += `<tr><td>Disposal</td><td>${fmt(project.disposal)}</td></tr>`;
-      }
 
       html += `
             <tr class="total"><td>Estimated Total</td><td>${fmt(grandTotal)}</td></tr>
@@ -1571,11 +1610,10 @@
       const bulkDiscount = round2(totalMaterials * project.bulkDiscountRate);
       const subtotalBeforePermit = round2(totalMaterials + totalLabor - bulkDiscount);
       const permitFee = round2(subtotalBeforePermit * 0.03);
-      const grandTotal = round2(subtotalBeforePermit + permitFee + project.disposal);
+      const grandTotal = round2(subtotalBeforePermit + permitFee);
 
       csv += `\n"","","","","","","","",\n`;
       csv += `"Permit Fee (3%)","","","","","","","",${permitFee}\n`;
-      csv += `"Disposal","","","","","","","",${project.disposal}\n`;
       if (bulkDiscount > 0) csv += `"Bulk Discount","","","","","","","",${-bulkDiscount}\n`;
       csv += `"GRAND TOTAL","","","","","","","",${grandTotal}\n`;
 
