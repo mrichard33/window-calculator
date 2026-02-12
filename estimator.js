@@ -316,6 +316,7 @@ function validateAndGoToStep2() {
     if (firstError) firstError.focus();
     return;
   }
+  sendToGHL();
   goToStep(2);
 }
 
@@ -350,6 +351,7 @@ function validateAndGoToStep4() {
     return;
   }
 
+  sendToGHL();
   goToStep(4);
 }
 
@@ -892,25 +894,20 @@ function getInstallLabel(type) {
   updateRunningTotal();
 })();
 
-function openMeasurementVerification() {
-  const fullName = (document.getElementById("fullName")?.value || "").trim();
-  const nameParts = fullName.split(/\s+/);
-  const firstName = nameParts[0] || "";
-  const lastName = nameParts.slice(1).join(" ") || "";
-  const phone = (document.getElementById("phone")?.value || "").trim();
-  const email = (document.getElementById("email")?.value || "").trim();
-  const street = (document.getElementById("streetAddress")?.value || "").trim();
-  const city = (document.getElementById("city")?.value || "").trim();
-  const state = (document.getElementById("state")?.value || "").trim();
-  const zip = (document.getElementById("postalCode")?.value || "").trim();
-  const estimate = window.latestEstimateTotal || "";
+function sendToGHL() {
+  var fullName = (document.getElementById("fullName")?.value || "").trim();
+  var nameParts = fullName.split(/\s+/);
+  var firstName = nameParts[0] || "";
+  var lastName = nameParts.slice(1).join(" ") || "";
+  var phone = (document.getElementById("phone")?.value || "").trim();
+  var email = (document.getElementById("email")?.value || "").trim();
+  var street = (document.getElementById("streetAddress")?.value || "").trim();
+  var city = (document.getElementById("city")?.value || "").trim();
+  var state = (document.getElementById("state")?.value || "").trim();
+  var zip = (document.getElementById("postalCode")?.value || "").trim();
+  var estimate = window.latestEstimateTotal || "";
 
   var params = new URLSearchParams(window.location.search);
-  var utmSource = params.get("utm_source") || "";
-  var utmMedium = params.get("utm_medium") || "";
-  var utmCampaign = params.get("utm_campaign") || "";
-  var utmContent = params.get("utm_content") || "";
-  var utmTerm = params.get("utm_term") || "";
 
   fetch("https://services.leadconnectorhq.com/hooks/SsBG7j5KQAIP1SFP2Sca/webhook-trigger/f089d6ac-5aaa-425d-a109-300ec44fd8de", {
     method: "POST",
@@ -925,13 +922,22 @@ function openMeasurementVerification() {
       state: state,
       postal_code: zip,
       estimate_total: estimate,
-      utm_source: utmSource,
-      utm_medium: utmMedium,
-      utm_campaign: utmCampaign,
-      utm_content: utmContent,
-      utm_term: utmTerm
+      utm_source: params.get("utm_source") || "",
+      utm_medium: params.get("utm_medium") || "",
+      utm_campaign: params.get("utm_campaign") || "",
+      utm_content: params.get("utm_content") || "",
+      utm_term: params.get("utm_term") || ""
     })
   }).catch(function() {});
+}
+
+function openMeasurementVerification() {
+  var fullName = (document.getElementById("fullName")?.value || "").trim();
+  var nameParts = fullName.split(/\s+/);
+  var firstName = nameParts[0] || "";
+  var lastName = nameParts.slice(1).join(" ") || "";
+  var phone = (document.getElementById("phone")?.value || "").trim();
+  var email = (document.getElementById("email")?.value || "").trim();
 
   const url =
     `https://landing.reecewindows.com/confirm-your-pricing?` +
