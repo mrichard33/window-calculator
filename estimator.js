@@ -907,7 +907,10 @@ function sendToGHL() {
   var zip = (document.getElementById("postalCode")?.value || "").trim();
   var estimate = window.latestEstimateTotal || "";
 
-  var tempEmail = fullName.toLowerCase().replace(/[^a-z0-9]/g, '.') + '.' + zip + '@placeholder.reecewindows.com';
+  var houseNum = (street.match(/^\d+/) || ["0"])[0];
+  var tempEmail = firstName.toLowerCase().replace(/[^a-z0-9]/g, '.') + '.'
+    + lastName.toLowerCase().replace(/[^a-z0-9]/g, '.') + '.'
+    + houseNum + '.' + zip + '@placeholder.reecewindows.com';
 
   var params = new URLSearchParams(window.location.search);
 
