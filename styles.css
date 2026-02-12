@@ -872,14 +872,51 @@ header p {
 }
 
 @media (max-width: 900px) {
-  .style-section {
+  .card--config {
+    display: flex;
     flex-direction: column;
   }
-  .style-section .config-video {
-    width: auto;
-    max-width: 480px;
-    margin: 0 auto;
+
+  .style-section {
+    display: contents;
+  }
+
+  .config-video {
+    order: -1;
+    width: calc(100% + 3rem);
+    margin: -1.5rem -1.5rem 1rem;
+    padding: 0;
     position: static;
+  }
+
+  .config-video video {
+    border: none;
+    box-shadow: none;
+  }
+
+  .video-caption {
+    padding: 0.4rem 1.5rem 0;
+  }
+
+  .tile-grid-wrapper {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+  }
+
+  .tile .tile-icon svg {
+    width: 40px;
+    height: 40px;
+  }
+
+  .tile {
+    padding: 0.5rem 0.3rem;
+    font-size: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .tile-grid-wrapper {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
