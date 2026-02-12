@@ -263,8 +263,6 @@ header p {
 .style-section .config-video {
   width: 280px;
   flex-shrink: 0;
-  position: sticky;
-  top: 1rem;
   max-width: 100%;
 }
 
