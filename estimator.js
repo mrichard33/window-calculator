@@ -389,6 +389,9 @@ function goToStep(n) {
   const runningTotal = document.getElementById('runningTotal');
   runningTotal.style.display = (n === 4) ? '' : 'none';
 
+  // Show "How This Works" only on step 1
+  document.getElementById('howItWorks').style.display = (n === 1) ? '' : 'none';
+
   // Build summary when arriving at estimate step
   if (n === 4) buildSummary();
 
