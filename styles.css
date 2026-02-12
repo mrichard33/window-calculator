@@ -245,6 +245,14 @@ header .header-intro {
   margin-top: 0.2rem;
 }
 
+.reassurance-note {
+  font-size: 0.75rem;
+  color: var(--text-gray);
+  text-align: center;
+  margin-top: 1rem;
+  margin-bottom: -0.5rem;
+}
+
 /* ===== TILE SELECTORS ===== */
 .tile-group {
   display: grid;
