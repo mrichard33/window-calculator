@@ -265,6 +265,7 @@ header p {
   flex-shrink: 0;
   position: sticky;
   top: 1rem;
+  max-width: 100%;
 }
 
 .tile {
@@ -853,6 +854,7 @@ header p {
 
 .config-video {
   padding-top: 0;
+  transition: width 0.3s ease, margin 0.3s ease;
 }
 
 .config-video video {
@@ -883,19 +885,12 @@ header p {
 
   .config-video {
     order: -1;
-    width: calc(100% + 3rem);
-    margin: -1.5rem -1.5rem 1rem;
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto 1rem;
     padding: 0;
     position: static;
-  }
-
-  .config-video video {
-    border: none;
-    box-shadow: none;
-  }
-
-  .video-caption {
-    padding: 0.4rem 1.5rem 0;
+    box-sizing: border-box;
   }
 
   .tile-grid-wrapper {
