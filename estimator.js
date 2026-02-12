@@ -394,8 +394,11 @@ function goToStep(n) {
   // Show "How This Works" only on step 1
   document.getElementById('howItWorks').style.display = (n === 1) ? '' : 'none';
 
-  // Build summary when arriving at estimate step
-  if (n === 4) buildSummary();
+  // Build summary and auto-send PDF to GHL when arriving at estimate step
+  if (n === 4) {
+    buildSummary();
+    sendPDFToGHL();
+  }
 
   // Video playback: play on Step 2, pause on all other steps
   var video = document.getElementById('introVideo');
@@ -1006,12 +1009,6 @@ function generateEstimatePDF() {
 }
 
 function sendPDFToGHL() {
-  var btn = document.getElementById('btnSendPDF');
-  if (btn) {
-    btn.disabled = true;
-    btn.textContent = 'Generating PDF...';
-  }
-
   generateEstimatePDF().then(function(pdf) {
     var fullName = (document.getElementById("fullName")?.value || "").trim();
     var nameParts = fullName.split(/\s+/);
@@ -1055,23 +1052,8 @@ function sendPDFToGHL() {
         utm_term: params.get("utm_term") || ""
       })
     });
-  }).then(function() {
-    if (btn) {
-      btn.textContent = 'PDF Sent Successfully!';
-      btn.style.background = '#27ae60';
-      setTimeout(function() {
-        btn.disabled = false;
-        btn.textContent = 'Send PDF Estimate';
-        btn.style.background = '';
-      }, 3000);
-    }
   }).catch(function(err) {
     console.error('PDF generation/send failed:', err);
-    if (btn) {
-      btn.textContent = 'Retry Send PDF';
-      btn.disabled = false;
-      btn.style.background = '';
-    }
   });
 }
 
