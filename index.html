@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.2/html2pdf.bundle.min.js" defer></script>
   <script src="estimator.js" defer></script>
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDHEXJFX600__uKskBl1RVs2wensuUW4c4&libraries=places&callback=initializeAddressForm" async defer></script>
 </head>
@@ -468,7 +469,10 @@
 
       <div class="btn-row">
         <button class="btn btn-secondary" onclick="goToStep(3)">&larr; Back</button>
-        <button class="btn btn-print" onclick="window.print()">Print Estimate</button>
+        <div style="display:flex; gap:0.5rem;">
+          <button class="btn btn-print" onclick="window.print()">Print Estimate</button>
+          <button class="btn btn-primary" id="btnSendPDF" onclick="sendPDFToGHL()">Send PDF Estimate</button>
+        </div>
       </div>
     </div>
   </div>

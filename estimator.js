@@ -938,6 +938,143 @@ function sendToGHL() {
   }).catch(function() {});
 }
 
+// ============================================================
+//  PDF GENERATION & SEND TO GHL
+// ============================================================
+
+function generateEstimatePDF() {
+  return new Promise(function(resolve, reject) {
+    var summaryEl = document.getElementById('summaryContent');
+    if (!summaryEl || !summaryEl.innerHTML.trim()) {
+      reject(new Error('No estimate content to generate PDF from.'));
+      return;
+    }
+
+    // Build a self-contained HTML element for the PDF
+    var pdfContainer = document.createElement('div');
+    pdfContainer.style.cssText = 'padding:20px; font-family:Nunito Sans,sans-serif; color:#1a2a3a; font-size:12px;';
+
+    // Header
+    var header = document.createElement('div');
+    header.style.cssText = 'text-align:center; margin-bottom:20px; padding-bottom:15px; border-bottom:2px solid #c0392b;';
+    header.innerHTML =
+      '<h1 style="margin:0 0 4px 0; font-size:22px; color:#1a2a3a;">Reece Windows & Doors</h1>' +
+      '<p style="margin:0 0 4px 0; font-size:11px; color:#6b7b8d;">Family-Owned Since 1972 &bull; Licensed &amp; Insured</p>' +
+      '<p style="margin:0; font-size:11px; color:#6b7b8d;">Window Replacement Estimate &mdash; ' + new Date().toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' }) + '</p>';
+    pdfContainer.appendChild(header);
+
+    // Clone summary content
+    var contentClone = summaryEl.cloneNode(true);
+    // Style tables for PDF readability
+    contentClone.querySelectorAll('table').forEach(function(table) {
+      table.style.cssText = 'width:100%; border-collapse:collapse; margin-bottom:12px; font-size:11px;';
+    });
+    contentClone.querySelectorAll('td, th').forEach(function(cell) {
+      cell.style.cssText += '; padding:6px 8px; border-bottom:1px solid #e0e0e0;';
+    });
+    contentClone.querySelectorAll('.total td').forEach(function(cell) {
+      cell.style.cssText += '; font-weight:700; font-size:14px; border-top:2px solid #1a2a3a;';
+    });
+    pdfContainer.appendChild(contentClone);
+
+    // Disclaimer footer
+    var footer = document.createElement('div');
+    footer.style.cssText = 'margin-top:20px; padding-top:10px; border-top:1px solid #e0e0e0; font-size:9px; color:#6b7b8d;';
+    footer.innerHTML = '<strong>Disclaimer:</strong> This estimate is based on current industry pricing and typical installation conditions. Final pricing may vary after on-site verification.';
+    pdfContainer.appendChild(footer);
+
+    var opt = {
+      margin:       [0.5, 0.5, 0.5, 0.5],
+      filename:     'Reece-Windows-Estimate.pdf',
+      image:        { type: 'jpeg', quality: 0.95 },
+      html2canvas:  { scale: 2, useCORS: true, logging: false },
+      jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' },
+      pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
+    };
+
+    html2pdf().set(opt).from(pdfContainer).outputPdf('datauristring').then(function(dataUri) {
+      // Extract base64 portion from the data URI
+      var base64 = dataUri.split(',')[1];
+      resolve({
+        base64: base64,
+        dataUri: dataUri
+      });
+    }).catch(function(err) {
+      reject(err);
+    });
+  });
+}
+
+function sendPDFToGHL() {
+  var btn = document.getElementById('btnSendPDF');
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Generating PDF...';
+  }
+
+  generateEstimatePDF().then(function(pdf) {
+    var fullName = (document.getElementById("fullName")?.value || "").trim();
+    var nameParts = fullName.split(/\s+/);
+    var firstName = nameParts[0] || "";
+    var lastName = nameParts.slice(1).join(" ") || "";
+    var phone = (document.getElementById("phone")?.value || "").trim();
+    var email = (document.getElementById("email")?.value || "").trim();
+    var street = (document.getElementById("streetAddress")?.value || "").trim();
+    var city = (document.getElementById("city")?.value || "").trim();
+    var state = (document.getElementById("state")?.value || "").trim();
+    var zip = (document.getElementById("postalCode")?.value || "").trim();
+    var estimate = window.latestEstimateTotal || "";
+
+    var houseNum = (street.match(/^\d+/) || ["0"])[0];
+    var tempParts = [firstName.toLowerCase().replace(/[^a-z0-9]/g, '.')];
+    if (lastName) tempParts.push(lastName.toLowerCase().replace(/[^a-z0-9]/g, '.'));
+    tempParts.push(houseNum, zip);
+    var tempEmail = tempParts.join('.') + '@placeholder.reecewindows.com';
+
+    var params = new URLSearchParams(window.location.search);
+
+    return fetch("https://services.leadconnectorhq.com/hooks/SsBG7j5KQAIP1SFP2Sca/webhook-trigger/f089d6ac-5aaa-425d-a109-300ec44fd8de", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        first_name: firstName,
+        last_name: lastName,
+        phone: phone,
+        email: tempEmail,
+        real_email: email,
+        address1: street,
+        city: city,
+        state: state,
+        postal_code: zip,
+        estimate_total: estimate,
+        estimate_pdf: pdf.base64,
+        utm_source: params.get("utm_source") || "",
+        utm_medium: params.get("utm_medium") || "",
+        utm_campaign: params.get("utm_campaign") || "",
+        utm_content: params.get("utm_content") || "",
+        utm_term: params.get("utm_term") || ""
+      })
+    });
+  }).then(function() {
+    if (btn) {
+      btn.textContent = 'PDF Sent Successfully!';
+      btn.style.background = '#27ae60';
+      setTimeout(function() {
+        btn.disabled = false;
+        btn.textContent = 'Send PDF Estimate';
+        btn.style.background = '';
+      }, 3000);
+    }
+  }).catch(function(err) {
+    console.error('PDF generation/send failed:', err);
+    if (btn) {
+      btn.textContent = 'Retry Send PDF';
+      btn.disabled = false;
+      btn.style.background = '';
+    }
+  });
+}
+
 function openMeasurementVerification() {
   var fullName = (document.getElementById("fullName")?.value || "").trim();
   var nameParts = fullName.split(/\s+/);
