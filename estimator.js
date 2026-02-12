@@ -895,14 +895,35 @@ function getInstallLabel(type) {
 function openMeasurementVerification() {
   const fullName = (document.getElementById("fullName")?.value || "").trim();
   const nameParts = fullName.split(/\s+/);
-  const firstName = encodeURIComponent(nameParts[0] || "");
-  const lastName = encodeURIComponent(nameParts.slice(1).join(" ") || "");
-  const phone = encodeURIComponent(document.getElementById("phone")?.value || "");
-  const email = encodeURIComponent(document.getElementById("email")?.value || "");
+  const firstName = nameParts[0] || "";
+  const lastName = nameParts.slice(1).join(" ") || "";
+  const phone = (document.getElementById("phone")?.value || "").trim();
+  const email = (document.getElementById("email")?.value || "").trim();
+  const street = (document.getElementById("streetAddress")?.value || "").trim();
+  const city = (document.getElementById("city")?.value || "").trim();
+  const state = (document.getElementById("state")?.value || "").trim();
+  const zip = (document.getElementById("postalCode")?.value || "").trim();
+  const estimate = window.latestEstimateTotal || "";
+
+  fetch("https://services.leadconnectorhq.com/hooks/SsBG7j5KQAIP1SFP2Sca/webhook-trigger/f089d6ac-5aaa-425d-a109-300ec44fd8de", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      first_name: firstName,
+      last_name: lastName,
+      phone: phone,
+      email: email,
+      address1: street,
+      city: city,
+      state: state,
+      postal_code: zip,
+      estimate_total: estimate
+    })
+  }).catch(function() {});
 
   const url =
     `https://landing.reecewindows.com/confirm-your-pricing?` +
-    `first_name=${firstName}&last_name=${lastName}&phone=${phone}&email=${email}`;
+    `first_name=${encodeURIComponent(firstName)}&last_name=${encodeURIComponent(lastName)}&phone=${encodeURIComponent(phone)}&email=${encodeURIComponent(email)}`;
 
   window.location.href = url;
 }
