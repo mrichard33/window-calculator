@@ -776,6 +776,7 @@ function buildSummary() {
   const subtotalBeforePermit = round2(windowSubtotal - bulkDiscountAmt);
   const permitFee = round2(subtotalBeforePermit * 0.03);
   const grandTotal = round2(subtotalBeforePermit + permitFee);
+  window.latestEstimateTotal = grandTotal;
 
   // Cost range
   const lowEstimate = round2(grandTotal * 0.80);
@@ -890,3 +891,19 @@ function getInstallLabel(type) {
 
   updateRunningTotal();
 })();
+
+function openMeasurementVerification() {
+  const name = encodeURIComponent(document.getElementById("fullName")?.value || "");
+  const phone = encodeURIComponent(document.getElementById("phone")?.value || "");
+  const street = encodeURIComponent(document.getElementById("streetAddress")?.value || "");
+  const city = encodeURIComponent(document.getElementById("city")?.value || "");
+  const state = encodeURIComponent(document.getElementById("state")?.value || "");
+  const zip = encodeURIComponent(document.getElementById("postalCode")?.value || "");
+  const estimate = encodeURIComponent(window.latestEstimateTotal || "");
+
+  const url =
+    `https://YOUR-SCHEDULING-LINK-HERE?` +
+    `name=${name}&phone=${phone}&street=${street}&city=${city}&state=${state}&zip=${zip}&estimate=${estimate}`;
+
+  window.location.href = url;
+}

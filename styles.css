@@ -509,6 +509,31 @@ header .header-intro {
 
 .disclaimer strong { color: var(--deep-navy); }
 
+/* ===== VERIFY CTA ===== */
+.verify-cta {
+  margin: 1.25rem 0;
+  padding: 1.25rem;
+  border-radius: 12px;
+  background: var(--white);
+  border: 1px solid rgba(0,0,0,0.08);
+}
+
+.verify-cta h3 {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+  color: var(--deep-navy);
+}
+
+.verify-cta p {
+  margin: 0.5rem 0;
+}
+
+.verify-micro {
+  margin-top: 0.75rem;
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
 /* ===== HOW THIS WORKS ===== */
 .how-it-works {
   background: var(--white);
