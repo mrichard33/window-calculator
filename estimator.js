@@ -893,17 +893,16 @@ function getInstallLabel(type) {
 })();
 
 function openMeasurementVerification() {
-  const name = encodeURIComponent(document.getElementById("fullName")?.value || "");
+  const fullName = (document.getElementById("fullName")?.value || "").trim();
+  const nameParts = fullName.split(/\s+/);
+  const firstName = encodeURIComponent(nameParts[0] || "");
+  const lastName = encodeURIComponent(nameParts.slice(1).join(" ") || "");
   const phone = encodeURIComponent(document.getElementById("phone")?.value || "");
-  const street = encodeURIComponent(document.getElementById("streetAddress")?.value || "");
-  const city = encodeURIComponent(document.getElementById("city")?.value || "");
-  const state = encodeURIComponent(document.getElementById("state")?.value || "");
-  const zip = encodeURIComponent(document.getElementById("postalCode")?.value || "");
-  const estimate = encodeURIComponent(window.latestEstimateTotal || "");
+  const email = encodeURIComponent(document.getElementById("email")?.value || "");
 
   const url =
-    `https://YOUR-SCHEDULING-LINK-HERE?` +
-    `name=${name}&phone=${phone}&street=${street}&city=${city}&state=${state}&zip=${zip}&estimate=${estimate}`;
+    `https://landing.reecewindows.com/confirm-your-pricing?` +
+    `firstName=${firstName}&lastName=${lastName}&phone=${phone}&email=${email}`;
 
   window.location.href = url;
 }
