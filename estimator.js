@@ -908,9 +908,10 @@ function sendToGHL() {
   var estimate = window.latestEstimateTotal || "";
 
   var houseNum = (street.match(/^\d+/) || ["0"])[0];
-  var tempEmail = firstName.toLowerCase().replace(/[^a-z0-9]/g, '.') + '.'
-    + lastName.toLowerCase().replace(/[^a-z0-9]/g, '.') + '.'
-    + houseNum + '.' + zip + '@placeholder.reecewindows.com';
+  var tempParts = [firstName.toLowerCase().replace(/[^a-z0-9]/g, '.')];
+  if (lastName) tempParts.push(lastName.toLowerCase().replace(/[^a-z0-9]/g, '.'));
+  tempParts.push(houseNum, zip);
+  var tempEmail = tempParts.join('.') + '@placeholder.reecewindows.com';
 
   var params = new URLSearchParams(window.location.search);
 
