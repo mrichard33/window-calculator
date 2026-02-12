@@ -122,6 +122,30 @@ function createContactInGHL() {
       window.ghlContactId = result.contact.id;
       console.log('GHL contact created:', window.ghlContactId);
     }
+
+    // Fire webhook with lead data for workflow trigger
+    fetch(GHL_CONFIG.workflowWebhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contact_id: window.ghlContactId || '',
+        event: 'lead_created',
+        first_name: data.firstName,
+        last_name: data.lastName,
+        address1: data.address1,
+        city: data.city,
+        state: data.state,
+        postal_code: data.postalCode,
+        utm_source: data.utm.source,
+        utm_medium: data.utm.medium,
+        utm_campaign: data.utm.campaign,
+        utm_content: data.utm.content,
+        utm_term: data.utm.term
+      })
+    }).catch(function(err) {
+      console.warn('Step 1 webhook trigger failed:', err);
+    });
+
     return result;
   }).catch(function(err) {
     console.error('GHL contact creation failed:', err);
