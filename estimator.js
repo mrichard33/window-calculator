@@ -11,6 +11,225 @@ const DEFAULTS = {
 };
 
 // ============================================================
+//  GHL API v2 CONFIGURATION
+// ============================================================
+var GHL_CONFIG = {
+  baseUrl: 'https://services.leadconnectorhq.com',
+  pit: 'pit-57cd2e37-3b0f-4d5d-8bdc-9f3780ea7e77',
+  locationId: 'SsBG7j5KQAIP1SFP2Sca',
+  apiVersion: '2021-07-28',
+  workflowWebhookUrl: 'https://services.leadconnectorhq.com/hooks/SsBG7j5KQAIP1SFP2Sca/webhook-trigger/f089d6ac-5aaa-425d-a109-300ec44fd8de'
+};
+
+// ============================================================
+//  GHL API v2 FETCH HELPER
+// ============================================================
+function ghlApiFetch(path, options) {
+  var url = GHL_CONFIG.baseUrl + path;
+  var headers = {
+    'Authorization': 'Bearer ' + GHL_CONFIG.pit,
+    'Version': GHL_CONFIG.apiVersion,
+    'Content-Type': 'application/json'
+  };
+  if (options.headers) {
+    Object.keys(options.headers).forEach(function(k) {
+      headers[k] = options.headers[k];
+    });
+  }
+  return fetch(url, {
+    method: options.method || 'POST',
+    headers: headers,
+    body: options.body || null
+  }).then(function(response) {
+    if (!response.ok) {
+      return response.text().then(function(text) {
+        throw new Error('GHL API ' + path + ' failed (' + response.status + '): ' + text);
+      });
+    }
+    return response.json();
+  });
+}
+
+// ============================================================
+//  GATHER CONTACT DATA FROM FORM FIELDS
+// ============================================================
+function gatherContactData() {
+  var fullName = (document.getElementById("fullName")?.value || "").trim();
+  var nameParts = fullName.split(/\s+/);
+  var firstName = nameParts[0] || "";
+  var lastName = nameParts.slice(1).join(" ") || "";
+  var phone = (document.getElementById("phone")?.value || "").replace(/\D/g, '');
+  var email = (document.getElementById("email")?.value || "").trim();
+  var street = (document.getElementById("streetAddress")?.value || "").trim();
+  var city = (document.getElementById("city")?.value || "").trim();
+  var state = (document.getElementById("state")?.value || "").trim();
+  var zip = (document.getElementById("postalCode")?.value || "").trim();
+
+  if (phone.length === 10) {
+    phone = '+1' + phone;
+  } else if (phone.length === 11 && phone.charAt(0) === '1') {
+    phone = '+' + phone;
+  }
+
+  var params = new URLSearchParams(window.location.search);
+
+  return {
+    firstName: firstName,
+    lastName: lastName,
+    phone: phone,
+    email: email,
+    address1: street,
+    city: city,
+    state: state,
+    postalCode: zip,
+    utm: {
+      source: params.get("utm_source") || "",
+      medium: params.get("utm_medium") || "",
+      campaign: params.get("utm_campaign") || "",
+      content: params.get("utm_content") || "",
+      term: params.get("utm_term") || ""
+    }
+  };
+}
+
+// ============================================================
+//  GHL API v2: CREATE CONTACT (Step 1 — name + address only)
+// ============================================================
+function createContactInGHL() {
+  var data = gatherContactData();
+
+  var body = {
+    locationId: GHL_CONFIG.locationId,
+    firstName: data.firstName,
+    lastName: data.lastName,
+    address1: data.address1,
+    city: data.city,
+    state: data.state,
+    postalCode: data.postalCode,
+    source: 'Window Estimator',
+    tags: ['window-estimator', 'online-lead']
+  };
+
+  if (data.utm.source) body.tags.push('utm_source:' + data.utm.source);
+  if (data.utm.medium) body.tags.push('utm_medium:' + data.utm.medium);
+  if (data.utm.campaign) body.tags.push('utm_campaign:' + data.utm.campaign);
+
+  return ghlApiFetch('/contacts/', {
+    method: 'POST',
+    body: JSON.stringify(body)
+  }).then(function(result) {
+    if (result && result.contact && result.contact.id) {
+      window.ghlContactId = result.contact.id;
+      console.log('GHL contact created:', window.ghlContactId);
+    }
+    return result;
+  }).catch(function(err) {
+    console.error('GHL contact creation failed:', err);
+  });
+}
+
+// ============================================================
+//  GHL API v2: UPDATE CONTACT PHONE/EMAIL (Step 3)
+// ============================================================
+function updateContactPhone() {
+  var data = gatherContactData();
+
+  // If we have a contactId from Step 1, update the existing contact
+  if (window.ghlContactId) {
+    var body = { phone: data.phone };
+    if (data.email) body.email = data.email;
+
+    return ghlApiFetch('/contacts/' + window.ghlContactId, {
+      method: 'PUT',
+      body: JSON.stringify(body)
+    }).then(function(result) {
+      console.log('GHL contact updated with phone/email:', window.ghlContactId);
+      return result;
+    }).catch(function(err) {
+      console.error('GHL contact update failed:', err);
+    });
+  }
+
+  // Fallback: Step 1 API failed, so upsert a new contact matching on phone
+  var body = {
+    locationId: GHL_CONFIG.locationId,
+    firstName: data.firstName,
+    lastName: data.lastName,
+    phone: data.phone,
+    address1: data.address1,
+    city: data.city,
+    state: data.state,
+    postalCode: data.postalCode,
+    source: 'Window Estimator',
+    tags: ['window-estimator', 'online-lead']
+  };
+  if (data.email) body.email = data.email;
+
+  return ghlApiFetch('/contacts/upsert', {
+    method: 'POST',
+    body: JSON.stringify(body)
+  }).then(function(result) {
+    if (result && result.contact && result.contact.id) {
+      window.ghlContactId = result.contact.id;
+      console.log('GHL contact upserted (fallback):', window.ghlContactId);
+    }
+    return result;
+  }).catch(function(err) {
+    console.error('GHL contact upsert failed:', err);
+  });
+}
+
+// ============================================================
+//  GHL API v2: UPDATE CONTACT WITH ESTIMATE DATA (Step 4)
+// ============================================================
+function updateContactEstimate(contactId, estimateTotal, pdfUrl) {
+  if (!contactId) {
+    console.warn('No GHL contactId available, skipping estimate update');
+    return Promise.resolve(null);
+  }
+
+  var body = {
+    tags: ['estimate-completed'],
+    customFields: []
+  };
+
+  if (estimateTotal) {
+    body.customFields.push({ key: 'estimate_total', field_value: String(estimateTotal) });
+  }
+  if (pdfUrl) {
+    body.customFields.push({ key: 'estimate_pdf_url', field_value: pdfUrl });
+  }
+
+  return ghlApiFetch('/contacts/' + contactId, {
+    method: 'PUT',
+    body: JSON.stringify(body)
+  }).then(function(result) {
+    console.log('GHL contact updated with estimate data:', contactId);
+    return result;
+  }).catch(function(err) {
+    console.error('GHL contact estimate update failed:', err);
+  });
+}
+
+// ============================================================
+//  GHL: LIGHTWEIGHT WORKFLOW TRIGGER (webhook with contactId)
+// ============================================================
+function triggerGHLWorkflow(contactId, eventType) {
+  if (!GHL_CONFIG.workflowWebhookUrl) return Promise.resolve(null);
+
+  return fetch(GHL_CONFIG.workflowWebhookUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contact_id: contactId || '',
+      event: eventType || 'estimate_completed'
+    })
+  }).catch(function(err) {
+    console.warn('GHL workflow trigger failed:', err);
+  });
+}
+
+// ============================================================
 //  GOOGLE PLACES ADDRESS AUTOCOMPLETE
 // ============================================================
 window.initializeAddressForm = function() {
@@ -316,7 +535,7 @@ function validateAndGoToStep2() {
     if (firstError) firstError.focus();
     return;
   }
-  sendToGHL();
+  createContactInGHL();
   goToStep(2);
 }
 
@@ -351,8 +570,9 @@ function validateAndGoToStep4() {
     return;
   }
 
-  sendToGHL();
-  goToStep(4);
+  updateContactPhone().finally(function() {
+    goToStep(4);
+  });
 }
 
 // ============================================================
@@ -897,50 +1117,6 @@ function getInstallLabel(type) {
   updateRunningTotal();
 })();
 
-function sendToGHL() {
-  var fullName = (document.getElementById("fullName")?.value || "").trim();
-  var nameParts = fullName.split(/\s+/);
-  var firstName = nameParts[0] || "";
-  var lastName = nameParts.slice(1).join(" ") || "";
-  var phone = (document.getElementById("phone")?.value || "").trim();
-  var email = (document.getElementById("email")?.value || "").trim();
-  var street = (document.getElementById("streetAddress")?.value || "").trim();
-  var city = (document.getElementById("city")?.value || "").trim();
-  var state = (document.getElementById("state")?.value || "").trim();
-  var zip = (document.getElementById("postalCode")?.value || "").trim();
-  var estimate = window.latestEstimateTotal || "";
-
-  var houseNum = (street.match(/^\d+/) || ["0"])[0];
-  var tempParts = [firstName.toLowerCase().replace(/[^a-z0-9]/g, '.')];
-  if (lastName) tempParts.push(lastName.toLowerCase().replace(/[^a-z0-9]/g, '.'));
-  tempParts.push(houseNum, zip);
-  var tempEmail = tempParts.join('.') + '@placeholder.reecewindows.com';
-
-  var params = new URLSearchParams(window.location.search);
-
-  fetch("https://services.leadconnectorhq.com/hooks/SsBG7j5KQAIP1SFP2Sca/webhook-trigger/f089d6ac-5aaa-425d-a109-300ec44fd8de", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      first_name: firstName,
-      last_name: lastName,
-      phone: phone,
-      email: tempEmail,
-      real_email: email,
-      address1: street,
-      city: city,
-      state: state,
-      postal_code: zip,
-      estimate_total: estimate,
-      utm_source: params.get("utm_source") || "",
-      utm_medium: params.get("utm_medium") || "",
-      utm_campaign: params.get("utm_campaign") || "",
-      utm_content: params.get("utm_content") || "",
-      utm_term: params.get("utm_term") || ""
-    })
-  }).catch(function() {});
-}
-
 // ============================================================
 //  PDF GENERATION & SEND TO GHL
 // ============================================================
@@ -1019,13 +1195,13 @@ function uploadPDFToGHL(blob) {
   var fileName = 'Reece-Windows-Estimate-' + Date.now() + '.pdf';
   formData.append('file', blob, fileName);
   formData.append('hosted', 'true');
-  formData.append('fileUrl', 'https://placeholder.reecewindows.com/' + fileName);
+  formData.append('fileUrl', 'https://reecewindows.com/estimates/' + fileName);
 
-  return fetch("https://services.leadconnectorhq.com/medias/upload-file", {
+  return fetch(GHL_CONFIG.baseUrl + "/medias/upload-file", {
     method: "POST",
     headers: {
-      "Authorization": "Bearer pit-57cd2e37-3b0f-4d5d-8bdc-9f3780ea7e77",
-      "Version": "2021-07-28"
+      "Authorization": "Bearer " + GHL_CONFIG.pit,
+      "Version": GHL_CONFIG.apiVersion
     },
     body: formData
   }).then(function(response) {
@@ -1042,76 +1218,17 @@ function uploadPDFToGHL(blob) {
 
 function sendPDFToGHL() {
   generateEstimatePDF().then(function(pdf) {
-    var fullName = (document.getElementById("fullName")?.value || "").trim();
-    var nameParts = fullName.split(/\s+/);
-    var firstName = nameParts[0] || "";
-    var lastName = nameParts.slice(1).join(" ") || "";
-    var phone = (document.getElementById("phone")?.value || "").trim();
-    var email = (document.getElementById("email")?.value || "").trim();
-    var street = (document.getElementById("streetAddress")?.value || "").trim();
-    var city = (document.getElementById("city")?.value || "").trim();
-    var state = (document.getElementById("state")?.value || "").trim();
-    var zip = (document.getElementById("postalCode")?.value || "").trim();
-    var estimate = window.latestEstimateTotal || "";
+    var estimateTotal = window.latestEstimateTotal || "";
+    var contactId = window.ghlContactId || null;
 
-    var houseNum = (street.match(/^\d+/) || ["0"])[0];
-    var tempParts = [firstName.toLowerCase().replace(/[^a-z0-9]/g, '.')];
-    if (lastName) tempParts.push(lastName.toLowerCase().replace(/[^a-z0-9]/g, '.'));
-    tempParts.push(houseNum, zip);
-    var tempEmail = tempParts.join('.') + '@placeholder.reecewindows.com';
-
-    var params = new URLSearchParams(window.location.search);
-
-    // Upload PDF to GHL media library first, then send the URL in the webhook
     return uploadPDFToGHL(pdf.blob).then(function(fileUrl) {
       console.log('PDF uploaded to GHL media library:', fileUrl);
-      return fetch("https://services.leadconnectorhq.com/hooks/SsBG7j5KQAIP1SFP2Sca/webhook-trigger/f089d6ac-5aaa-425d-a109-300ec44fd8de", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          first_name: firstName,
-          last_name: lastName,
-          phone: phone,
-          email: tempEmail,
-          real_email: email,
-          address1: street,
-          city: city,
-          state: state,
-          postal_code: zip,
-          estimate_total: estimate,
-          estimate_pdf_url: fileUrl,
-          utm_source: params.get("utm_source") || "",
-          utm_medium: params.get("utm_medium") || "",
-          utm_campaign: params.get("utm_campaign") || "",
-          utm_content: params.get("utm_content") || "",
-          utm_term: params.get("utm_term") || ""
-        })
-      });
+      return updateContactEstimate(contactId, estimateTotal, fileUrl);
     }).catch(function(uploadErr) {
-      // Fallback: if media upload fails, send base64 as before
-      console.warn('GHL media upload failed, falling back to base64:', uploadErr);
-      return fetch("https://services.leadconnectorhq.com/hooks/SsBG7j5KQAIP1SFP2Sca/webhook-trigger/f089d6ac-5aaa-425d-a109-300ec44fd8de", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          first_name: firstName,
-          last_name: lastName,
-          phone: phone,
-          email: tempEmail,
-          real_email: email,
-          address1: street,
-          city: city,
-          state: state,
-          postal_code: zip,
-          estimate_total: estimate,
-          estimate_pdf: pdf.base64,
-          utm_source: params.get("utm_source") || "",
-          utm_medium: params.get("utm_medium") || "",
-          utm_campaign: params.get("utm_campaign") || "",
-          utm_content: params.get("utm_content") || "",
-          utm_term: params.get("utm_term") || ""
-        })
-      });
+      console.warn('PDF upload failed, updating contact without PDF URL:', uploadErr);
+      return updateContactEstimate(contactId, estimateTotal, null);
+    }).then(function() {
+      return triggerGHLWorkflow(contactId, 'estimate_completed');
     });
   }).catch(function(err) {
     console.error('PDF generation/send failed:', err);
