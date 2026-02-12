@@ -82,6 +82,14 @@ header p {
   font-weight: 400;
 }
 
+header .header-authority {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--white);
+  margin-top: 0.2rem;
+  letter-spacing: 0.3px;
+}
+
 header .header-intro {
   max-width: 640px;
   margin: 0.6rem auto 0;
