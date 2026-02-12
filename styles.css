@@ -243,9 +243,21 @@ header p {
   margin-bottom: 0.25rem;
 }
 
-.style-section .tile-group {
+.tile-grid-wrapper {
   flex: 1;
   min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 0.6rem;
+}
+
+.tile-grid-wrapper > .tile-group {
+  display: contents;
+}
+
+.tile-grid-wrapper > h3 {
+  grid-column: 1 / -1;
+  margin: 0.25rem 0;
 }
 
 .style-section .config-video {
