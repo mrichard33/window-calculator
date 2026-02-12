@@ -82,6 +82,15 @@ header p {
   font-weight: 400;
 }
 
+header .header-intro {
+  max-width: 640px;
+  margin: 0.6rem auto 0;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: rgba(255,255,255,0.82);
+  font-weight: 300;
+}
+
 /* ===== CONTAINER ===== */
 .container {
   max-width: 960px;
@@ -484,6 +493,80 @@ header p {
 
 .disclaimer strong { color: var(--deep-navy); }
 
+/* ===== HOW THIS WORKS ===== */
+.how-it-works {
+  background: var(--white);
+  box-shadow: var(--shadow);
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.how-it-works h2 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--deep-navy);
+  margin-bottom: 0.75rem;
+}
+
+.how-steps {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 0.6rem;
+}
+
+.how-steps li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--charcoal);
+  padding: 0.25rem 0;
+}
+
+.how-check {
+  color: var(--cta-red);
+  font-weight: 700;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.how-tagline {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--deep-navy);
+  font-style: italic;
+}
+
+/* ===== REASSURANCE NOTE ===== */
+.reassurance-note {
+  font-size: 0.78rem;
+  color: var(--text-gray);
+  line-height: 1.4;
+  margin-top: 1rem;
+  margin-bottom: 0;
+}
+
+/* ===== PRICING STABILITY NOTE ===== */
+.pricing-stability-note {
+  background: var(--light-bg);
+  padding: 0.8rem 1rem;
+  font-size: 0.85rem;
+  color: var(--charcoal);
+  line-height: 1.5;
+  margin-top: 1rem;
+  border-left: 4px solid var(--steel-blue);
+}
+
+/* ===== SITE FOOTER ===== */
+.site-footer {
+  text-align: center;
+  padding: 1.25rem 1rem;
+  font-size: 0.82rem;
+  color: var(--text-gray);
+  background: var(--white);
+  border-top: 1px solid var(--mist);
+}
+
 /* ===== PRINT BUTTON ===== */
 .btn-print { background: var(--dark-navy); color: var(--white); }
 .btn-print:hover { background: var(--steel-blue); }
@@ -569,7 +652,10 @@ header p {
   #section-1,
   #section-2,
   #section-3,
-  .config-video {
+  .config-video,
+  .how-it-works,
+  .site-footer,
+  .pricing-stability-note {
     display: none !important;
   }
 

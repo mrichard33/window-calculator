@@ -17,6 +17,7 @@
       <div class="brand-name">Reece Windows &amp; Doors &bull; Est. 1972</div>
       <h1>Window Cost Estimator</h1>
       <p>Protecting Families for Over 50 Years</p>
+      <p class="header-intro">New windows don't just improve how your home looks. They lower energy bills, increase storm protection, reduce outside noise, and raise your home's value.<br>This quick estimator shows you what that upgrade could realistically cost, before you commit to anything.</p>
     </div>
   </header>
 
@@ -32,10 +33,22 @@
       <div class="step" data-step="4"><span class="num">4</span> Estimate</div>
     </div>
 
+    <!-- HOW THIS WORKS -->
+    <div class="how-it-works">
+      <h2>How This Works</h2>
+      <ul class="how-steps">
+        <li><span class="how-check">&#10003;</span> Enter your project details</li>
+        <li><span class="how-check">&#10003;</span> Select your window types</li>
+        <li><span class="how-check">&#10003;</span> Instantly see your estimated investment range</li>
+        <li><span class="how-check">&#10003;</span> Decide if you'd like to explore next steps</li>
+      </ul>
+      <p class="how-tagline">No appointment. No pressure. Just clarity.</p>
+    </div>
+
     <!-- ========== STEP 1: PROJECT DETAILS ========== -->
     <div class="section visible" id="section-1">
       <div class="card">
-        <h2>Customer Information</h2>
+        <h2>Step 1: Tell Us About Your Home</h2>
 
         <div class="form-row full">
           <div class="field" id="field-fullName">
@@ -108,9 +121,11 @@
         <p style="font-size:0.8rem; color:var(--text-gray); margin-top:0.5rem;">A 3% permit fee and disposal of old windows are automatically included in every estimate.</p>
       </div>
 
+      <p class="reassurance-note">We will NOT send a salesperson to your home unless you request it. Your information is only used to generate your estimate.</p>
+
       <div class="btn-row">
         <div></div>
-        <button class="btn btn-primary" onclick="validateAndGoToStep2()">Next: Configure Windows &rarr;</button>
+        <button class="btn btn-primary" onclick="validateAndGoToStep2()">Start My Estimate &rarr;</button>
       </div>
     </div>
 
@@ -389,7 +404,7 @@
         </div>
         <div class="btn-row">
           <button class="btn btn-secondary" onclick="goToStep(1)">&larr; Project Details</button>
-          <button class="btn btn-primary" id="btnToStep3" onclick="goToStep(3)" disabled>Next: Contact Info &rarr;</button>
+          <button class="btn btn-primary" id="btnToStep3" onclick="goToStep(3)" disabled>Show My Window Pricing &rarr;</button>
         </div>
       </div>
 
@@ -424,7 +439,7 @@
 
         <div class="btn-row">
           <button class="btn btn-secondary" onclick="goToStep(2)">&larr; Edit Windows</button>
-          <button class="btn btn-primary" onclick="validateAndGoToStep4()">View My Estimate &rarr;</button>
+          <button class="btn btn-primary" onclick="validateAndGoToStep4()">Calculate My Estimate &rarr;</button>
         </div>
       </div>
     </div>
@@ -436,6 +451,8 @@
         <div id="summaryContent"></div>
       </div>
 
+      <p class="pricing-stability-note">Window pricing and manufacturer incentives can change seasonally. Locking in your estimate now protects today's pricing.</p>
+
       <div class="disclaimer">
         <strong>Disclaimer:</strong> This estimate is based on national average pricing data from 2025-2026 industry sources including Angi, This Old House, HomeAdvisor, and Fixr. Actual costs may vary based on local market conditions, contractor pricing, brand selection, and site-specific factors. Always obtain at least 3 quotes from licensed contractors. Prices do not include potential tax credits or rebates for energy-efficient windows.
       </div>
@@ -446,6 +463,10 @@
       </div>
     </div>
   </div>
+
+  <footer class="site-footer">
+    <p>Serving Florida Homeowners Since 1972 &bull; Licensed, Insured, Hurricane Code Compliant</p>
+  </footer>
 
   <!-- Running total — visible only on Step 4 (estimate) -->
   <div class="running-total" id="runningTotal">
