@@ -107,7 +107,7 @@ function createContactInGHL() {
     state: data.state,
     postalCode: data.postalCode,
     source: 'Window Estimator',
-    tags: ['window-estimator', 'online-lead']
+    tags: ['window-estimator']
   };
 
   if (data.utm.source) body.tags.push('utm_source:' + data.utm.source);
@@ -161,7 +161,7 @@ function updateContactPhone() {
     state: data.state,
     postalCode: data.postalCode,
     source: 'Window Estimator',
-    tags: ['window-estimator', 'online-lead']
+    tags: ['window-estimator']
   };
   if (data.email) body.email = data.email;
 
@@ -1194,8 +1194,6 @@ function uploadPDFToGHL(blob) {
   var formData = new FormData();
   var fileName = 'Reece-Windows-Estimate-' + Date.now() + '.pdf';
   formData.append('file', blob, fileName);
-  formData.append('hosted', 'true');
-  formData.append('fileUrl', 'https://reecewindows.com/estimates/' + fileName);
 
   return fetch(GHL_CONFIG.baseUrl + "/medias/upload-file", {
     method: "POST",
@@ -1212,6 +1210,7 @@ function uploadPDFToGHL(blob) {
     }
     return response.json();
   }).then(function(data) {
+    console.log('GHL media upload response:', JSON.stringify(data));
     return data.url || data.fileUrl || data.altId || null;
   });
 }
