@@ -319,6 +319,17 @@ header .header-intro {
 
 @media (max-width: 600px) { .check-group { grid-template-columns: 1fr; } }
 
+@media (max-width: 600px) {
+  .btn-row {
+    flex-direction: column;
+  }
+
+  .btn {
+    width: 100%;
+    padding: 12px 1rem;
+  }
+}
+
 .check-item {
   display: flex;
   align-items: flex-start;
