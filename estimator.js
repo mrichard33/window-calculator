@@ -995,16 +995,48 @@ function generateEstimatePDF() {
       pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
     };
 
-    html2pdf().set(opt).from(pdfContainer).outputPdf('datauristring').then(function(dataUri) {
-      // Extract base64 portion from the data URI
+    var worker = html2pdf().set(opt).from(pdfContainer);
+    Promise.all([
+      worker.outputPdf('datauristring'),
+      worker.outputPdf('blob')
+    ]).then(function(results) {
+      var dataUri = results[0];
+      var blob = results[1];
       var base64 = dataUri.split(',')[1];
       resolve({
         base64: base64,
-        dataUri: dataUri
+        dataUri: dataUri,
+        blob: blob
       });
     }).catch(function(err) {
       reject(err);
     });
+  });
+}
+
+function uploadPDFToGHL(blob) {
+  var formData = new FormData();
+  var fileName = 'Reece-Windows-Estimate-' + Date.now() + '.pdf';
+  formData.append('file', blob, fileName);
+  formData.append('hosted', 'true');
+  formData.append('fileUrl', 'https://placeholder.reecewindows.com/' + fileName);
+
+  return fetch("https://services.leadconnectorhq.com/medias/upload-file", {
+    method: "POST",
+    headers: {
+      "Authorization": "Bearer pit-57cd2e37-3b0f-4d5d-8bdc-9f3780ea7e77",
+      "Version": "2021-07-28"
+    },
+    body: formData
+  }).then(function(response) {
+    if (!response.ok) {
+      return response.text().then(function(text) {
+        throw new Error('GHL media upload failed (' + response.status + '): ' + text);
+      });
+    }
+    return response.json();
+  }).then(function(data) {
+    return data.url || data.fileUrl || data.altId || null;
   });
 }
 
@@ -1030,27 +1062,56 @@ function sendPDFToGHL() {
 
     var params = new URLSearchParams(window.location.search);
 
-    return fetch("https://services.leadconnectorhq.com/hooks/SsBG7j5KQAIP1SFP2Sca/webhook-trigger/f089d6ac-5aaa-425d-a109-300ec44fd8de", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        first_name: firstName,
-        last_name: lastName,
-        phone: phone,
-        email: tempEmail,
-        real_email: email,
-        address1: street,
-        city: city,
-        state: state,
-        postal_code: zip,
-        estimate_total: estimate,
-        estimate_pdf: pdf.base64,
-        utm_source: params.get("utm_source") || "",
-        utm_medium: params.get("utm_medium") || "",
-        utm_campaign: params.get("utm_campaign") || "",
-        utm_content: params.get("utm_content") || "",
-        utm_term: params.get("utm_term") || ""
-      })
+    // Upload PDF to GHL media library first, then send the URL in the webhook
+    return uploadPDFToGHL(pdf.blob).then(function(fileUrl) {
+      console.log('PDF uploaded to GHL media library:', fileUrl);
+      return fetch("https://services.leadconnectorhq.com/hooks/SsBG7j5KQAIP1SFP2Sca/webhook-trigger/f089d6ac-5aaa-425d-a109-300ec44fd8de", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          first_name: firstName,
+          last_name: lastName,
+          phone: phone,
+          email: tempEmail,
+          real_email: email,
+          address1: street,
+          city: city,
+          state: state,
+          postal_code: zip,
+          estimate_total: estimate,
+          estimate_pdf_url: fileUrl,
+          utm_source: params.get("utm_source") || "",
+          utm_medium: params.get("utm_medium") || "",
+          utm_campaign: params.get("utm_campaign") || "",
+          utm_content: params.get("utm_content") || "",
+          utm_term: params.get("utm_term") || ""
+        })
+      });
+    }).catch(function(uploadErr) {
+      // Fallback: if media upload fails, send base64 as before
+      console.warn('GHL media upload failed, falling back to base64:', uploadErr);
+      return fetch("https://services.leadconnectorhq.com/hooks/SsBG7j5KQAIP1SFP2Sca/webhook-trigger/f089d6ac-5aaa-425d-a109-300ec44fd8de", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          first_name: firstName,
+          last_name: lastName,
+          phone: phone,
+          email: tempEmail,
+          real_email: email,
+          address1: street,
+          city: city,
+          state: state,
+          postal_code: zip,
+          estimate_total: estimate,
+          estimate_pdf: pdf.base64,
+          utm_source: params.get("utm_source") || "",
+          utm_medium: params.get("utm_medium") || "",
+          utm_campaign: params.get("utm_campaign") || "",
+          utm_content: params.get("utm_content") || "",
+          utm_term: params.get("utm_term") || ""
+        })
+      });
     });
   }).catch(function(err) {
     console.error('PDF generation/send failed:', err);
