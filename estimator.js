@@ -907,6 +907,8 @@ function sendToGHL() {
   var zip = (document.getElementById("postalCode")?.value || "").trim();
   var estimate = window.latestEstimateTotal || "";
 
+  var tempEmail = fullName.toLowerCase().replace(/[^a-z0-9]/g, '.') + '.' + zip + '@placeholder.reecewindows.com';
+
   var params = new URLSearchParams(window.location.search);
 
   fetch("https://services.leadconnectorhq.com/hooks/SsBG7j5KQAIP1SFP2Sca/webhook-trigger/f089d6ac-5aaa-425d-a109-300ec44fd8de", {
@@ -916,7 +918,8 @@ function sendToGHL() {
       first_name: firstName,
       last_name: lastName,
       phone: phone,
-      email: email,
+      email: tempEmail,
+      real_email: email,
       address1: street,
       city: city,
       state: state,
