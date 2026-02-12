@@ -784,9 +784,6 @@ function buildSummary() {
   const custCity = document.getElementById('city').value.trim();
   const custState = document.getElementById('state').value.trim();
   const custPostal = document.getElementById('postalCode').value.trim();
-  const regionEl = document.getElementById('serviceRegion');
-  const regionLabel = regionEl.selectedIndex > 0 ? regionEl.options[regionEl.selectedIndex].text : '';
-
   // Contact info from step 3
   const custPhone = document.getElementById('phone').value.trim();
   const custEmail = document.getElementById('email').value.trim();
@@ -798,7 +795,6 @@ function buildSummary() {
       '<tr><td>Address</td><td>' + custAddress + ', ' + custCity + ', ' + custState + ' ' + custPostal + '</td></tr>' +
       '<tr><td>Phone</td><td>' + custPhone + '</td></tr>' +
       (custEmail ? '<tr><td>Email</td><td>' + custEmail + '</td></tr>' : '') +
-      (regionLabel ? '<tr><td>Region</td><td>' + regionLabel + '</td></tr>' : '') +
     '</table>' +
   '</div>';
 
