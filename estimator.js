@@ -902,7 +902,7 @@ function openMeasurementVerification() {
 
   const url =
     `https://landing.reecewindows.com/confirm-your-pricing?` +
-    `firstName=${firstName}&lastName=${lastName}&phone=${phone}&email=${email}`;
+    `first_name=${firstName}&last_name=${lastName}&phone=${phone}&email=${email}`;
 
   window.location.href = url;
 }
