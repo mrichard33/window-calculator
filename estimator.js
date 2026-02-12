@@ -905,6 +905,13 @@ function openMeasurementVerification() {
   const zip = (document.getElementById("postalCode")?.value || "").trim();
   const estimate = window.latestEstimateTotal || "";
 
+  var params = new URLSearchParams(window.location.search);
+  var utmSource = params.get("utm_source") || "";
+  var utmMedium = params.get("utm_medium") || "";
+  var utmCampaign = params.get("utm_campaign") || "";
+  var utmContent = params.get("utm_content") || "";
+  var utmTerm = params.get("utm_term") || "";
+
   fetch("https://services.leadconnectorhq.com/hooks/SsBG7j5KQAIP1SFP2Sca/webhook-trigger/f089d6ac-5aaa-425d-a109-300ec44fd8de", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -917,7 +924,12 @@ function openMeasurementVerification() {
       city: city,
       state: state,
       postal_code: zip,
-      estimate_total: estimate
+      estimate_total: estimate,
+      utm_source: utmSource,
+      utm_medium: utmMedium,
+      utm_campaign: utmCampaign,
+      utm_content: utmContent,
+      utm_term: utmTerm
     })
   }).catch(function() {});
 
