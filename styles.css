@@ -609,8 +609,8 @@ header .header-intro {
 }
 
 /* ===== PRINT BUTTON ===== */
-.btn-print { background: var(--dark-navy); color: var(--white); }
-.btn-print:hover { background: var(--steel-blue); }
+.btn-print { background: transparent; color: var(--dark-navy); border: 1.5px solid var(--mist); }
+.btn-print:hover { background: var(--light-bg); color: var(--deep-navy); }
 
 @media print {
   /* ===== PAGE SETUP ===== */
