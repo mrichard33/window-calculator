@@ -696,6 +696,7 @@ header .header-intro {
   .config-video,
   .how-it-works,
   .site-footer,
+  .verify-cta,
   .pricing-stability-note {
     display: none !important;
   }
@@ -734,7 +735,7 @@ header .header-intro {
   /* ===== SUMMARY SECTIONS ===== */
   .summary-section {
     margin-bottom: 0.18in !important;
-    page-break-inside: avoid;
+    page-break-inside: auto;
   }
 
   .summary-section h3 {
@@ -751,6 +752,8 @@ header .header-intro {
   .summary-table {
     width: 100%;
     border-collapse: collapse;
+    table-layout: fixed;
+    overflow-wrap: break-word;
   }
 
   .summary-table th {
