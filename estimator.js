@@ -19,7 +19,7 @@ var GHL_CONFIG = {
   locationId: 'SsBG7j5KQAIP1SFP2Sca',
   apiVersion: '2021-07-28',
   workflowWebhookUrl: 'https://services.leadconnectorhq.com/hooks/SsBG7j5KQAIP1SFP2Sca/webhook-trigger/f089d6ac-5aaa-425d-a109-300ec44fd8de',
-  n8nWebhookUrl: 'https://n8n-main-instance-production-981e.up.railway.app/webhook-test/fd8d8515-a9ba-475e-98fa-2c2aad873f6f'
+  n8nWebhookUrl: 'https://n8n-main-instance-production-981e.up.railway.app/webhook-test/create-pdf'
 };
 
 // ============================================================
@@ -1229,7 +1229,9 @@ function sendPDFToN8N(base64, contactId, contactName) {
       contact_id: contactId,
       contact_name: contactName,
       pdf_base64: base64,
-      file_name: fileName
+      file_name: fileName,
+      ghl_api_key: GHL_CONFIG.pit,
+      ghl_location_id: GHL_CONFIG.locationId
     })
   }).then(function(response) {
     if (!response.ok) {
@@ -1255,7 +1257,7 @@ function sendPDFToGHL() {
     sendPDFToN8N(pdf.base64, contactId, contactName);
 
     // Update contact with estimate_total, window_count, and tag directly
-    updateContactEstimate(contactId, estimateTotal, null, windowCount);
+    updateContactEstimate(contactId, estimateTotal, windowCount);
 
     // Fire workflow webhook
     triggerGHLWorkflow(contactId, 'estimate_completed');
