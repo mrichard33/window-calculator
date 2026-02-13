@@ -1221,19 +1221,23 @@ function generateEstimatePDF() {
 
 function sendPDFToN8N(base64, contactId, contactName) {
   var fileName = 'Reece-Windows-Estimate-' + Date.now() + '.pdf';
+  var payload = JSON.stringify({
+    contact_id: contactId,
+    contact_name: contactName,
+    pdf_base64: base64,
+    file_name: fileName,
+    ghl_api_key: GHL_CONFIG.pit,
+    ghl_location_id: GHL_CONFIG.locationId
+  });
+
+  console.log('Sending PDF to n8n, payload size:', payload.length, 'bytes');
 
   return fetch(GHL_CONFIG.n8nWebhookUrl, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contact_id: contactId,
-      contact_name: contactName,
-      pdf_base64: base64,
-      file_name: fileName,
-      ghl_api_key: GHL_CONFIG.pit,
-      ghl_location_id: GHL_CONFIG.locationId
-    })
+    headers: { 'Content-Type': 'text/plain' },
+    body: payload
   }).then(function(response) {
+    console.log('n8n webhook response status:', response.status);
     if (!response.ok) {
       return response.text().then(function(text) {
         throw new Error('n8n webhook failed (' + response.status + '): ' + text);
@@ -1252,6 +1256,8 @@ function sendPDFToGHL() {
     var contactId = window.ghlContactId || null;
     var data = gatherContactData();
     var contactName = (data.firstName + ' ' + data.lastName).trim();
+
+    console.log('PDF generated, base64 length:', pdf.base64.length, 'contactId:', contactId);
 
     // Send PDF to n8n for media upload + contact update
     sendPDFToN8N(pdf.base64, contactId, contactName);
