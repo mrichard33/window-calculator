@@ -19,7 +19,7 @@ var GHL_CONFIG = {
   locationId: 'SsBG7j5KQAIP1SFP2Sca',
   apiVersion: '2021-07-28',
   workflowWebhookUrl: 'https://services.leadconnectorhq.com/hooks/SsBG7j5KQAIP1SFP2Sca/webhook-trigger/f089d6ac-5aaa-425d-a109-300ec44fd8de',
-  n8nWebhookUrl: 'https://n8n-main-instance-production-981e.up.railway.app/webhook-test/create-pdf'
+  n8nWebhookUrl: 'https://n8n-main-instance-production-981e.up.railway.app/webhook/create-pdf'
 };
 
 // ============================================================
@@ -1191,8 +1191,8 @@ function generateEstimatePDF() {
     var opt = {
       margin:       [0.5, 0.5, 0.5, 0.5],
       filename:     'Reece-Windows-Estimate.pdf',
-      image:        { type: 'jpeg', quality: 0.95 },
-      html2canvas:  { scale: 2, useCORS: true, logging: false },
+      image:        { type: 'jpeg', quality: 0.65 },
+      html2canvas:  { scale: 1.5, useCORS: true, logging: false },
       jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' },
       pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
     };
@@ -1234,7 +1234,7 @@ function sendPDFToN8N(base64, contactId, contactName) {
 
   return fetch(GHL_CONFIG.n8nWebhookUrl, {
     method: 'POST',
-    headers: { 'Content-Type': 'text/plain' },
+    headers: { 'Content-Type': 'application/json' },
     body: payload
   }).then(function(response) {
     console.log('n8n webhook response status:', response.status);
@@ -1252,21 +1252,21 @@ function sendPDFToN8N(base64, contactId, contactName) {
 function sendPDFToGHL() {
   generateEstimatePDF().then(function(pdf) {
     var estimateTotal = window.latestEstimateTotal || "";
-    var windowCount = window.latestWindowCount || "";
+    var windowCount = window.latestWindowCount || 0;
     var contactId = window.ghlContactId || null;
     var data = gatherContactData();
     var contactName = (data.firstName + ' ' + data.lastName).trim();
 
-    console.log('PDF generated, base64 length:', pdf.base64.length, 'contactId:', contactId);
+    console.log('PDF generated, base64 length:', pdf.base64.length, 'contactId:', contactId, 'windowCount:', windowCount);
 
-    // Send PDF to n8n for media upload + contact update
-    sendPDFToN8N(pdf.base64, contactId, contactName);
-
-    // Update contact with estimate_total, window_count, and tag directly
-    updateContactEstimate(contactId, estimateTotal, windowCount);
-
-    // Fire workflow webhook
-    triggerGHLWorkflow(contactId, 'estimate_completed');
+    // 1. Update contact with estimate_total, window_count, and tag FIRST
+    updateContactEstimate(contactId, estimateTotal, windowCount).then(function() {
+      // 2. Then send PDF to n8n for media upload
+      return sendPDFToN8N(pdf.base64, contactId, contactName);
+    }).then(function() {
+      // 3. Then fire workflow webhook
+      return triggerGHLWorkflow(contactId, 'estimate_completed');
+    });
   }).catch(function(err) {
     console.error('PDF generation/send failed:', err);
   });
