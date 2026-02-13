@@ -206,7 +206,7 @@ function updateContactPhone() {
 // ============================================================
 //  GHL API v2: UPDATE CONTACT WITH ESTIMATE DATA (Step 4)
 // ============================================================
-function updateContactEstimate(contactId, estimateTotal, pdfUrl) {
+function updateContactEstimate(contactId, estimateTotal, pdfUrl, windowCount) {
   if (!contactId) {
     console.warn('No GHL contactId available, skipping estimate update');
     return Promise.resolve(null);
@@ -222,6 +222,9 @@ function updateContactEstimate(contactId, estimateTotal, pdfUrl) {
   }
   if (pdfUrl) {
     body.customFields.push({ key: 'estimate_pdf_url', field_value: pdfUrl });
+  }
+  if (windowCount) {
+    body.customFields.push({ key: 'window_count', field_value: String(windowCount) });
   }
 
   return ghlApiFetch('/contacts/' + contactId, {
@@ -1026,6 +1029,7 @@ function buildSummary() {
   const permitFee = round2(subtotalBeforePermit * 0.03);
   const grandTotal = round2(subtotalBeforePermit + permitFee);
   window.latestEstimateTotal = grandTotal;
+  window.latestWindowCount = totalWindows;
 
   // Cost range
   const lowEstimate = round2(grandTotal * 0.80);
@@ -1195,14 +1199,17 @@ function generateEstimatePDF() {
       pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
     };
 
-    var worker = html2pdf().set(opt).from(pdfContainer);
-    Promise.all([
-      worker.outputPdf('datauristring'),
-      worker.outputPdf('blob')
-    ]).then(function(results) {
-      var dataUri = results[0];
-      var blob = results[1];
+    html2pdf().set(opt).from(pdfContainer).outputPdf('datauristring').then(function(dataUri) {
       var base64 = dataUri.split(',')[1];
+      // Convert base64 to Blob
+      var byteChars = atob(base64);
+      var byteNumbers = new Array(byteChars.length);
+      for (var i = 0; i < byteChars.length; i++) {
+        byteNumbers[i] = byteChars.charCodeAt(i);
+      }
+      var byteArray = new Uint8Array(byteNumbers);
+      var blob = new Blob([byteArray], { type: 'application/pdf' });
+
       resolve({
         base64: base64,
         dataUri: dataUri,
@@ -1242,14 +1249,15 @@ function uploadPDFToGHL(blob) {
 function sendPDFToGHL() {
   generateEstimatePDF().then(function(pdf) {
     var estimateTotal = window.latestEstimateTotal || "";
+    var windowCount = window.latestWindowCount || "";
     var contactId = window.ghlContactId || null;
 
     return uploadPDFToGHL(pdf.blob).then(function(fileUrl) {
       console.log('PDF uploaded to GHL media library:', fileUrl);
-      return updateContactEstimate(contactId, estimateTotal, fileUrl);
+      return updateContactEstimate(contactId, estimateTotal, fileUrl, windowCount);
     }).catch(function(uploadErr) {
       console.warn('PDF upload failed, updating contact without PDF URL:', uploadErr);
-      return updateContactEstimate(contactId, estimateTotal, null);
+      return updateContactEstimate(contactId, estimateTotal, null, windowCount);
     }).then(function() {
       return triggerGHLWorkflow(contactId, 'estimate_completed');
     });
