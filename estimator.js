@@ -1221,32 +1221,49 @@ function generateEstimatePDF() {
 
 function sendPDFToN8N(base64, contactId, contactName) {
   var fileName = 'Reece-Windows-Estimate-' + Date.now() + '.pdf';
-  var payload = JSON.stringify({
-    contact_id: contactId,
-    contact_name: contactName,
+
+  // Create hidden iframe as form target (prevents page navigation)
+  var iframeName = 'n8n_upload_' + Date.now();
+  var iframe = document.createElement('iframe');
+  iframe.name = iframeName;
+  iframe.style.display = 'none';
+  document.body.appendChild(iframe);
+
+  // Create hidden form targeting the iframe
+  var form = document.createElement('form');
+  form.method = 'POST';
+  form.action = GHL_CONFIG.n8nWebhookUrl;
+  form.target = iframeName;
+  form.style.display = 'none';
+
+  // Add form fields
+  var fields = {
+    contact_id: contactId || '',
+    contact_name: contactName || '',
     pdf_base64: base64,
     file_name: fileName,
     ghl_api_key: GHL_CONFIG.pit,
     ghl_location_id: GHL_CONFIG.locationId
+  };
+
+  Object.keys(fields).forEach(function(key) {
+    var input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = key;
+    input.value = fields[key];
+    form.appendChild(input);
   });
 
-  console.log('Sending PDF to n8n, payload size:', payload.length, 'bytes');
+  document.body.appendChild(form);
+  form.submit();
 
-  return fetch(GHL_CONFIG.n8nWebhookUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: payload
-  }).then(function(response) {
-    console.log('n8n webhook response status:', response.status);
-    if (!response.ok) {
-      return response.text().then(function(text) {
-        throw new Error('n8n webhook failed (' + response.status + '): ' + text);
-      });
-    }
-    console.log('PDF sent to n8n for upload:', fileName);
-  }).catch(function(err) {
-    console.error('n8n PDF send failed:', err);
-  });
+  console.log('PDF sent to n8n via form submit, file:', fileName, 'payload fields:', Object.keys(fields).length);
+
+  // Clean up form and iframe after a delay
+  setTimeout(function() {
+    document.body.removeChild(form);
+    document.body.removeChild(iframe);
+  }, 30000);
 }
 
 function sendPDFToGHL() {
