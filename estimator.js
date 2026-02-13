@@ -18,7 +18,8 @@ var GHL_CONFIG = {
   pit: 'pit-57cd2e37-3b0f-4d5d-8bdc-9f3780ea7e77',
   locationId: 'SsBG7j5KQAIP1SFP2Sca',
   apiVersion: '2021-07-28',
-  workflowWebhookUrl: 'https://services.leadconnectorhq.com/hooks/SsBG7j5KQAIP1SFP2Sca/webhook-trigger/f089d6ac-5aaa-425d-a109-300ec44fd8de'
+  workflowWebhookUrl: 'https://services.leadconnectorhq.com/hooks/SsBG7j5KQAIP1SFP2Sca/webhook-trigger/f089d6ac-5aaa-425d-a109-300ec44fd8de',
+  n8nWebhookUrl: 'https://n8n-main-instance-production-981e.up.railway.app/webhook-test/fd8d8515-a9ba-475e-98fa-2c2aad873f6f'
 };
 
 // ============================================================
@@ -206,7 +207,7 @@ function updateContactPhone() {
 // ============================================================
 //  GHL API v2: UPDATE CONTACT WITH ESTIMATE DATA (Step 4)
 // ============================================================
-function updateContactEstimate(contactId, estimateTotal, pdfUrl, windowCount) {
+function updateContactEstimate(contactId, estimateTotal, windowCount) {
   if (!contactId) {
     console.warn('No GHL contactId available, skipping estimate update');
     return Promise.resolve(null);
@@ -219,9 +220,6 @@ function updateContactEstimate(contactId, estimateTotal, pdfUrl, windowCount) {
 
   if (estimateTotal) {
     body.customFields.push({ key: 'estimate_total', field_value: String(estimateTotal) });
-  }
-  if (pdfUrl) {
-    body.customFields.push({ key: 'estimate_pdf_url', field_value: pdfUrl });
   }
   if (windowCount) {
     body.customFields.push({ key: 'window_count', field_value: String(windowCount) });
@@ -1221,28 +1219,27 @@ function generateEstimatePDF() {
   });
 }
 
-function uploadPDFToGHL(blob) {
-  var formData = new FormData();
+function sendPDFToN8N(base64, contactId, contactName) {
   var fileName = 'Reece-Windows-Estimate-' + Date.now() + '.pdf';
-  formData.append('file', blob, fileName);
 
-  return fetch(GHL_CONFIG.baseUrl + "/medias/upload-file", {
-    method: "POST",
-    headers: {
-      "Authorization": "Bearer " + GHL_CONFIG.pit,
-      "Version": GHL_CONFIG.apiVersion
-    },
-    body: formData
+  return fetch(GHL_CONFIG.n8nWebhookUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contact_id: contactId,
+      contact_name: contactName,
+      pdf_base64: base64,
+      file_name: fileName
+    })
   }).then(function(response) {
     if (!response.ok) {
       return response.text().then(function(text) {
-        throw new Error('GHL media upload failed (' + response.status + '): ' + text);
+        throw new Error('n8n webhook failed (' + response.status + '): ' + text);
       });
     }
-    return response.json();
-  }).then(function(data) {
-    console.log('GHL media upload response:', JSON.stringify(data));
-    return data.url || data.fileUrl || data.altId || null;
+    console.log('PDF sent to n8n for upload:', fileName);
+  }).catch(function(err) {
+    console.error('n8n PDF send failed:', err);
   });
 }
 
@@ -1251,16 +1248,17 @@ function sendPDFToGHL() {
     var estimateTotal = window.latestEstimateTotal || "";
     var windowCount = window.latestWindowCount || "";
     var contactId = window.ghlContactId || null;
+    var data = gatherContactData();
+    var contactName = (data.firstName + ' ' + data.lastName).trim();
 
-    return uploadPDFToGHL(pdf.blob).then(function(fileUrl) {
-      console.log('PDF uploaded to GHL media library:', fileUrl);
-      return updateContactEstimate(contactId, estimateTotal, fileUrl, windowCount);
-    }).catch(function(uploadErr) {
-      console.warn('PDF upload failed, updating contact without PDF URL:', uploadErr);
-      return updateContactEstimate(contactId, estimateTotal, null, windowCount);
-    }).then(function() {
-      return triggerGHLWorkflow(contactId, 'estimate_completed');
-    });
+    // Send PDF to n8n for media upload + contact update
+    sendPDFToN8N(pdf.base64, contactId, contactName);
+
+    // Update contact with estimate_total, window_count, and tag directly
+    updateContactEstimate(contactId, estimateTotal, null, windowCount);
+
+    // Fire workflow webhook
+    triggerGHLWorkflow(contactId, 'estimate_completed');
   }).catch(function(err) {
     console.error('PDF generation/send failed:', err);
   });
