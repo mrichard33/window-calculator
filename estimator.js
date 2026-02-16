@@ -643,15 +643,21 @@ function goToStep(n) {
   if (n === 4) {
     buildSummary();
 
-    // Update contact with estimate data immediately (independent of PDF generation)
-    var estimateTotal = window.latestEstimateTotal || "";
-    var windowCount = window.latestWindowCount || 0;
-    var contactId = window.ghlContactId || null;
-    updateContactEstimate(contactId, estimateTotal, windowCount);
-    triggerGHLWorkflow(contactId, 'estimate_completed');
+    // Only fire webhooks and PDF on first arrival at Step 4
+    // Prevents duplicate leads when user navigates back and re-submits
+    if (!window._estimateSent) {
+      window._estimateSent = true;
 
-    // PDF generation + n8n send (separate, can fail independently)
-    sendPDFToGHL();
+      // Update contact with estimate data immediately (independent of PDF generation)
+      var estimateTotal = window.latestEstimateTotal || "";
+      var windowCount = window.latestWindowCount || 0;
+      var contactId = window.ghlContactId || null;
+      updateContactEstimate(contactId, estimateTotal, windowCount);
+      triggerGHLWorkflow(contactId, 'estimate_completed');
+
+      // PDF generation + n8n send (separate, can fail independently)
+      sendPDFToGHL();
+    }
   }
 
   // Video playback: play on Step 2, pause on all other steps
@@ -1180,11 +1186,11 @@ function generateEstimatePDF() {
 
     // Build a self-contained HTML element for the PDF
     var pdfContainer = document.createElement('div');
-    pdfContainer.style.cssText = 'padding:20px; font-family:Nunito Sans,sans-serif; color:#1a2a3a; font-size:12px;';
+    pdfContainer.style.cssText = 'padding:12px 20px 20px 20px; font-family:Nunito Sans,sans-serif; color:#1a2a3a; font-size:12px;';
 
     // Header
     var header = document.createElement('div');
-    header.style.cssText = 'text-align:center; margin-bottom:20px; padding-bottom:15px; border-bottom:2px solid #c0392b;';
+    header.style.cssText = 'text-align:center; margin-bottom:10px; padding-bottom:8px; border-bottom:2px solid #c0392b;';
     header.innerHTML =
       '<h1 style="margin:0 0 4px 0; font-size:22px; color:#1a2a3a;">Reece Windows & Doors</h1>' +
       '<p style="margin:0 0 4px 0; font-size:11px; color:#6b7b8d;">Family-Owned Since 1972 &bull; Licensed &amp; Insured</p>' +
@@ -1212,7 +1218,7 @@ function generateEstimatePDF() {
     pdfContainer.appendChild(footer);
 
     var opt = {
-      margin:       [0.5, 0.5, 0.5, 0.5],
+      margin:       [0.3, 0.5, 0.5, 0.5],
       filename:     'Reece-Windows-Estimate.pdf',
       image:        { type: 'jpeg', quality: 0.65 },
       html2canvas:  { scale: 1.5, useCORS: true, logging: false },
