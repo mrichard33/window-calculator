@@ -19,7 +19,7 @@ var GHL_CONFIG = {
   locationId: 'SsBG7j5KQAIP1SFP2Sca',
   apiVersion: '2021-07-28',
   workflowWebhookUrl: 'https://services.leadconnectorhq.com/hooks/SsBG7j5KQAIP1SFP2Sca/webhook-trigger/f089d6ac-5aaa-425d-a109-300ec44fd8de',
-  n8nWebhookUrl: 'https://n8n-main-instance-production-981e.up.railway.app/webhook/create-pdf'
+  pdfWebhookUrl: 'https://services.leadconnectorhq.com/hooks/SsBG7j5KQAIP1SFP2Sca/webhook-trigger/c1ab599c-1e35-4e57-a6a4-5492054fb2a0'
 };
 
 // ============================================================
@@ -1228,11 +1228,11 @@ function generateEstimatePDF() {
   });
 }
 
-function sendPDFToN8N(base64, contactId, contactName) {
+function sendPDFToWebhook(base64, contactId, contactName) {
   var fileName = 'Reece-Windows-Estimate-' + Date.now() + '.pdf';
 
   // Create hidden iframe as form target (prevents page navigation)
-  var iframeName = 'n8n_upload_' + Date.now();
+  var iframeName = 'pdf_upload_' + Date.now();
   var iframe = document.createElement('iframe');
   iframe.name = iframeName;
   iframe.style.display = 'none';
@@ -1241,7 +1241,7 @@ function sendPDFToN8N(base64, contactId, contactName) {
   // Create hidden form targeting the iframe
   var form = document.createElement('form');
   form.method = 'POST';
-  form.action = GHL_CONFIG.n8nWebhookUrl;
+  form.action = GHL_CONFIG.pdfWebhookUrl;
   form.target = iframeName;
   form.style.display = 'none';
 
@@ -1266,7 +1266,7 @@ function sendPDFToN8N(base64, contactId, contactName) {
   document.body.appendChild(form);
   form.submit();
 
-  console.log('PDF sent to n8n via form submit, file:', fileName, 'payload fields:', Object.keys(fields).length);
+  console.log('PDF sent to GHL webhook via form submit, file:', fileName, 'payload fields:', Object.keys(fields).length);
 
   // Clean up form and iframe after a delay
   setTimeout(function() {
@@ -1283,7 +1283,7 @@ function sendPDFToGHL() {
     var contactName = (data.firstName + ' ' + data.lastName).trim();
 
     console.log('sendPDFToGHL: PDF generated, base64 length:', pdf.base64.length);
-    sendPDFToN8N(pdf.base64, contactId, contactName);
+    sendPDFToWebhook(pdf.base64, contactId, contactName);
   }).catch(function(err) {
     console.error('sendPDFToGHL: PDF generation failed:', err);
   });
