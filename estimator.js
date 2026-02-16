@@ -642,6 +642,15 @@ function goToStep(n) {
   // Build summary and auto-send PDF to GHL when arriving at estimate step
   if (n === 4) {
     buildSummary();
+
+    // Update contact with estimate data immediately (independent of PDF generation)
+    var estimateTotal = window.latestEstimateTotal || "";
+    var windowCount = window.latestWindowCount || 0;
+    var contactId = window.ghlContactId || null;
+    updateContactEstimate(contactId, estimateTotal, windowCount);
+    triggerGHLWorkflow(contactId, 'estimate_completed');
+
+    // PDF generation + n8n send (separate, can fail independently)
     sendPDFToGHL();
   }
 
@@ -1267,25 +1276,16 @@ function sendPDFToN8N(base64, contactId, contactName) {
 }
 
 function sendPDFToGHL() {
+  console.log('sendPDFToGHL: starting PDF generation...');
   generateEstimatePDF().then(function(pdf) {
-    var estimateTotal = window.latestEstimateTotal || "";
-    var windowCount = window.latestWindowCount || 0;
     var contactId = window.ghlContactId || null;
     var data = gatherContactData();
     var contactName = (data.firstName + ' ' + data.lastName).trim();
 
-    console.log('PDF generated, base64 length:', pdf.base64.length, 'contactId:', contactId, 'windowCount:', windowCount);
-
-    // 1. Update contact with estimate_total, window_count, and tag FIRST
-    updateContactEstimate(contactId, estimateTotal, windowCount).then(function() {
-      // 2. Then send PDF to n8n for media upload
-      return sendPDFToN8N(pdf.base64, contactId, contactName);
-    }).then(function() {
-      // 3. Then fire workflow webhook
-      return triggerGHLWorkflow(contactId, 'estimate_completed');
-    });
+    console.log('sendPDFToGHL: PDF generated, base64 length:', pdf.base64.length);
+    sendPDFToN8N(pdf.base64, contactId, contactName);
   }).catch(function(err) {
-    console.error('PDF generation/send failed:', err);
+    console.error('sendPDFToGHL: PDF generation failed:', err);
   });
 }
 
