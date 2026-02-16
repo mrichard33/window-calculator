@@ -1167,7 +1167,7 @@ function generateEstimatePDF() {
 
     // Header
     var header = document.createElement('div');
-    header.style.cssText = 'text-align:center; margin-bottom:10px; padding-bottom:8px; border-bottom:2px solid #c0392b;';
+    header.style.cssText = 'text-align:center; margin-bottom:10px; padding-bottom:8px; border-bottom:2px solid #c0392b; page-break-inside:avoid;';
     header.innerHTML =
       '<h1 style="margin:0 0 4px 0; font-size:22px; color:#1a2a3a;">Reece Windows & Doors</h1>' +
       '<p style="margin:0 0 4px 0; font-size:11px; color:#6b7b8d;">Family-Owned Since 1972 &bull; Licensed &amp; Insured</p>' +
@@ -1186,11 +1186,20 @@ function generateEstimatePDF() {
     contentClone.querySelectorAll('.total td').forEach(function(cell) {
       cell.style.cssText += '; font-weight:700; font-size:14px; border-top:2px solid #1a2a3a;';
     });
+    // Keep small sections together on one page; let Itemized Breakdown flow across pages
+    contentClone.querySelectorAll('.summary-section').forEach(function(section) {
+      var heading = section.querySelector('h3');
+      if (heading && heading.textContent === 'Itemized Breakdown') {
+        section.style.pageBreakInside = 'auto';
+      } else {
+        section.style.pageBreakInside = 'avoid';
+      }
+    });
     pdfContainer.appendChild(contentClone);
 
     // Disclaimer footer
     var footer = document.createElement('div');
-    footer.style.cssText = 'margin-top:20px; padding-top:10px; border-top:1px solid #e0e0e0; font-size:9px; color:#6b7b8d;';
+    footer.style.cssText = 'margin-top:20px; padding-top:10px; border-top:1px solid #e0e0e0; font-size:9px; color:#6b7b8d; page-break-inside:avoid;';
     footer.innerHTML = '<strong>Disclaimer:</strong> This estimate is based on current industry pricing and typical installation conditions. Final pricing may vary after on-site verification.';
     pdfContainer.appendChild(footer);
 
@@ -1200,7 +1209,7 @@ function generateEstimatePDF() {
       image:        { type: 'jpeg', quality: 0.65 },
       html2canvas:  { scale: 1.5, useCORS: true, logging: false },
       jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' },
-      pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
+      pagebreak:    { mode: ['css', 'legacy'] }
     };
 
     // Dynamically load html2pdf if not already available
