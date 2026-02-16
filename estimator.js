@@ -1197,6 +1197,12 @@ function generateEstimatePDF() {
     footer.innerHTML = '<strong>Disclaimer:</strong> This estimate is based on current industry pricing and typical installation conditions. Final pricing may vary after on-site verification.';
     pdfContainer.appendChild(footer);
 
+    // Check that html2pdf library is loaded
+    if (typeof html2pdf === 'undefined') {
+      reject(new Error('html2pdf library not loaded'));
+      return;
+    }
+
     var opt = {
       margin:       [0.5, 0.5, 0.5, 0.5],
       filename:     'Reece-Windows-Estimate.pdf',
@@ -1206,25 +1212,42 @@ function generateEstimatePDF() {
       pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
     };
 
-    html2pdf().set(opt).from(pdfContainer).outputPdf('datauristring').then(function(dataUri) {
-      var base64 = dataUri.split(',')[1];
-      // Convert base64 to Blob
-      var byteChars = atob(base64);
-      var byteNumbers = new Array(byteChars.length);
-      for (var i = 0; i < byteChars.length; i++) {
-        byteNumbers[i] = byteChars.charCodeAt(i);
-      }
-      var byteArray = new Uint8Array(byteNumbers);
-      var blob = new Blob([byteArray], { type: 'application/pdf' });
+    // Timeout to detect if html2pdf hangs
+    var pdfTimedOut = false;
+    var pdfTimeout = setTimeout(function() {
+      pdfTimedOut = true;
+      reject(new Error('PDF generation timed out after 30s'));
+    }, 30000);
 
-      resolve({
-        base64: base64,
-        dataUri: dataUri,
-        blob: blob
+    try {
+      html2pdf().set(opt).from(pdfContainer).outputPdf('datauristring').then(function(dataUri) {
+        if (pdfTimedOut) return;
+        clearTimeout(pdfTimeout);
+
+        var base64 = dataUri.split(',')[1];
+        // Convert base64 to Blob
+        var byteChars = atob(base64);
+        var byteNumbers = new Array(byteChars.length);
+        for (var i = 0; i < byteChars.length; i++) {
+          byteNumbers[i] = byteChars.charCodeAt(i);
+        }
+        var byteArray = new Uint8Array(byteNumbers);
+        var blob = new Blob([byteArray], { type: 'application/pdf' });
+
+        resolve({
+          base64: base64,
+          dataUri: dataUri,
+          blob: blob
+        });
+      }).catch(function(err) {
+        if (pdfTimedOut) return;
+        clearTimeout(pdfTimeout);
+        reject(err);
       });
-    }).catch(function(err) {
-      reject(err);
-    });
+    } catch (err) {
+      clearTimeout(pdfTimeout);
+      reject(new Error('html2pdf threw: ' + err.message));
+    }
   });
 }
 
