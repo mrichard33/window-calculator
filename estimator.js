@@ -1266,23 +1266,7 @@ function generateEstimatePDF() {
 
 function sendPDFToWebhook(base64, contactId, contactName) {
   var fileName = 'Reece-Windows-Estimate-' + Date.now() + '.pdf';
-
-  // Create hidden iframe as form target (prevents page navigation)
-  var iframeName = 'pdf_upload_' + Date.now();
-  var iframe = document.createElement('iframe');
-  iframe.name = iframeName;
-  iframe.style.display = 'none';
-  document.body.appendChild(iframe);
-
-  // Create hidden form targeting the iframe
-  var form = document.createElement('form');
-  form.method = 'POST';
-  form.action = GHL_CONFIG.pdfWebhookUrl;
-  form.target = iframeName;
-  form.style.display = 'none';
-
-  // Add form fields
-  var fields = {
+  var payload = {
     contact_id: contactId || '',
     contact_name: contactName || '',
     pdf_base64: base64,
@@ -1291,24 +1275,17 @@ function sendPDFToWebhook(base64, contactId, contactName) {
     ghl_location_id: GHL_CONFIG.locationId
   };
 
-  Object.keys(fields).forEach(function(key) {
-    var input = document.createElement('input');
-    input.type = 'hidden';
-    input.name = key;
-    input.value = fields[key];
-    form.appendChild(input);
+  fetch(GHL_CONFIG.pdfWebhookUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  }).then(function(resp) {
+    console.log('PDF webhook response:', resp.status);
+  }).catch(function(err) {
+    console.error('PDF webhook failed:', err);
   });
 
-  document.body.appendChild(form);
-  form.submit();
-
-  console.log('PDF sent to GHL webhook via form submit, file:', fileName, 'payload fields:', Object.keys(fields).length);
-
-  // Clean up form and iframe after a delay
-  setTimeout(function() {
-    document.body.removeChild(form);
-    document.body.removeChild(iframe);
-  }, 30000);
+  console.log('PDF sent to GHL webhook, file:', fileName);
 }
 
 function sendPDFToGHL() {
