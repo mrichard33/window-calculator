@@ -195,7 +195,7 @@ function updateContactEstimate(contactId, estimateTotal, windowCount) {
   }
 
   var body = {
-    tags: ['estimate-completed'],
+    tags: ['window-estimator', 'estimator-completed'],
     customFields: []
   };
 
