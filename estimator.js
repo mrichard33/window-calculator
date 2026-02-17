@@ -139,6 +139,7 @@ function createContactInGHL() {
 // ============================================================
 function updateContactPhone() {
   var data = gatherContactData();
+  var previousContactId = window.ghlContactId || null;
 
   // Always upsert so that if the phone matches an existing GHL contact
   // the records merge instead of creating a duplicate.
@@ -170,6 +171,16 @@ function updateContactPhone() {
     if (result && result.contact && result.contact.id) {
       window.ghlContactId = result.contact.id;
       console.log('GHL contact upserted:', window.ghlContactId);
+
+      // If upsert matched a different contact, delete the orphan from Step 1
+      if (previousContactId && previousContactId !== result.contact.id) {
+        console.log('Deleting orphan contact from Step 1:', previousContactId);
+        ghlApiFetch('/contacts/' + previousContactId, {
+          method: 'DELETE'
+        }).catch(function(err) {
+          console.warn('Failed to delete orphan contact:', err);
+        });
+      }
     }
     return result;
   }).catch(function(err) {
