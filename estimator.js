@@ -1170,7 +1170,7 @@ function generateEstimatePDF() {
 
     // Build a self-contained HTML element for the PDF
     var pdfContainer = document.createElement('div');
-    pdfContainer.style.cssText = 'width:7.5in; padding:12px 20px 20px 20px; font-family:Nunito Sans,sans-serif; color:#1a2a3a; font-size:12px;';
+    pdfContainer.style.cssText = 'box-sizing:border-box; width:7.5in; padding:12px 20px 20px 20px; font-family:Nunito Sans,sans-serif; color:#1a2a3a; font-size:12px;';
 
     // Header
     var header = document.createElement('div');
