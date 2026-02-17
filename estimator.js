@@ -89,7 +89,8 @@ function gatherContactData() {
       campaign: params.get("utm_campaign") || "",
       content: params.get("utm_content") || "",
       term: params.get("utm_term") || ""
-    }
+    },
+    lpSourceId: params.get("lp_source_id") || ""
   };
 }
 
@@ -116,6 +117,7 @@ function createContactInGHL() {
   if (data.utm.medium) body.customFields.push({ key: 'utm_medium', field_value: data.utm.medium });
   if (data.utm.campaign) body.customFields.push({ key: 'utm_campaign', field_value: data.utm.campaign });
   if (data.utm.content) body.customFields.push({ key: 'utm_content', field_value: data.utm.content });
+  if (data.lpSourceId) body.customFields.push({ key: 'lp_source_id', field_value: data.lpSourceId });
 
   return ghlApiFetch('/contacts/', {
     method: 'POST',
