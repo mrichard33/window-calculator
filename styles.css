@@ -598,6 +598,28 @@ header .header-intro {
   margin-bottom: 0;
 }
 
+/* ===== CONSENT CHECKBOX ===== */
+.consent-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--text-gray);
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.consent-label input[type="checkbox"] {
+  margin-top: 0.2rem;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.field-error .consent-label input[type="checkbox"] {
+  outline: 2px solid var(--cta-red);
+  outline-offset: 1px;
+}
+
 /* ===== PRICING STABILITY NOTE ===== */
 .pricing-stability-note {
   background: var(--light-bg);

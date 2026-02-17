@@ -573,6 +573,15 @@ function validateAndGoToStep4() {
     document.getElementById('field-email').classList.remove('field-error');
   }
 
+  // Consent checkbox is required
+  var consentBox = document.getElementById('consentCheckbox');
+  if (!consentBox.checked) {
+    document.getElementById('field-consent').classList.add('field-error');
+    valid = false;
+  } else {
+    document.getElementById('field-consent').classList.remove('field-error');
+  }
+
   if (!valid) {
     const firstError = document.querySelector('#section-3 .field-error input');
     if (firstError) firstError.focus();
