@@ -108,12 +108,14 @@ function createContactInGHL() {
     state: data.state,
     postalCode: data.postalCode,
     source: 'Window Estimator',
-    tags: ['window-estimator']
+    tags: ['window-estimator'],
+    customFields: []
   };
 
-  if (data.utm.source) body.tags.push('utm_source:' + data.utm.source);
-  if (data.utm.medium) body.tags.push('utm_medium:' + data.utm.medium);
-  if (data.utm.campaign) body.tags.push('utm_campaign:' + data.utm.campaign);
+  if (data.utm.source) body.customFields.push({ key: 'utm_source', field_value: data.utm.source });
+  if (data.utm.medium) body.customFields.push({ key: 'utm_medium', field_value: data.utm.medium });
+  if (data.utm.campaign) body.customFields.push({ key: 'utm_campaign', field_value: data.utm.campaign });
+  if (data.utm.content) body.customFields.push({ key: 'utm_content', field_value: data.utm.content });
 
   return ghlApiFetch('/contacts/', {
     method: 'POST',
