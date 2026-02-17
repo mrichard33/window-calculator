@@ -140,23 +140,8 @@ function createContactInGHL() {
 function updateContactPhone() {
   var data = gatherContactData();
 
-  // If we have a contactId from Step 1, update the existing contact
-  if (window.ghlContactId) {
-    var body = { phone: data.phone };
-    if (data.email) body.email = data.email;
-
-    return ghlApiFetch('/contacts/' + window.ghlContactId, {
-      method: 'PUT',
-      body: JSON.stringify(body)
-    }).then(function(result) {
-      console.log('GHL contact updated with phone/email:', window.ghlContactId);
-      return result;
-    }).catch(function(err) {
-      console.error('GHL contact update failed:', err);
-    });
-  }
-
-  // Fallback: Step 1 API failed, so upsert a new contact matching on phone
+  // Always upsert so that if the phone matches an existing GHL contact
+  // the records merge instead of creating a duplicate.
   var body = {
     locationId: GHL_CONFIG.locationId,
     firstName: data.firstName,
@@ -167,9 +152,16 @@ function updateContactPhone() {
     state: data.state,
     postalCode: data.postalCode,
     source: 'Window Estimator',
-    tags: ['window-estimator']
+    tags: ['window-estimator'],
+    customFields: []
   };
   if (data.email) body.email = data.email;
+
+  if (data.utm.source) body.customFields.push({ key: 'utm_source', field_value: data.utm.source });
+  if (data.utm.medium) body.customFields.push({ key: 'utm_medium', field_value: data.utm.medium });
+  if (data.utm.campaign) body.customFields.push({ key: 'utm_campaign', field_value: data.utm.campaign });
+  if (data.utm.content) body.customFields.push({ key: 'utm_content', field_value: data.utm.content });
+  if (data.lpSourceId) body.customFields.push({ key: 'lp_source_id', field_value: data.lpSourceId });
 
   return ghlApiFetch('/contacts/upsert', {
     method: 'POST',
@@ -177,7 +169,7 @@ function updateContactPhone() {
   }).then(function(result) {
     if (result && result.contact && result.contact.id) {
       window.ghlContactId = result.contact.id;
-      console.log('GHL contact upserted (fallback):', window.ghlContactId);
+      console.log('GHL contact upserted:', window.ghlContactId);
     }
     return result;
   }).catch(function(err) {
