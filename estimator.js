@@ -1170,7 +1170,7 @@ function generateEstimatePDF() {
 
     // Build a self-contained HTML element for the PDF
     var pdfContainer = document.createElement('div');
-    pdfContainer.style.cssText = 'padding:20px; font-family:Nunito Sans,sans-serif; color:#1a2a3a; font-size:12px;';
+    pdfContainer.style.cssText = 'padding:4px 20px 20px 20px; font-family:Nunito Sans,sans-serif; color:#1a2a3a; font-size:12px;';
 
     // Header
     var header = document.createElement('div');
@@ -1193,13 +1193,17 @@ function generateEstimatePDF() {
     contentClone.querySelectorAll('.total td').forEach(function(cell) {
       cell.style.cssText += '; font-weight:700; font-size:14px; border-top:2px solid #1a2a3a;';
     });
-    // Keep small sections together on one page; let Itemized Breakdown flow across pages
+    // Tighten vertical spacing and control page breaks in cloned sections
     contentClone.querySelectorAll('.summary-section').forEach(function(section) {
+      section.style.margin = '0 0 8px 0';
       var heading = section.querySelector('h3');
-      if (heading && heading.textContent === 'Itemized Breakdown') {
-        section.style.pageBreakInside = 'auto';
-      } else {
-        section.style.pageBreakInside = 'avoid';
+      if (heading) {
+        heading.style.margin = '0 0 4px 0';
+        if (heading.textContent === 'Itemized Breakdown') {
+          section.style.pageBreakInside = 'auto';
+        } else {
+          section.style.pageBreakInside = 'avoid';
+        }
       }
     });
     pdfContainer.appendChild(contentClone);
@@ -1211,7 +1215,7 @@ function generateEstimatePDF() {
     pdfContainer.appendChild(footer);
 
     var opt = {
-      margin:       [0.5, 0.5, 0.5, 0.5],
+      margin:       [0.3, 0.5, 0.5, 0.5],
       filename:     'Reece-Windows-Estimate.pdf',
       image:        { type: 'jpeg', quality: 0.95 },
       html2canvas:  { scale: 2, useCORS: true, logging: false },
