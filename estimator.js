@@ -1170,7 +1170,7 @@ function generateEstimatePDF() {
 
     // Build a self-contained HTML element for the PDF
     var pdfContainer = document.createElement('div');
-    pdfContainer.style.cssText = 'box-sizing:border-box; width:7.5in; padding:12px 20px 20px 20px; font-family:Nunito Sans,sans-serif; color:#1a2a3a; font-size:12px;';
+    pdfContainer.style.cssText = 'box-sizing:border-box; width:760px; padding:12px 20px 20px 20px; font-family:Nunito Sans,sans-serif; color:#1a2a3a; font-size:12px;';
 
     // Header
     var header = document.createElement('div');
@@ -1214,7 +1214,7 @@ function generateEstimatePDF() {
       margin:       [0.3, 0.5, 0.5, 0.5],
       filename:     'Reece-Windows-Estimate.pdf',
       image:        { type: 'jpeg', quality: 0.65 },
-      html2canvas:  { scale: 1.5, useCORS: true, logging: false, windowWidth: 720 },
+      html2canvas:  { scale: 1.5, useCORS: true, logging: false, windowWidth: 760 },
       jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' },
       pagebreak:    { mode: ['css', 'legacy'] }
     };
