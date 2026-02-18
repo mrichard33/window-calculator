@@ -1084,7 +1084,7 @@ function buildSummary() {
       '<tr><td>Windows Subtotal (incl. installation)</td><td>' + fmt(windowSubtotal) + '</td></tr>';
 
   if (bulkDiscountAmt > 0) {
-    html += '<tr><td>Bulk Discount (' + Math.round(project.bulkDiscountRate * 100) + '% for ' + totalWindows + ' windows)</td><td style="color:var(--cta-red);">-' + fmt(bulkDiscountAmt) + '</td></tr>';
+    html += '<tr><td>Project Efficiency Adjustment (' + totalWindows + '-Window Scope)</td><td style="color:var(--cta-red);">-' + fmt(bulkDiscountAmt) + '</td></tr>';
   }
   html += '<tr><td>Permit Fee (3%)</td><td>' + fmt(permitFee) + '</td></tr>';
 
@@ -1100,7 +1100,7 @@ function buildSummary() {
       '<tr><td>High Estimate (+20%)</td><td>' + fmt(highEstimate) + '</td></tr>' +
     '</table>' +
     '<p style="font-size:0.78rem; color:var(--text-gray); margin-top:0.5rem;">' +
-      'Range accounts for brand variance, local market conditions, and contractor pricing differences.' +
+      'This range reflects final measurement confirmation, installation conditions, and code compliance requirements.' +
     '</p>' +
   '</div>';
 
@@ -1201,6 +1201,7 @@ function generateEstimatePDF() {
     priceBlock.innerHTML =
       '<h3 style="margin:0 0 10px 0; padding-left:12px; font-size:14px; font-weight:700; color:#122739; border-left:3px solid #ED1E24; line-height:1.3;">Estimated Project Investment</h3>' +
       '<p style="margin:0 0 4px 0; font-size:30px; font-weight:700; color:#122739; text-align:center; line-height:1.2;">' + fmt(total) + '</p>' +
+      '<p style="margin:4px 0 0 0; font-size:11px; color:#626060; text-align:center; letter-spacing:0.3px;">Full-Frame Replacement | ' + (window.latestWindowCount || 0) + ' Impact-Rated Windows</p>' +
       '<div style="border-top:1px solid #C1D5DB; margin:12px 0;"></div>' +
       '<p style="margin:0 0 8px 0; font-size:11px; color:#626060; text-align:center;">Most projects fall within this estimated range.</p>' +
       '<p style="margin:0 0 2px 0; font-size:10px; font-weight:700; color:#0C2340; text-align:center;">Estimated Range</p>' +
@@ -1259,10 +1260,14 @@ function generateEstimatePDF() {
     pdfContainer.appendChild(routingBody);
 
     // ===== 5. CLOSE SECTION =====
+    var closeDivider = document.createElement('div');
+    closeDivider.style.cssText = 'border-top:1px solid #C1D5DB; margin:24px -20px 0 -20px;';
+    pdfContainer.appendChild(closeDivider);
+
     var closeSection = document.createElement('div');
-    closeSection.style.cssText = 'background:#FFFFFF; padding-top:14px; border-top:1px solid #C1D5DB; margin-bottom:20px; page-break-inside:avoid;';
+    closeSection.style.cssText = 'background:#FFFFFF; padding-top:18px; margin-bottom:20px; page-break-inside:avoid;';
     closeSection.innerHTML =
-      '<h3 style="margin:0 0 10px 0; padding-left:12px; font-size:13px; font-weight:700; color:#122739; border-left:3px solid #ED1E24; line-height:1.3;">Next Step: Confirm and Finalize</h3>' +
+      '<h3 style="margin:0 0 10px 0; padding-left:12px; font-size:14px; font-weight:700; color:#122739; border-left:3px solid #ED1E24; line-height:1.3;">Next Step: Confirm and Finalize</h3>' +
       '<p style="margin:0 0 4px 0; font-size:11px; color:#626060; line-height:1.5;">A brief professional measurement allows us to:</p>' +
       '<ul style="margin:4px 0 10px 0; padding-left:20px; font-size:11px; color:#626060; line-height:1.6;">' +
         '<li>Lock in your exact price</li>' +
@@ -1277,7 +1282,7 @@ function generateEstimatePDF() {
 
     // ===== 6. FOOTER =====
     var footer = document.createElement('div');
-    footer.style.cssText = 'margin-top:20px; padding-top:10px; border-top:1px solid #C1D5DB; font-size:10px; color:#626060; text-align:center; line-height:1.5; page-break-inside:avoid;';
+    footer.style.cssText = 'margin-top:28px; padding-top:12px; border-top:1px solid #C1D5DB; font-size:10px; color:#4A4A4A; text-align:center; line-height:1.5; page-break-inside:avoid;';
     footer.innerHTML =
       'Installation schedules are organized by geographic zone and material availability.<br>' +
       'Early verification ensures access to the most efficient installation cycle.';
