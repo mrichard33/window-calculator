@@ -239,6 +239,30 @@ function triggerGHLWorkflow(contactId, eventType) {
 }
 
 // ============================================================
+//  GHL: IMMEDIATE ESTIMATE WEBHOOK (fires independently of PDF)
+// ============================================================
+function fireEstimateWebhook(contactId, contactName, estimateData) {
+  if (!GHL_CONFIG.pdfWebhookUrl) return Promise.resolve(null);
+
+  return fetch(GHL_CONFIG.pdfWebhookUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contact_id: contactId || '',
+      contact_name: contactName || '',
+      event: 'estimate_completed',
+      estimate_total: estimateData.total || '',
+      window_count: estimateData.windowCount || 0,
+      ghl_location_id: GHL_CONFIG.locationId
+    })
+  }).then(function(resp) {
+    console.log('Estimate webhook response:', resp.status);
+  }).catch(function(err) {
+    console.warn('Estimate webhook failed:', err);
+  });
+}
+
+// ============================================================
 //  GOOGLE PLACES ADDRESS AUTOCOMPLETE
 // ============================================================
 window.initializeAddressForm = function() {
@@ -645,8 +669,15 @@ function goToStep(n) {
       var estimateTotal = window.latestEstimateTotal || "";
       var windowCount = window.latestWindowCount || 0;
       var contactId = window.ghlContactId || null;
+      var data = gatherContactData();
+      var contactName = (data.firstName + ' ' + data.lastName).trim();
+
       updateContactEstimate(contactId, estimateTotal, windowCount);
       triggerGHLWorkflow(contactId, 'estimate_completed');
+      fireEstimateWebhook(contactId, contactName, {
+        total: estimateTotal,
+        windowCount: windowCount
+      });
 
       // PDF generation + n8n send (separate, can fail independently)
       sendPDFToGHL();
@@ -1345,6 +1376,7 @@ function generateEstimatePDF() {
 function sendPDFToWebhook(base64, contactId, contactName) {
   var fileName = 'Reece-Windows-Estimate-' + Date.now() + '.pdf';
   var payload = {
+    type: 'pdf_attachment',
     contact_id: contactId || '',
     contact_name: contactName || '',
     pdf_base64: base64,
