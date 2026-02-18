@@ -507,6 +507,125 @@ header .header-intro {
   margin-bottom: 0.5rem;
 }
 
+/* ===== ESTIMATE HERO (Price Authority Block) ===== */
+.estimate-hero {
+  text-align: center;
+  padding: 1.25rem 0;
+  margin-bottom: 1.25rem;
+}
+
+.estimate-hero h3 {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--deep-navy);
+  border-left: 3px solid var(--cta-red);
+  padding-left: 0.75rem;
+  margin-bottom: 0.75rem;
+  text-align: left;
+}
+
+.estimate-hero .hero-price {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--deep-navy);
+  margin: 0.25rem 0;
+}
+
+.estimate-hero .hero-descriptor {
+  font-size: 0.85rem;
+  color: var(--charcoal);
+  letter-spacing: 0.3px;
+}
+
+.estimate-hero .hero-credibility {
+  font-size: 0.75rem;
+  color: var(--text-gray);
+  letter-spacing: 0.5px;
+  margin-top: 0.15rem;
+}
+
+/* ===== ESTIMATE RANGE BLOCK ===== */
+.estimate-range {
+  text-align: center;
+  padding: 1rem 0;
+  margin-bottom: 1.25rem;
+  border-top: 1px solid var(--mist);
+  border-bottom: 1px solid var(--mist);
+}
+
+.estimate-range .range-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--deep-navy);
+  margin-bottom: 0.25rem;
+}
+
+.estimate-range .range-values {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--deep-navy);
+  margin-bottom: 0.5rem;
+}
+
+.estimate-range p {
+  font-size: 0.82rem;
+  color: var(--charcoal);
+  margin: 0.25rem 0;
+  line-height: 1.5;
+}
+
+/* ===== PROJECT SUMMARY HEADER ===== */
+.project-summary-header {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--deep-navy);
+  border-left: 3px solid var(--cta-red);
+  padding-left: 0.75rem;
+  margin: 1.25rem 0 0.75rem 0;
+}
+
+/* ===== ROUTING SECTION ===== */
+.routing-section {
+  margin-bottom: 1.5rem;
+}
+
+.routing-section h3 {
+  font-size: 0.9rem;
+  color: var(--deep-navy);
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.routing-section p {
+  font-size: 0.85rem;
+  color: var(--charcoal);
+  margin: 0.35rem 0;
+  line-height: 1.5;
+}
+
+.routing-section ul {
+  padding-left: 1.25rem;
+  margin: 0.35rem 0;
+}
+
+.routing-section li {
+  font-size: 0.85rem;
+  color: var(--charcoal);
+  line-height: 1.6;
+}
+
+/* ===== VERIFY CTA SECONDARY LINK ===== */
+.verify-secondary {
+  margin-top: 0.75rem;
+  text-align: center;
+}
+
+.verify-secondary a {
+  color: var(--steel-blue);
+  font-size: 0.85rem;
+  text-decoration: underline;
+}
+
 /* ===== DISCLAIMER ===== */
 .disclaimer {
   background: var(--light-bg);
@@ -730,7 +849,11 @@ header .header-intro {
   .how-it-works,
   .site-footer,
   .verify-cta,
-  .pricing-stability-note {
+  .pricing-stability-note,
+  .estimate-hero,
+  .estimate-range,
+  .routing-section,
+  .project-summary-header {
     display: none !important;
   }
 

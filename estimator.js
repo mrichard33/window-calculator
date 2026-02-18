@@ -1082,8 +1082,43 @@ function buildSummary() {
   const custPhone = document.getElementById('phone').value.trim();
   const custEmail = document.getElementById('email').value.trim();
 
-  let html = '<div class="summary-section">' +
-    '<h3>Customer</h3>' +
+  // ===== PRICE HERO BLOCK =====
+  let html = '<div class="estimate-hero">' +
+    '<h3>Estimated Project Investment</h3>' +
+    '<p class="hero-price">' + fmt(grandTotal) + '</p>' +
+    '<p class="hero-descriptor">Full-Frame Replacement | ' + totalWindows + ' Impact-Rated Windows</p>' +
+    '<p class="hero-credibility">Florida-Engineered | Impact-Rated | In-House Installation</p>' +
+  '</div>';
+
+  // ===== STRUCTURED STARTING POINT =====
+  html += '<div class="summary-section">' +
+    '<h3>Your Online Estimate Is a Structured Starting Point</h3>' +
+    '<p style="font-size:0.85rem; color:var(--charcoal); margin-bottom:0.5rem;">This estimate reflects the window selections and preliminary measurements you provided.</p>' +
+    '<p style="font-size:0.85rem; color:var(--charcoal); margin-bottom:0.35rem;">Before materials are ordered, we verify:</p>' +
+    '<ul style="padding-left:1.25rem; margin:0.25rem 0 0.5rem 0;">' +
+      '<li style="font-size:0.85rem; color:var(--charcoal); line-height:1.6;">Exact opening dimensions</li>' +
+      '<li style="font-size:0.85rem; color:var(--charcoal); line-height:1.6;">Installation conditions</li>' +
+      '<li style="font-size:0.85rem; color:var(--charcoal); line-height:1.6;">Florida code compliance requirements</li>' +
+      '<li style="font-size:0.85rem; color:var(--charcoal); line-height:1.6;">Geographic scheduling zone eligibility</li>' +
+    '</ul>' +
+    '<p style="font-size:0.85rem; color:var(--charcoal);">This protects you from unexpected changes \u2014 up or down.</p>' +
+  '</div>';
+
+  // ===== ESTIMATED RANGE BLOCK =====
+  html += '<div class="estimate-range">' +
+    '<p class="range-label">Estimated Range</p>' +
+    '<p class="range-values">' + fmt(lowEstimate) + ' \u2013 ' + fmt(highEstimate) + '</p>' +
+    '<p>Most verified projects remain within this range.</p>' +
+    '<p>Verified projects rarely exceed the projected range.</p>' +
+    '<p style="margin-top:0.5rem; font-size:0.78rem; color:var(--text-gray);">This range reflects final measurement confirmation, installation conditions, and code compliance requirements.</p>' +
+  '</div>';
+
+  // ===== PROJECT SUMMARY HEADER =====
+  html += '<h3 class="project-summary-header">Project Summary</h3>';
+
+  // ===== CUSTOMER INFORMATION =====
+  html += '<div class="summary-section">' +
+    '<h3>Customer Information</h3>' +
     '<table class="summary-table">' +
       '<tr><td>Name</td><td>' + custName + '</td></tr>' +
       '<tr><td>Address</td><td>' + custAddress + ', ' + custCity + ', ' + custState + ' ' + custPostal + '</td></tr>' +
@@ -1092,6 +1127,7 @@ function buildSummary() {
     '</table>' +
   '</div>';
 
+  // ===== PROJECT OVERVIEW =====
   html += '<div class="summary-section">' +
     '<h3>Project Overview</h3>' +
     '<table class="summary-table">' +
@@ -1101,6 +1137,7 @@ function buildSummary() {
     '</table>' +
   '</div>';
 
+  // ===== ITEMIZED BREAKDOWN =====
   html += '<div class="summary-section">' +
     '<h3>Itemized Breakdown</h3>' +
     '<table class="summary-table">' +
@@ -1109,6 +1146,7 @@ function buildSummary() {
     '</table>' +
   '</div>';
 
+  // ===== PROJECT COSTS =====
   html += '<div class="summary-section">' +
     '<h3>Project Costs</h3>' +
     '<table class="summary-table">' +
@@ -1123,24 +1161,30 @@ function buildSummary() {
     '</table>' +
   '</div>';
 
-  html += '<div class="summary-section">' +
-    '<h3>Cost Range</h3>' +
-    '<table class="summary-table">' +
-      '<tr><td>Projected Low (-20%)</td><td>' + fmt(lowEstimate) + '</td></tr>' +
-      '<tr class="subtotal"><td>Verified Average</td><td>' + fmt(grandTotal) + '</td></tr>' +
-      '<tr><td>Projected High (+20%)</td><td>' + fmt(highEstimate) + '</td></tr>' +
-    '</table>' +
-    '<p style="font-size:0.78rem; color:var(--text-gray); margin-top:0.5rem;">' +
-      'This range reflects final measurement confirmation, installation conditions, and code compliance requirements.' +
-    '</p>' +
-  '</div>';
-
+  // ===== POTENTIAL SAVINGS =====
   html += '<div class="summary-section">' +
     '<h3>Potential Savings</h3>' +
-    '<table class="summary-table">' +
-      '<tr><td>ENERGY STAR Tax Credit (up to 30%, max $600/yr Federal Tax Credit)</td><td style="color:var(--cta-red);">Up to -' + fmt(Math.min(windowSubtotal * 0.30, 600)) + '</td></tr>' +
-      '<tr><td>Energy Savings (est. 12% on heating/cooling bills annually)</td><td style="color:var(--cta-red);">Varies by home</td></tr>' +
-    '</table>' +
+    '<ul style="padding-left:1.25rem; margin:0.25rem 0 0.5rem 0;">' +
+      '<li style="font-size:0.85rem; color:var(--charcoal); line-height:1.6;">Up to $600 Federal ENERGY STAR Tax Credit</li>' +
+      '<li style="font-size:0.85rem; color:var(--charcoal); line-height:1.6;">Estimated 12% annual heating/cooling efficiency improvement (varies by home)</li>' +
+    '</ul>' +
+    '<p style="font-size:0.82rem; color:var(--text-gray); margin-top:0.35rem;">Savings eligibility is confirmed during professional verification.</p>' +
+  '</div>';
+
+  // ===== HOW SCHEDULING CAN INFLUENCE FINAL PRICING =====
+  html += '<div class="routing-section">' +
+    '<h3>How Scheduling Can Influence Final Pricing</h3>' +
+    '<p>We organize installations by geographic zones.</p>' +
+    '<p>When multiple homes in the same area are completed during the same installation cycle, operational efficiencies may apply.</p>' +
+    '<p>These efficiencies can reduce:</p>' +
+    '<ul>' +
+      '<li>Crew travel time</li>' +
+      '<li>Equipment staging costs</li>' +
+      '<li>Material handling redundancies</li>' +
+    '</ul>' +
+    '<p>When routing efficiencies apply, they are reflected in final pricing.</p>' +
+    '<p>Unverified estimates are not allocated to an installation zone.</p>' +
+    '<p>Early confirmation improves access to the most efficient installation cycle.</p>' +
   '</div>';
 
   document.getElementById('summaryContent').innerHTML = html;
