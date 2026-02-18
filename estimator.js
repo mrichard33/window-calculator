@@ -1031,7 +1031,7 @@ function buildSummary() {
 
     const impactLabel = cost.isImpact ? ' (Impact)' : '';
     windowRows += '<tr>' +
-      '<td colspan="4" style="font-weight:700; background:var(--light-bg); color:var(--deep-navy);">' +
+      '<td colspan="4" style="font-weight:700; background:#F2F3F7; color:#0D2240;">' +
         '#' + (i + 1) + ' ' + label + ' ' + (c.qty > 1 ? '&times; ' + c.qty : '') +
         impactLabel +
       '</td>' +
@@ -1148,7 +1148,7 @@ function buildSummary() {
   html += '<div class="summary-section">' +
     '<h3>Itemized Breakdown</h3>' +
     '<table class="summary-table">' +
-      '<thead><tr><th>Item</th><th>Per Unit</th><th>Qty</th><th>Total</th></tr></thead>' +
+      '<thead><tr><th>Item</th><th>Per Unit</th><th>Qty</th><th style="text-align:right;">Total</th></tr></thead>' +
       '<tbody>' + windowRows + '</tbody>' +
     '</table>' +
   '</div>';
