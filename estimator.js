@@ -1088,7 +1088,9 @@ function buildSummary() {
     '<p class="hero-price">' + fmt(grandTotal) + '</p>' +
     '<p class="hero-descriptor">Full-Frame Replacement | ' + totalWindows + ' Impact-Rated Windows</p>' +
     '<p class="hero-credibility">Florida-Engineered | Impact-Rated | In-House Installation</p>' +
-    '<p class="hero-financing">Financing available with approved credit. Estimated payments from $' + Math.round(lowEstimate * 0.0107) + '\u2013$' + Math.round(grandTotal * 0.0107) + ' per month. 0% down options available.</p>' +
+    '<p class="hero-financing">Flexible property-based payment options available. No traditional credit score required.</p>' +
+    '<p class="hero-financing">Estimated payments from $' + Math.round(lowEstimate * 0.0107) + '\u2013$' + Math.round(grandTotal * 0.0107) + ' per month*. 0% down options available.</p>' +
+    '<p class="hero-financing">*Payment example based on estimated project total. Final terms determined during verification.</p>' +
   '</div>';
 
   // ===== STRUCTURED STARTING POINT =====
