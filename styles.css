@@ -544,6 +544,13 @@ header .header-intro {
   margin-top: 0.15rem;
 }
 
+.estimate-hero .hero-financing {
+  font-size: 0.72rem;
+  color: var(--text-gray);
+  margin-top: 0.35rem;
+  line-height: 1.4;
+}
+
 /* ===== ESTIMATE RANGE BLOCK ===== */
 .estimate-range {
   text-align: center;

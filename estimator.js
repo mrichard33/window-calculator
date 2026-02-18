@@ -1088,6 +1088,7 @@ function buildSummary() {
     '<p class="hero-price">' + fmt(grandTotal) + '</p>' +
     '<p class="hero-descriptor">Full-Frame Replacement | ' + totalWindows + ' Impact-Rated Windows</p>' +
     '<p class="hero-credibility">Florida-Engineered | Impact-Rated | In-House Installation</p>' +
+    '<p class="hero-financing">Financing available with approved credit. Estimated payments from $' + Math.round(lowEstimate * 0.0107) + '\u2013$' + Math.round(grandTotal * 0.0107) + ' per month. 0% down options available.</p>' +
   '</div>';
 
   // ===== STRUCTURED STARTING POINT =====
@@ -1278,6 +1279,7 @@ function generateEstimatePDF() {
       '<p style="margin:0 0 4px 0; font-size:30px; font-weight:700; color:#122739; text-align:center; line-height:1.2;">' + fmt(total) + '</p>' +
       '<p style="margin:4px 0 0 0; font-size:11px; color:#626060; text-align:center; letter-spacing:0.3px;">Full-Frame Replacement | ' + (window.latestWindowCount || 0) + ' Impact-Rated Windows</p>' +
       '<p style="margin:2px 0 0 0; font-size:9px; color:#87898B; text-align:center; letter-spacing:0.5px;">Florida-Engineered | Impact-Rated | In-House Installation</p>' +
+      '<p style="margin:4px 0 0 0; font-size:8px; color:#87898B; text-align:center; line-height:1.4;">Financing available with approved credit. Estimated payments from $' + Math.round(lowPrice * 0.0107) + '\u2013$' + Math.round(total * 0.0107) + ' per month. 0% down options available.</p>' +
       '<div style="border-top:1px solid #C1D5DB; margin:12px 0;"></div>' +
       '<p style="margin:0 0 2px 0; font-size:10px; font-weight:700; color:#0C2340; text-align:center;">Estimated Range</p>' +
       '<p style="margin:0 0 6px 0; font-size:13px; font-weight:700; color:#0C2340; text-align:center;">' + fmt(lowPrice) + ' \u2013 ' + fmt(highPrice) + '</p>' +
