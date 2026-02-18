@@ -1373,7 +1373,7 @@ function generateEstimatePDF() {
     savings.innerHTML =
       '<h3 style="margin:0 0 4px 0; font-size:11px; font-weight:700; color:#0C2340;">Potential Savings</h3>' +
       '<table style="width:100%; border-collapse:collapse; margin-bottom:12px; font-size:11px;">' +
-        '<tr><td style="padding:6px 8px; border-bottom:1px solid #e0e0e0;">ENERGY STAR Tax Credit (up to 30%, max $600/yr)</td><td style="padding:6px 8px; border-bottom:1px solid #e0e0e0; text-align:right; font-weight:500; color:#ED1F24;">Up to' + fmt(Math.min(total * 0.30, 600)) Federal Tax Credit + '</td></tr>' +
+        '<tr><td style="padding:6px 8px; border-bottom:1px solid #e0e0e0;">ENERGY STAR Tax Credit (up to 30%, max $600/yr Federal Tax Credit)</td><td style="padding:6px 8px; border-bottom:1px solid #e0e0e0; text-align:right; font-weight:500; color:#ED1F24;">Up to' + fmt(Math.min(total * 0.30, 600)) + '</td></tr>' +
         '<tr><td style="padding:6px 8px; border-bottom:1px solid #e0e0e0;">Energy Savings (est. 12% on heating/cooling bills annually)</td><td style="padding:6px 8px; border-bottom:1px solid #e0e0e0; text-align:right; font-weight:500; color:#ED1F24;">Varies by home</td></tr>' +
       '</table>';
     pdfContainer.appendChild(savings);
