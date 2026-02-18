@@ -1202,10 +1202,11 @@ function generateEstimatePDF() {
       '<h3 style="margin:0 0 10px 0; padding-left:12px; font-size:14px; font-weight:700; color:#122739; border-left:3px solid #ED1E24; line-height:1.3;">Estimated Project Investment</h3>' +
       '<p style="margin:0 0 4px 0; font-size:30px; font-weight:700; color:#122739; text-align:center; line-height:1.2;">' + fmt(total) + '</p>' +
       '<p style="margin:4px 0 0 0; font-size:11px; color:#626060; text-align:center; letter-spacing:0.3px;">Full-Frame Replacement | ' + (window.latestWindowCount || 0) + ' Impact-Rated Windows</p>' +
+      '<p style="margin:2px 0 0 0; font-size:9px; color:#87898B; text-align:center; letter-spacing:0.5px;">Florida-Engineered | Impact-Rated | In-House Installation</p>' +
       '<div style="border-top:1px solid #C1D5DB; margin:12px 0;"></div>' +
-      '<p style="margin:0 0 8px 0; font-size:11px; color:#626060; text-align:center;">Most projects fall within this estimated range.</p>' +
       '<p style="margin:0 0 2px 0; font-size:10px; font-weight:700; color:#0C2340; text-align:center;">Estimated Range</p>' +
-      '<p style="margin:0 0 10px 0; font-size:13px; font-weight:700; color:#0C2340; text-align:center;">' + fmt(lowPrice) + ' \u2013 ' + fmt(highPrice) + '</p>' +
+      '<p style="margin:0 0 6px 0; font-size:13px; font-weight:700; color:#0C2340; text-align:center;">' + fmt(lowPrice) + ' \u2013 ' + fmt(highPrice) + '</p>' +
+      '<p style="margin:0 0 8px 0; font-size:11px; color:#626060; text-align:center;">Most projects fall within this estimated range.</p>' +
       '<p style="margin:0; font-size:10px; color:#626060; text-align:center; line-height:1.4;">This range reflects final measurement confirmation, installation method adjustments, and Florida code requirements.</p>';
     pdfContainer.appendChild(priceBlock);
 
@@ -1222,8 +1223,12 @@ function generateEstimatePDF() {
       cell.style.cssText += '; font-weight:700; font-size:14px; border-top:2px solid #1a2a3a;';
     });
     // Tighten vertical spacing and control page breaks in cloned sections
-    contentClone.querySelectorAll('.summary-section').forEach(function(section) {
+    contentClone.querySelectorAll('.summary-section').forEach(function(section, index) {
       section.style.margin = '0 0 8px 0';
+      if (index === 0) {
+        section.style.borderTop = '1px solid #C1D5DB';
+        section.style.paddingTop = '10px';
+      }
       var heading = section.querySelector('h3');
       if (heading) {
         heading.style.margin = '0 0 4px 0';
@@ -1237,14 +1242,8 @@ function generateEstimatePDF() {
     pdfContainer.appendChild(contentClone);
 
     // ===== 4. ROUTING & INSTALLATION SECTION =====
-    var routingDivider = document.createElement('div');
-    routingDivider.style.cssText = 'background:#C1D5DB; padding:10px 20px; margin:20px -20px 0 -20px; page-break-inside:avoid;';
-    routingDivider.innerHTML =
-      '<p style="margin:0; font-size:11px; font-weight:700; color:#122739; text-align:center;">Installation Scheduling &amp; Pricing</p>';
-    pdfContainer.appendChild(routingDivider);
-
     var routingBody = document.createElement('div');
-    routingBody.style.cssText = 'padding:16px 0 0 0; margin-bottom:20px; page-break-inside:avoid;';
+    routingBody.style.cssText = 'padding:20px 0 0 0; margin-bottom:20px; page-break-inside:avoid;';
     routingBody.innerHTML =
       '<h3 style="margin:0 0 10px 0; padding-left:12px; font-size:13px; font-weight:700; color:#122739; border-left:3px solid #ED1E24; line-height:1.3;">How Installation Scheduling Can Influence Final Pricing</h3>' +
       '<p style="margin:0 0 4px 0; font-size:11px; color:#626060; line-height:1.5;">We organize installations by geographic zones.</p>' +
@@ -1277,7 +1276,7 @@ function generateEstimatePDF() {
       '</ul>' +
       '<p style="margin:0 0 3px 0; font-size:11px; color:#626060; line-height:1.5;">There is no obligation.</p>' +
       '<p style="margin:0 0 3px 0; font-size:11px; color:#626060; line-height:1.5;">No sales presentation.</p>' +
-      '<p style="margin:0; font-size:11px; color:#626060; line-height:1.5;">Just precision.</p>';
+      '<p style="margin:0; font-size:11px; color:#626060; font-weight:600; line-height:1.5;">Just precision.</p>';
     pdfContainer.appendChild(closeSection);
 
     // ===== 6. FOOTER =====
