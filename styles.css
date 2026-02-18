@@ -658,6 +658,18 @@ header .header-intro {
   margin: 0.5rem 0;
 }
 
+.verify-cta ul {
+  margin: 0.5rem 0 0.5rem 1.25rem;
+  padding: 0;
+}
+
+.verify-cta li {
+  margin: 0.25rem 0;
+  color: var(--text-gray);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
 .verify-micro {
   margin-top: 0.75rem;
   font-size: 0.9rem;
