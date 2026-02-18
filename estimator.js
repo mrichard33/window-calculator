@@ -242,9 +242,9 @@ function triggerGHLWorkflow(contactId, eventType) {
 //  GHL: IMMEDIATE ESTIMATE WEBHOOK (fires independently of PDF)
 // ============================================================
 function fireEstimateWebhook(contactId, contactName, estimateData) {
-  if (!GHL_CONFIG.pdfWebhookUrl) return Promise.resolve(null);
+  if (!GHL_CONFIG.workflowWebhookUrl) return Promise.resolve(null);
 
-  return fetch(GHL_CONFIG.pdfWebhookUrl, {
+  return fetch(GHL_CONFIG.workflowWebhookUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -1503,20 +1503,20 @@ function sendPDFToWebhook(base64, contactId, contactName) {
     ghl_location_id: GHL_CONFIG.locationId
   };
 
-  fetch(GHL_CONFIG.pdfWebhookUrl, {
+  return fetch(GHL_CONFIG.pdfWebhookUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
   }).then(function(resp) {
     console.log('[PDF] webhook response:', resp.status);
     if (!resp.ok) {
-      resp.text().then(function(body) { console.error('[PDF] webhook error body:', body); });
+      return resp.text().then(function(body) {
+        throw new Error('[PDF] webhook error (' + resp.status + '): ' + body);
+      });
     }
-  }).catch(function(err) {
-    console.error('[PDF] webhook failed:', err);
+    console.log('[PDF] PDF sent to GHL webhook, file:', fileName);
+    return resp;
   });
-
-  console.log('PDF sent to GHL webhook, file:', fileName);
 }
 
 function sendPDFToGHL() {
@@ -1527,7 +1527,7 @@ function sendPDFToGHL() {
     var contactName = (data.firstName + ' ' + data.lastName).trim();
 
     console.log('[PDF] sendPDFToGHL: PDF generated, base64 length:', pdf.base64.length);
-    sendPDFToWebhook(pdf.base64, contactId, contactName);
+    return sendPDFToWebhook(pdf.base64, contactId, contactName);
   }).catch(function(err) {
     console.error('[PDF] sendPDFToGHL: PDF generation failed:', err);
     throw err;
