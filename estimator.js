@@ -1320,6 +1320,11 @@ function generateEstimatePDF() {
     if (projHeader) projHeader.remove();
     var routingEl = contentClone.querySelector('.routing-section');
     if (routingEl) routingEl.remove();
+    // Remove list-based Potential Savings (replaced by inline-styled table below)
+    contentClone.querySelectorAll('.summary-section').forEach(function(sec) {
+      var h = sec.querySelector('h3');
+      if (h && h.textContent === 'Potential Savings') sec.remove();
+    });
     // Style tables for PDF readability
     contentClone.querySelectorAll('table').forEach(function(table) {
       table.style.cssText = 'width:100%; border-collapse:collapse; margin-bottom:12px; font-size:11px;';
@@ -1348,6 +1353,30 @@ function generateEstimatePDF() {
       }
     });
     pdfContainer.appendChild(contentClone);
+
+    // ===== 3b. COST RANGE TABLE =====
+    var costRange = document.createElement('div');
+    costRange.style.cssText = 'margin:0 0 8px 0; page-break-inside:avoid;';
+    costRange.innerHTML =
+      '<h3 style="margin:0 0 4px 0; font-size:11px; font-weight:700; color:#0C2340;">Cost Range</h3>' +
+      '<table style="width:100%; border-collapse:collapse; margin-bottom:12px; font-size:11px;">' +
+        '<tr><td style="padding:6px 8px; border-bottom:1px solid #e0e0e0;">Projected Low (-20%)</td><td style="padding:6px 8px; border-bottom:1px solid #e0e0e0; text-align:right; font-weight:500;">' + fmt(lowPrice) + '</td></tr>' +
+        '<tr><td style="padding:6px 8px; border-bottom:1px solid #e0e0e0; font-weight:600; color:#122738;">Verified Average</td><td style="padding:6px 8px; border-bottom:1px solid #e0e0e0; text-align:right; font-weight:600; color:#122738;">' + fmt(total) + '</td></tr>' +
+        '<tr><td style="padding:6px 8px; border-bottom:1px solid #e0e0e0;">Projected High (+20%)</td><td style="padding:6px 8px; border-bottom:1px solid #e0e0e0; text-align:right; font-weight:500;">' + fmt(highPrice) + '</td></tr>' +
+      '</table>' +
+      '<p style="font-size:10px; color:#87898B; margin-top:4px; line-height:1.4;">This range reflects final measurement confirmation, installation conditions, and code compliance requirements.</p>';
+    pdfContainer.appendChild(costRange);
+
+    // ===== 3c. POTENTIAL SAVINGS TABLE =====
+    var savings = document.createElement('div');
+    savings.style.cssText = 'margin:0 0 8px 0; page-break-inside:avoid;';
+    savings.innerHTML =
+      '<h3 style="margin:0 0 4px 0; font-size:11px; font-weight:700; color:#0C2340;">Potential Savings</h3>' +
+      '<table style="width:100%; border-collapse:collapse; margin-bottom:12px; font-size:11px;">' +
+        '<tr><td style="padding:6px 8px; border-bottom:1px solid #e0e0e0;">ENERGY STAR Tax Credit (up to 30%, max $600/yr Federal Tax Credit)</td><td style="padding:6px 8px; border-bottom:1px solid #e0e0e0; text-align:right; font-weight:500; color:#ED1F24;">Up to -' + fmt(Math.min(total * 0.30, 600)) + '</td></tr>' +
+        '<tr><td style="padding:6px 8px; border-bottom:1px solid #e0e0e0;">Energy Savings (est. 12% on heating/cooling bills annually)</td><td style="padding:6px 8px; border-bottom:1px solid #e0e0e0; text-align:right; font-weight:500; color:#ED1F24;">Varies by home</td></tr>' +
+      '</table>';
+    pdfContainer.appendChild(savings);
 
     // ===== 4. ROUTING & INSTALLATION SECTION =====
     var routingBody = document.createElement('div');
