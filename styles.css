@@ -507,11 +507,25 @@ header .header-intro {
   margin-bottom: 0.5rem;
 }
 
+/* ===== STRUCTURED STARTING POINT ===== */
+.structured-starting-point {
+  border-top: 1px solid var(--mist);
+  padding-top: 1.25rem;
+  margin-top: 0;
+}
+
+.structured-starting-point h3 {
+  font-size: 1.05rem;
+  color: var(--deep-navy);
+  font-weight: 700;
+  margin-bottom: 0.6rem;
+}
+
 /* ===== ESTIMATE HERO (Price Authority Block) ===== */
 .estimate-hero {
   text-align: center;
   padding: 1.25rem 0;
-  margin-bottom: 1.25rem;
+  margin-bottom: 2rem;
 }
 
 .estimate-hero h3 {
@@ -525,21 +539,21 @@ header .header-intro {
 }
 
 .estimate-hero .hero-price {
-  font-size: 2rem;
-  font-weight: 700;
+  font-size: 2.5rem;
+  font-weight: 800;
   color: var(--deep-navy);
   margin: 0.25rem 0;
 }
 
 .estimate-hero .hero-descriptor {
   font-size: 0.85rem;
-  color: var(--charcoal);
+  color: #3a3a3a;
   letter-spacing: 0.3px;
 }
 
 .estimate-hero .hero-credibility {
   font-size: 0.75rem;
-  color: var(--text-gray);
+  color: var(--charcoal);
   letter-spacing: 0.5px;
   margin-top: 0.15rem;
 }
@@ -551,10 +565,16 @@ header .header-intro {
   line-height: 1.4;
 }
 
+.estimate-hero .hero-footnote {
+  font-size: 0.62rem;
+  margin-top: 0.15rem;
+}
+
 /* ===== ESTIMATE RANGE BLOCK ===== */
 .estimate-range {
   text-align: center;
   padding: 1rem 0;
+  margin-top: 0.75rem;
   margin-bottom: 1.25rem;
   border-top: 1px solid var(--mist);
   border-bottom: 1px solid var(--mist);
