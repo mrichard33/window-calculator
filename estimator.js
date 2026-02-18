@@ -1138,7 +1138,7 @@ function buildSummary() {
   html += '<div class="summary-section">' +
     '<h3>Potential Savings</h3>' +
     '<table class="summary-table">' +
-      '<tr><td>ENERGY STAR Tax Credit (up to 30%, max $600/yr)</td><td style="color:var(--cta-red);">Up to -' + fmt(Math.min(windowSubtotal * 0.30, 600)) + '</td></tr>' +
+      '<tr><td>ENERGY STAR Tax Credit (up to 30%, max $600/yr Federal Tax Credit)</td><td style="color:var(--cta-red);">Up to -' + fmt(Math.min(windowSubtotal * 0.30, 600)) + '</td></tr>' +
       '<tr><td>Energy Savings (est. 12% on heating/cooling bills annually)</td><td style="color:var(--cta-red);">Varies by home</td></tr>' +
     '</table>' +
   '</div>';
@@ -1238,6 +1238,7 @@ function generateEstimatePDF() {
       '<p style="margin:0 0 2px 0; font-size:10px; font-weight:700; color:#0C2340; text-align:center;">Estimated Range</p>' +
       '<p style="margin:0 0 6px 0; font-size:13px; font-weight:700; color:#0C2340; text-align:center;">' + fmt(lowPrice) + ' \u2013 ' + fmt(highPrice) + '</p>' +
       '<p style="margin:0 0 8px 0; font-size:11px; color:#626060; text-align:center;">Most projects fall within this estimated range.</p>' +
+      '<p style="margin:0 0 8px 0; font-size:11px; color:#626060; text-align:center;">Verified projects rarely exceed the projected range.</p>' +
       '<p style="margin:0; font-size:10px; color:#626060; text-align:center; line-height:1.4;">This range reflects final measurement confirmation, installation method adjustments, and Florida code requirements.</p>';
     pdfContainer.appendChild(priceBlock);
 
@@ -1284,7 +1285,7 @@ function generateEstimatePDF() {
         '<li>Equipment staging costs</li>' +
         '<li>Material handling inefficiencies</li>' +
       '</ul>' +
-      '<p style="margin:0 0 4px 0; font-size:11px; color:#626060; line-height:1.5;">In some cases, those efficiencies are reflected in final pricing.</p>' +
+      '<p style="margin:0 0 4px 0; font-size:11px; color:#626060; line-height:1.5;">When routing efficiencies apply, they are reflected in final pricing.</p>' +
       '<p style="margin:0 0 4px 0; font-size:11px; color:#626060; line-height:1.5;">Routing eligibility is confirmed during professional measurement verification.</p>' +
       '<p style="margin:0; font-size:11px; color:#626060; line-height:1.5;">Early verification improves access to the most efficient installation cycle.</p>';
     pdfContainer.appendChild(routingBody);
@@ -1312,7 +1313,7 @@ function generateEstimatePDF() {
 
     // ===== 6. FOOTER =====
     var footer = document.createElement('div');
-    footer.style.cssText = 'margin-top:28px; padding-top:12px; border-top:1px solid #C1D5DB; font-size:10px; color:#4A4A4A; text-align:center; line-height:1.5; page-break-inside:avoid;';
+    footer.style.cssText = 'margin-top:40px; padding-top:20px; border-top:1px solid #C1D5DB; font-size:11px; font-weight:600; color:#4A4A4A; text-align:center; line-height:1.6; page-break-inside:avoid;';
     footer.innerHTML =
       'Installation schedules are organized by geographic zone and material availability.<br>' +
       'Early verification ensures access to the most efficient installation cycle.';
