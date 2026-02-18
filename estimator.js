@@ -1293,6 +1293,17 @@ function generateEstimatePDF() {
 
     // ===== 3. EXISTING PRICING CONTENT (cloned — unchanged) =====
     var contentClone = summaryEl.cloneNode(true);
+    // Remove sections already rendered with inline styles in the PDF above
+    var heroEl = contentClone.querySelector('.estimate-hero');
+    if (heroEl) heroEl.remove();
+    var startingPt = contentClone.querySelector('.structured-starting-point');
+    if (startingPt) startingPt.remove();
+    var rangeEl = contentClone.querySelector('.estimate-range');
+    if (rangeEl) rangeEl.remove();
+    var projHeader = contentClone.querySelector('.project-summary-header');
+    if (projHeader) projHeader.remove();
+    var routingEl = contentClone.querySelector('.routing-section');
+    if (routingEl) routingEl.remove();
     // Style tables for PDF readability
     contentClone.querySelectorAll('table').forEach(function(table) {
       table.style.cssText = 'width:100%; border-collapse:collapse; margin-bottom:12px; font-size:11px;';
