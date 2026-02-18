@@ -1177,20 +1177,46 @@ function generateEstimatePDF() {
       return;
     }
 
+    // Currency formatter
+    var fmt = function(v) { return '$' + v.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','); };
+
+    // Read form values for personalized header
+    var custName = document.getElementById('fullName').value.trim();
+    var custCity = document.getElementById('city').value.trim();
+    var dateStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    var total = window.latestEstimateTotal || 0;
+    var lowPrice = total * 0.80;
+    var highPrice = total * 1.20;
+
     // Build a self-contained HTML element for the PDF
     var pdfContainer = document.createElement('div');
     pdfContainer.style.cssText = 'padding:4px 20px 20px 20px; font-family:Nunito Sans,sans-serif; color:#1a2a3a; font-size:12px;';
 
-    // Header
+    // ===== 1. PAGE HEADER SECTION =====
     var header = document.createElement('div');
-    header.style.cssText = 'text-align:center; margin-bottom:10px; padding-bottom:8px; border-bottom:2px solid #c0392b; page-break-inside:avoid;';
+    header.style.cssText = 'text-align:center; margin-bottom:16px; padding-bottom:12px; border-bottom:2px solid #c0392b; page-break-inside:avoid;';
     header.innerHTML =
-      '<h1 style="margin:0 0 4px 0; font-size:22px; color:#1a2a3a;">Reece Windows & Doors</h1>' +
-      '<p style="margin:0 0 4px 0; font-size:11px; color:#6b7b8d;">Family-Owned Since 1972 &bull; Licensed &amp; Insured</p>' +
-      '<p style="margin:0; font-size:11px; color:#6b7b8d;">Window Replacement Estimate &mdash; ' + new Date().toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' }) + '</p>';
+      '<h1 style="margin:0 0 4px 0; font-size:22px; color:#0D2240;">Reece Windows &amp; Doors</h1>' +
+      '<h2 style="margin:0 0 10px 0; font-size:16px; color:#1a2a3a; font-weight:400;">Your Personalized Window Estimate</h2>' +
+      '<p style="margin:0 0 2px 0; font-size:11px; color:#1a2a3a;">Prepared for: ' + custName + '</p>' +
+      '<p style="margin:0 0 2px 0; font-size:11px; color:#1a2a3a;">Date: ' + dateStr + '</p>' +
+      '<p style="margin:0 0 10px 0; font-size:11px; color:#1a2a3a;">Project Location: ' + custCity + '</p>' +
+      '<p style="margin:0 0 2px 0; font-size:10px; color:#87898B; line-height:1.4;">This estimate is based on the window count, sizes, and selections you entered through our online system.</p>' +
+      '<p style="margin:0; font-size:10px; color:#87898B; line-height:1.4;">Final pricing is confirmed through professional measurement prior to material ordering.</p>';
     pdfContainer.appendChild(header);
 
-    // Clone summary content
+    // ===== 2. PRICE SUMMARY SECTION =====
+    var priceSummary = document.createElement('div');
+    priceSummary.style.cssText = 'margin-bottom:16px; padding:12px; background:#F2F3F7; border-left:3px solid #ED1F24; page-break-inside:avoid;';
+    priceSummary.innerHTML =
+      '<h3 style="margin:0 0 8px 0; font-size:14px; color:#0D2240; font-weight:700;">Estimated Project Investment</h3>' +
+      '<p style="margin:0 0 4px 0; font-size:12px; color:#1a2a3a;"><strong>Projected Total:</strong> ' + fmt(total) + '</p>' +
+      '<p style="margin:0 0 8px 0; font-size:12px; color:#1a2a3a;"><strong>Estimated Range:</strong> ' + fmt(lowPrice) + ' \u2013 ' + fmt(highPrice) + '</p>' +
+      '<p style="margin:0 0 2px 0; font-size:10px; color:#87898B; line-height:1.4;">This range reflects possible adjustments based on final measurements, installation method confirmation, and code requirements.</p>' +
+      '<p style="margin:0; font-size:10px; color:#87898B; line-height:1.4;">Most projects fall within the projected range.</p>';
+    pdfContainer.appendChild(priceSummary);
+
+    // ===== 3. EXISTING PRICING CONTENT (cloned — unchanged) =====
     var contentClone = summaryEl.cloneNode(true);
     // Style tables for PDF readability
     contentClone.querySelectorAll('table').forEach(function(table) {
@@ -1217,10 +1243,76 @@ function generateEstimatePDF() {
     });
     pdfContainer.appendChild(contentClone);
 
-    // Disclaimer footer
+    // ===== 4. ROUTING & INSTALLATION LOGIC SECTION =====
+    var routingSection = document.createElement('div');
+    routingSection.style.cssText = 'margin-bottom:16px; page-break-inside:avoid;';
+    routingSection.innerHTML =
+      '<h3 style="margin:0 0 6px 0; font-size:13px; color:#0D2240; font-weight:700;">How Installation Scheduling Can Influence Final Pricing</h3>' +
+      '<p style="margin:0 0 4px 0; font-size:11px; color:#1a2a3a; line-height:1.5;">We organize installations by geographic zones.</p>' +
+      '<p style="margin:0 0 4px 0; font-size:11px; color:#1a2a3a; line-height:1.5;">When multiple homes in the same area are completed during the same installation cycle, we reduce:</p>' +
+      '<ul style="margin:4px 0 8px 0; padding-left:20px; font-size:11px; color:#1a2a3a; line-height:1.6;">' +
+        '<li>Crew travel time</li>' +
+        '<li>Equipment staging costs</li>' +
+        '<li>Material handling inefficiencies</li>' +
+        '<li>Permit processing redundancies</li>' +
+      '</ul>' +
+      '<p style="margin:0 0 4px 0; font-size:11px; color:#1a2a3a; line-height:1.5;">In certain cases, these efficiencies are reflected in final pricing.</p>' +
+      '<p style="margin:0; font-size:10px; color:#87898B; line-height:1.4; font-style:italic;">Routing efficiencies are determined during professional measurement and scheduling.</p>';
+    pdfContainer.appendChild(routingSection);
+
+    // ===== 5. PRICE CLARITY SECTION =====
+    var claritySection = document.createElement('div');
+    claritySection.style.cssText = 'margin-bottom:16px; page-break-inside:avoid;';
+    claritySection.innerHTML =
+      '<h3 style="margin:0 0 6px 0; font-size:13px; color:#0D2240; font-weight:700;">What This Estimate Includes</h3>' +
+      '<ul style="margin:4px 0 8px 0; padding-left:20px; font-size:11px; color:#1a2a3a; line-height:1.6;">' +
+        '<li>Florida-engineered impact-rated windows</li>' +
+        '<li>Reinforced framing systems</li>' +
+        '<li>In-house professional installation</li>' +
+        '<li>Code-compliant permitting</li>' +
+        '<li>Manufacturer-backed product warranties</li>' +
+      '</ul>' +
+      '<p style="margin:0; font-size:11px; color:#1a2a3a; line-height:1.5;">This is not a material-only quote or subcontracted install estimate.</p>';
+    pdfContainer.appendChild(claritySection);
+
+    // ===== 6. STABILITY SECTION =====
+    var stabilitySection = document.createElement('div');
+    stabilitySection.style.cssText = 'margin-bottom:16px; page-break-inside:avoid;';
+    stabilitySection.innerHTML =
+      '<h3 style="margin:0 0 6px 0; font-size:13px; color:#0D2240; font-weight:700;">Why Verification Protects You</h3>' +
+      '<p style="margin:0 0 4px 0; font-size:11px; color:#1a2a3a; line-height:1.5;">Online estimates are highly accurate based on submitted measurements.</p>' +
+      '<p style="margin:0 0 4px 0; font-size:11px; color:#1a2a3a; line-height:1.5;">Professional verification confirms:</p>' +
+      '<ul style="margin:4px 0 8px 0; padding-left:20px; font-size:11px; color:#1a2a3a; line-height:1.6;">' +
+        '<li>Exact opening dimensions</li>' +
+        '<li>Structural considerations</li>' +
+        '<li>Installation method</li>' +
+        '<li>Scheduling zone eligibility</li>' +
+      '</ul>' +
+      '<p style="margin:0; font-size:11px; color:#1a2a3a; line-height:1.5;">Verification removes uncertainty before materials are allocated.</p>';
+    pdfContainer.appendChild(stabilitySection);
+
+    // ===== 7. CLOSE SECTION =====
+    var closeSection = document.createElement('div');
+    closeSection.style.cssText = 'margin-bottom:16px; page-break-inside:avoid;';
+    closeSection.innerHTML =
+      '<h3 style="margin:0 0 6px 0; font-size:13px; color:#0D2240; font-weight:700;">Next Step: Confirm and Finalize</h3>' +
+      '<p style="margin:0 0 4px 0; font-size:11px; color:#1a2a3a; line-height:1.5;">A brief professional measurement allows us to:</p>' +
+      '<ul style="margin:4px 0 8px 0; padding-left:20px; font-size:11px; color:#1a2a3a; line-height:1.6;">' +
+        '<li>Lock in your exact price</li>' +
+        '<li>Confirm material allocation</li>' +
+        '<li>Determine routing efficiencies</li>' +
+        '<li>Finalize installation scheduling</li>' +
+      '</ul>' +
+      '<p style="margin:0 0 4px 0; font-size:11px; color:#1a2a3a; line-height:1.5;">There is no obligation and no sales presentation.</p>' +
+      '<p style="margin:0; font-size:11px; color:#1a2a3a; line-height:1.5;">Just precision.</p>';
+    pdfContainer.appendChild(closeSection);
+
+    // ===== 8. FOOTER =====
     var footer = document.createElement('div');
-    footer.style.cssText = 'margin-top:20px; padding-top:10px; border-top:1px solid #e0e0e0; font-size:9px; color:#6b7b8d; page-break-inside:avoid;';
-    footer.innerHTML = '<strong>Disclaimer:</strong> This estimate is based on current industry pricing and typical installation conditions. Final pricing may vary after on-site verification.';
+    footer.style.cssText = 'margin-top:20px; padding-top:10px; border-top:1px solid #e0e0e0; font-size:9px; color:#87898B; text-align:center; line-height:1.4; font-style:italic; page-break-inside:avoid;';
+    footer.innerHTML =
+      'Installation schedules are organized by geographic zone and material availability.<br>' +
+      'Early verification ensures access to the most efficient installation cycle.';
     pdfContainer.appendChild(footer);
 
     var opt = {
