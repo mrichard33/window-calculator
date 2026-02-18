@@ -1291,6 +1291,22 @@ function generateEstimatePDF() {
       '<p style="margin:0; font-size:10px; color:#626060; text-align:center; line-height:1.4;">This range reflects final measurement confirmation, installation method adjustments, and Florida code requirements.</p>';
     pdfContainer.appendChild(priceBlock);
 
+    // ===== 2b. STRUCTURED STARTING POINT =====
+    var startingPoint = document.createElement('div');
+    startingPoint.style.cssText = 'border-top:1px solid #C1D5DB; padding-top:14px; margin-bottom:16px; page-break-inside:avoid;';
+    startingPoint.innerHTML =
+      '<h3 style="margin:0 0 8px 0; font-size:13px; font-weight:700; color:#0C2340;">Your Online Estimate Is a Structured Starting Point</h3>' +
+      '<p style="margin:0 0 4px 0; font-size:11px; color:#626060; line-height:1.5;">This estimate reflects the window selections and preliminary measurements you provided.</p>' +
+      '<p style="margin:0 0 4px 0; font-size:11px; color:#626060; line-height:1.5;">Before materials are ordered, we verify:</p>' +
+      '<ul style="margin:4px 0 8px 0; padding-left:20px; font-size:11px; color:#626060; line-height:1.6;">' +
+        '<li>Exact opening dimensions</li>' +
+        '<li>Installation conditions</li>' +
+        '<li>Florida code compliance requirements</li>' +
+        '<li>Geographic scheduling zone eligibility</li>' +
+      '</ul>' +
+      '<p style="margin:0; font-size:11px; color:#626060; line-height:1.5;">This protects you from unexpected changes \u2014 up or down.</p>';
+    pdfContainer.appendChild(startingPoint);
+
     // ===== 3. EXISTING PRICING CONTENT (cloned — unchanged) =====
     var contentClone = summaryEl.cloneNode(true);
     // Remove sections already rendered with inline styles in the PDF above
