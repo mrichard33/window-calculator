@@ -1126,9 +1126,9 @@ function buildSummary() {
   html += '<div class="summary-section">' +
     '<h3>Cost Range</h3>' +
     '<table class="summary-table">' +
-      '<tr><td>Low Estimate (-20%)</td><td>' + fmt(lowEstimate) + '</td></tr>' +
-      '<tr class="subtotal"><td>Mid Estimate</td><td>' + fmt(grandTotal) + '</td></tr>' +
-      '<tr><td>High Estimate (+20%)</td><td>' + fmt(highEstimate) + '</td></tr>' +
+      '<tr><td>Projected Low (-20%)</td><td>' + fmt(lowEstimate) + '</td></tr>' +
+      '<tr class="subtotal"><td>Verified Average</td><td>' + fmt(grandTotal) + '</td></tr>' +
+      '<tr><td>Projected High (+20%)</td><td>' + fmt(highEstimate) + '</td></tr>' +
     '</table>' +
     '<p style="font-size:0.78rem; color:var(--text-gray); margin-top:0.5rem;">' +
       'This range reflects final measurement confirmation, installation conditions, and code compliance requirements.' +
@@ -1313,7 +1313,7 @@ function generateEstimatePDF() {
 
     // ===== 6. FOOTER =====
     var footer = document.createElement('div');
-    footer.style.cssText = 'margin-top:40px; padding-top:20px; border-top:1px solid #C1D5DB; font-size:11px; font-weight:600; color:#4A4A4A; text-align:center; line-height:1.6; page-break-inside:avoid;';
+    footer.style.cssText = 'margin-top:50px; padding-top:20px; border-top:1px solid #C1D5DB; font-size:11px; font-weight:700; color:#4A4A4A; text-align:center; line-height:1.6; page-break-inside:avoid;';
     footer.innerHTML =
       'Installation schedules are organized by geographic zone and material availability.<br>' +
       'Early verification ensures access to the most efficient installation cycle.';
