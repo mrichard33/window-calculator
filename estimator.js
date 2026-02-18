@@ -680,8 +680,11 @@ function goToStep(n) {
         windowCount: windowCount
       });
 
-      // PDF generation + n8n send (separate, can fail independently)
-      sendPDFToGHL();
+      // PDF generation + webhook send (separate, can fail independently)
+      sendPDFToGHL().catch(function() {
+        // Allow retry on next Step 4 visit if PDF generation fails
+        window._estimateSent = false;
+      });
     }
   }
 
@@ -1249,12 +1252,15 @@ function loadHtml2Pdf() {
 }
 
 function generateEstimatePDF() {
+  console.log('[PDF] generateEstimatePDF: starting...');
   return new Promise(function(resolve, reject) {
     var summaryEl = document.getElementById('summaryContent');
     if (!summaryEl || !summaryEl.innerHTML.trim()) {
+      console.error('[PDF] No summaryContent element found');
       reject(new Error('No estimate content to generate PDF from.'));
       return;
     }
+    console.log('[PDF] summaryContent found, total:', window.latestEstimateTotal);
 
     // Currency formatter
     var fmt = function(v) { return '$' + v.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','); };
@@ -1428,15 +1434,19 @@ function generateEstimatePDF() {
       margin:       [0.3, 0.5, 0.5, 0.5],
       filename:     'Reece-Windows-Estimate.pdf',
       image:        { type: 'jpeg', quality: 0.95 },
-      html2canvas:  { scale: 2, useCORS: true, logging: false },
+      html2canvas:  { scale: 1.5, useCORS: true, logging: false },
       jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' },
       pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
     };
 
+    console.log('[PDF] pdfContainer built, child count:', pdfContainer.childNodes.length);
+
     // Dynamically load html2pdf if not already available; wait for fonts
     loadHtml2Pdf().then(function() {
+      console.log('[PDF] html2pdf loaded, waiting for fonts...');
       return document.fonts.ready;
     }).then(function() {
+      console.log('[PDF] fonts ready, generating PDF...');
       // Timeout to detect if html2pdf hangs
       var pdfTimedOut = false;
       var pdfTimeout = setTimeout(function() {
@@ -1448,6 +1458,7 @@ function generateEstimatePDF() {
         html2pdf().set(opt).from(pdfContainer).outputPdf('datauristring').then(function(dataUri) {
           if (pdfTimedOut) return;
           clearTimeout(pdfTimeout);
+          console.log('[PDF] html2pdf resolved, dataUri length:', dataUri.length);
 
           var base64 = dataUri.split(',')[1];
           // Convert base64 to Blob
@@ -1480,6 +1491,7 @@ function generateEstimatePDF() {
 }
 
 function sendPDFToWebhook(base64, contactId, contactName) {
+  console.log('[PDF] sendPDFToWebhook: base64 length:', base64.length, 'contactId:', contactId);
   var fileName = 'Reece-Windows-Estimate-' + Date.now() + '.pdf';
   var payload = {
     type: 'pdf_attachment',
@@ -1496,25 +1508,29 @@ function sendPDFToWebhook(base64, contactId, contactName) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
   }).then(function(resp) {
-    console.log('PDF webhook response:', resp.status);
+    console.log('[PDF] webhook response:', resp.status);
+    if (!resp.ok) {
+      resp.text().then(function(body) { console.error('[PDF] webhook error body:', body); });
+    }
   }).catch(function(err) {
-    console.error('PDF webhook failed:', err);
+    console.error('[PDF] webhook failed:', err);
   });
 
   console.log('PDF sent to GHL webhook, file:', fileName);
 }
 
 function sendPDFToGHL() {
-  console.log('sendPDFToGHL: starting PDF generation...');
-  generateEstimatePDF().then(function(pdf) {
+  console.log('[PDF] sendPDFToGHL: starting PDF generation...');
+  return generateEstimatePDF().then(function(pdf) {
     var contactId = window.ghlContactId || null;
     var data = gatherContactData();
     var contactName = (data.firstName + ' ' + data.lastName).trim();
 
-    console.log('sendPDFToGHL: PDF generated, base64 length:', pdf.base64.length);
+    console.log('[PDF] sendPDFToGHL: PDF generated, base64 length:', pdf.base64.length);
     sendPDFToWebhook(pdf.base64, contactId, contactName);
   }).catch(function(err) {
-    console.error('sendPDFToGHL: PDF generation failed:', err);
+    console.error('[PDF] sendPDFToGHL: PDF generation failed:', err);
+    throw err;
   });
 }
 
