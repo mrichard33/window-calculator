@@ -2858,15 +2858,19 @@ function generateEstimatePDF() {
       '<\/ul>' +
       '<p style="margin:0; font-size:10px; color:#626060; line-height:1.4;">This protects you from unexpected changes \u2014 up or down.<\/p>';
     pdfContainer.appendChild(startingPoint);
-    // ===== 3. EXISTING PRICING CONTENT (cloned — unchanged) =====
+    // ===== 3. EXTRACT SECTIONS FROM CLONED CONTENT =====
+    // Mirror the print layout: Page 1 ends after Project Overview,
+    // Page 2 starts with Itemized Breakdown, last page starts with Project Costs
     var contentClone = summaryEl.cloneNode(true);
-    // Remove sections already rendered with inline styles in the PDF above
+    // Remove sections already rendered above (hero, starting point, range, routing)
     var heroEl = contentClone.querySelector('.estimate-hero');
     if (heroEl) heroEl.remove();
     var startingPt = contentClone.querySelector('.structured-starting-point');
     if (startingPt) startingPt.remove();
     var rangeEl = contentClone.querySelector('.estimate-range');
     if (rangeEl) rangeEl.remove();
+    var dividerEl = contentClone.querySelector('.section-divider');
+    if (dividerEl) dividerEl.remove();
     var routingEl = contentClone.querySelector('.routing-section');
     if (routingEl) routingEl.remove();
     // Remove list-based Potential Savings (replaced by inline-styled table below)
@@ -2874,7 +2878,7 @@ function generateEstimatePDF() {
       var h = sec.querySelector('h3');
       if (h && h.textContent === 'Potential Savings') sec.remove();
     });
-    // Style tables for PDF readability
+    // Style all tables for PDF readability
     contentClone.querySelectorAll('table').forEach(function(table) {
       table.style.cssText = 'width:100%; border-collapse:collapse; margin-bottom:12px; font-size:11px; table-layout:auto;';
     });
@@ -2884,33 +2888,47 @@ function generateEstimatePDF() {
     contentClone.querySelectorAll('.total td').forEach(function(cell) {
       cell.style.cssText += '; font-weight:700; font-size:14px; border-top:2px solid #1a2a3a;';
     });
-    // Tighten vertical spacing and control page breaks in cloned sections
-    contentClone.querySelectorAll('.summary-section').forEach(function(section, index) {
-      section.style.margin = '0 0 8px 0';
-      if (index === 0) {
-        section.style.borderTop = '1px solid #C1D5DB';
-        section.style.paddingTop = '10px';
-      }
-      var heading = section.querySelector('h3');
-      if (heading) {
-        heading.style.margin = '0 0 4px 0';
-        if (heading.textContent === 'Itemized Breakdown') {
-          section.style.pageBreakInside = 'auto';
-        } else {
-          section.style.pageBreakInside = 'avoid';
-        }
-      }
-    });
-    // Force Page 2 to start at "Project Summary"
-    var projHeader = contentClone.querySelector('.project-summary-header');
-    if (projHeader) {
-      projHeader.style.cssText = 'margin:0 0 10px 0; padding-top:0.5in; font-size:14px; font-weight:700; color:#0C2340; page-break-before:always;';
-    }
     // Prevent individual table rows from splitting across pages
     contentClone.querySelectorAll('tr').forEach(function(row) {
       row.style.pageBreakInside = 'avoid';
     });
-    pdfContainer.appendChild(contentClone);
+    // Extract Project Summary header — stays on Page 1 (no page break)
+    var projHeader = contentClone.querySelector('.project-summary-header');
+    if (projHeader) {
+      projHeader.style.cssText = 'margin:0 0 10px 0; font-size:14px; font-weight:700; color:#0C2340; border-left:3px solid #ED1E24; padding-left:12px;';
+      pdfContainer.appendChild(projHeader);
+    }
+    // Extract sections one by one for precise page break control
+    var sections = contentClone.querySelectorAll('.summary-section');
+    // sections[0]=Customer Info, [1]=Project Overview, [2]=Itemized Breakdown, [3]=Project Costs
+    // Customer Information — stays on Page 1
+    if (sections[0]) {
+      sections[0].style.cssText = 'margin:0 0 8px 0; page-break-inside:avoid;';
+      var h0 = sections[0].querySelector('h3');
+      if (h0) h0.style.margin = '0 0 4px 0';
+      pdfContainer.appendChild(sections[0]);
+    }
+    // Project Overview — stays on Page 1
+    if (sections[1]) {
+      sections[1].style.cssText = 'margin:0 0 8px 0; page-break-inside:avoid;';
+      var h1 = sections[1].querySelector('h3');
+      if (h1) h1.style.margin = '0 0 4px 0';
+      pdfContainer.appendChild(sections[1]);
+    }
+    // Itemized Breakdown — forced page break (starts Page 2)
+    if (sections[2]) {
+      sections[2].style.cssText = 'margin:0 0 8px 0; page-break-before:always; padding-top:0.3in; page-break-inside:auto;';
+      var h2 = sections[2].querySelector('h3');
+      if (h2) h2.style.margin = '0 0 4px 0';
+      pdfContainer.appendChild(sections[2]);
+    }
+    // Project Costs — forced page break (starts last page)
+    if (sections[3]) {
+      sections[3].style.cssText = 'margin:0 0 8px 0; page-break-before:always; padding-top:0.3in; page-break-inside:avoid;';
+      var h3 = sections[3].querySelector('h3');
+      if (h3) h3.style.margin = '0 0 4px 0';
+      pdfContainer.appendChild(sections[3]);
+    }
     // ===== 3b. COST RANGE TABLE =====
     var costRange = document.createElement('div');
     costRange.style.cssText = 'margin:0 0 8px 0; page-break-inside:avoid;';
