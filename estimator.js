@@ -1,6 +1,6 @@
 // =============================================================
 //  Reece Windows & Doors — Window Cost Estimator
-//  estimator.js — All application logic
+//  All application logic (inlined for standalone use)
 // =============================================================
 // ============================================================
 //  CENTRALIZED DEFAULTS
@@ -476,13 +476,13 @@ function handlePaneChange() {
   const gasFill = document.getElementById('gasFill');
   if (panes === 'single') {
     // Single pane: hide gas fill, reset to Standard
-    gasFill.innerHTML = '<option value="air" selected>Air (Standard)</option>';
+    gasFill.innerHTML = '<option value="air" selected>Air (Standard)<\/option>';
     gasFillField.style.display = 'none';
   } else {
     // Double pane: show gas fill with Argon option
     gasFill.innerHTML =
-      '<option value="air" selected>Air (Standard)</option>' +
-      '<option value="argon">Argon Gas</option>';
+      '<option value="air" selected>Air (Standard)<\/option>' +
+      '<option value="argon">Argon Gas<\/option>';
     gasFillField.style.display = '';
   }
 }
@@ -606,8 +606,9 @@ function goToStep(n) {
         windowCount: windowCount
       });
       // PDF generation + webhook send (separate, can fail independently)
-      sendPDFToGHL().catch(function() {
-        // Allow retry on next Step 4 visit if PDF generation fails
+      sendPDFToGHL().catch(function(err) {
+        console.error('[Webhook] Step 4 PDF webhook failed, enabling retry:', err);
+        window.__estimateWebhookError = true;
         window._estimateSent = false;
       });
     }
@@ -812,7 +813,7 @@ function removeWindow(idx) {
 function renderWindowList() {
   const list = document.getElementById('windowList');
   if (windows.length === 0) {
-    list.innerHTML = '<div class="empty-state">No windows added yet. Configure a window above and click "Add Window to Estimate".</div>';
+    list.innerHTML = '<div class="empty-state">No windows added yet. Configure a window above and click "Add Window to Estimate".<\/div>';
     document.getElementById('btnToStep3').disabled = true;
     return;
   }
@@ -842,26 +843,26 @@ function renderWindowList() {
     html += '<div class="cart-item">' +
       '<div class="cart-item-header">' +
         '<div class="cart-item-title">' +
-          '<strong>#' + (i + 1) + '</strong> ' + label +
-          (c.qty > 1 ? ' <span class="cart-qty">&times; ' + c.qty + '</span>' : '') +
-        '</div>' +
+          '<strong>#' + (i + 1) + '<\/strong> ' + label +
+          (c.qty > 1 ? ' <span class="cart-qty">&times; ' + c.qty + '<\/span>' : '') +
+        '<\/div>' +
         '<div class="we-actions">' +
-          '<button class="btn-sm btn-edit" onclick="editWindow(' + i + ')">Edit</button>' +
-          '<button class="btn-sm btn-delete" onclick="removeWindow(' + i + ')">Remove</button>' +
-        '</div>' +
-      '</div>' +
+          '<button class="btn-sm btn-edit" onclick="editWindow(' + i + ')">Edit<\/button>' +
+          '<button class="btn-sm btn-delete" onclick="removeWindow(' + i + ')">Remove<\/button>' +
+        '<\/div>' +
+      '<\/div>' +
       '<div class="cart-item-details">';
     detailTags.forEach(tag => {
-      html += '<span class="cart-tag">' + tag + '</span>';
+      html += '<span class="cart-tag">' + tag + '<\/span>';
     });
     upgradeTags.forEach(tag => {
-      html += '<span class="cart-tag cart-tag-upgrade">' + tag + '</span>';
+      html += '<span class="cart-tag cart-tag-upgrade">' + tag + '<\/span>';
     });
     modifierTags.forEach(tag => {
-      html += '<span class="cart-tag cart-tag-modifier">' + tag + '</span>';
+      html += '<span class="cart-tag cart-tag-modifier">' + tag + '<\/span>';
     });
-    html += '</div>' +
-    '</div>';
+    html += '<\/div>' +
+    '<\/div>';
   });
   list.innerHTML = html;
 }
@@ -904,34 +905,34 @@ function buildSummary() {
     const label = getWindowLabel(c);
     windowSubtotal += cost.totalCost;
     totalWindows += c.qty;
-    const impactLabel = cost.isImpact ? ' <span style="letter-spacing:0.3px;">(Impact)</span>' : '';
+    const impactLabel = cost.isImpact ? ' <span style="letter-spacing:0.3px;">(Impact)<\/span>' : '';
     windowRows += '<tr>' +
       '<td colspan="4" style="font-weight:700; background:#F2F3F7; color:#0D2240;">' +
         '#' + (i + 1) + ' ' + label + ' ' + (c.qty > 1 ? '&times; ' + c.qty : '') +
         impactLabel +
-      '</td>' +
-    '</tr>';
-    windowRows += '<tr><td style="padding-left:1.5rem;">Base Price (' + getStyleLabel(c.style) + (cost.isImpact ? ', Impact' : '') + ', ' + cost.unitedInches + ' UI)</td><td>' + fmt(cost.breakdown.chartPrice) + '</td><td>&times; ' + c.qty + '</td><td>' + fmt(cost.breakdown.chartPrice * c.qty) + '</td></tr>';
+      '<\/td>' +
+    '<\/tr>';
+    windowRows += '<tr><td style="padding-left:1.5rem;">Base Price (' + getStyleLabel(c.style) + (cost.isImpact ? ', Impact' : '') + ', ' + cost.unitedInches + ' UI)<\/td><td>' + fmt(cost.breakdown.chartPrice) + '<\/td><td>&times; ' + c.qty + '<\/td><td>' + fmt(cost.breakdown.chartPrice * c.qty) + '<\/td><\/tr>';
     if (cost.breakdown.frameMult !== 0) {
-      windowRows += '<tr><td style="padding-left:1.5rem;">Frame Adj. (' + PRICING.frameMaterial[c.frame].label + ')</td><td>' + fmt(cost.breakdown.frameMult) + '</td><td>&times; ' + c.qty + '</td><td>' + fmt(cost.breakdown.frameMult * c.qty) + '</td></tr>';
+      windowRows += '<tr><td style="padding-left:1.5rem;">Frame Adj. (' + PRICING.frameMaterial[c.frame].label + ')<\/td><td>' + fmt(cost.breakdown.frameMult) + '<\/td><td>&times; ' + c.qty + '<\/td><td>' + fmt(cost.breakdown.frameMult * c.qty) + '<\/td><\/tr>';
     }
     if (cost.breakdown.glassPanes !== 0) {
-      windowRows += '<tr><td style="padding-left:1.5rem;">' + PRICING.glassPanes[c.panes].label + '</td><td>' + fmt(cost.breakdown.glassPanes) + '</td><td>&times; ' + c.qty + '</td><td>' + fmt(cost.breakdown.glassPanes * c.qty) + '</td></tr>';
+      windowRows += '<tr><td style="padding-left:1.5rem;">' + PRICING.glassPanes[c.panes].label + '<\/td><td>' + fmt(cost.breakdown.glassPanes) + '<\/td><td>&times; ' + c.qty + '<\/td><td>' + fmt(cost.breakdown.glassPanes * c.qty) + '<\/td><\/tr>';
     }
     if (cost.breakdown.gasFill > 0) {
-      windowRows += '<tr><td style="padding-left:1.5rem;">' + PRICING.gasFill[c.gas].label + '</td><td>' + fmt(cost.breakdown.gasFill) + '</td><td>&times; ' + c.qty + '</td><td>' + fmt(cost.breakdown.gasFill * c.qty) + '</td></tr>';
+      windowRows += '<tr><td style="padding-left:1.5rem;">' + PRICING.gasFill[c.gas].label + '<\/td><td>' + fmt(cost.breakdown.gasFill) + '<\/td><td>&times; ' + c.qty + '<\/td><td>' + fmt(cost.breakdown.gasFill * c.qty) + '<\/td><\/tr>';
     }
     if (cost.breakdown.grid > 0) {
-      windowRows += '<tr><td style="padding-left:1.5rem;">' + PRICING.gridPattern[c.grid].label + '</td><td>' + fmt(cost.breakdown.grid) + '</td><td>&times; ' + c.qty + '</td><td>' + fmt(cost.breakdown.grid * c.qty) + '</td></tr>';
+      windowRows += '<tr><td style="padding-left:1.5rem;">' + PRICING.gridPattern[c.grid].label + '<\/td><td>' + fmt(cost.breakdown.grid) + '<\/td><td>&times; ' + c.qty + '<\/td><td>' + fmt(cost.breakdown.grid * c.qty) + '<\/td><\/tr>';
     }
     if (cost.breakdown.upgrades > 0) {
       const upgradeLabels = c.upgrades.filter(u => u !== 'impact').map(u => PRICING.glassUpgrades[u] ? PRICING.glassUpgrades[u].label : u).join(', ');
-      windowRows += '<tr><td style="padding-left:1.5rem;">Upgrades (' + upgradeLabels + ')</td><td>' + fmt(cost.breakdown.upgrades) + '</td><td>&times; ' + c.qty + '</td><td>' + fmt(cost.breakdown.upgrades * c.qty) + '</td></tr>';
+      windowRows += '<tr><td style="padding-left:1.5rem;">Upgrades (' + upgradeLabels + ')<\/td><td>' + fmt(cost.breakdown.upgrades) + '<\/td><td>&times; ' + c.qty + '<\/td><td>' + fmt(cost.breakdown.upgrades * c.qty) + '<\/td><\/tr>';
     }
     if (cost.breakdown.storySurcharge > 0) {
-      windowRows += '<tr><td style="padding-left:1.5rem;">Story Surcharge</td><td>' + fmt(cost.breakdown.storySurcharge) + '</td><td>&times; ' + c.qty + '</td><td>' + fmt(cost.breakdown.storySurcharge * c.qty) + '</td></tr>';
+      windowRows += '<tr><td style="padding-left:1.5rem;">Story Surcharge<\/td><td>' + fmt(cost.breakdown.storySurcharge) + '<\/td><td>&times; ' + c.qty + '<\/td><td>' + fmt(cost.breakdown.storySurcharge * c.qty) + '<\/td><\/tr>';
     }
-    windowRows += '<tr class="subtotal"><td style="padding-left:1.5rem;">Subtotal</td><td>' + fmt(cost.perWindowCost) + '</td><td>&times; ' + c.qty + '</td><td>' + fmt(cost.totalCost) + '</td></tr>';
+    windowRows += '<tr class="subtotal"><td style="padding-left:1.5rem;">Subtotal<\/td><td>' + fmt(cost.perWindowCost) + '<\/td><td>&times; ' + c.qty + '<\/td><td>' + fmt(cost.totalCost) + '<\/td><\/tr>';
   });
   // Bulk discount
   let bulkDiscountAmt = 0;
@@ -965,105 +966,105 @@ function buildSummary() {
   window.latestMonthlyAvg = estMonthlyAvg;
 
   let html = '<div class="estimate-hero">' +
-    '<h3>Estimated Project Investment</h3>' +
-    '<p class="hero-price">' + fmt(grandTotal) + '</p>' +
-    '<p class="hero-descriptor">Full-Frame Replacement | ' + totalWindows + ' Impact-Rated Windows</p>' +
-    '<p class="hero-credibility">Florida-Engineered | Impact-Rated | In-House Installation</p>' +
-    '<p class="monthly-amount">Estimated $' + estMonthlyLow.toLocaleString() + '\u2013$' + estMonthlyAvg.toLocaleString() + ' per month*</p>' +
-    '<p class="monthly-sub">Payment options available.</p>' +
-    '<p class="monthly-sub">No traditional credit score required.</p>' +
-    '<p class="monthly-footnote">*Example based on estimated project total. Final terms are confirmed during verification.</p>' +
-  '</div>';
+    '<h3>Estimated Project Investment<\/h3>' +
+    '<p class="hero-price">' + fmt(grandTotal) + '<\/p>' +
+    '<p class="hero-descriptor">Full-Frame Replacement | ' + totalWindows + ' Impact-Rated Windows<\/p>' +
+    '<p class="hero-credibility">Florida-Engineered | Impact-Rated | In-House Installation<\/p>' +
+    '<p class="monthly-amount">Estimated $' + estMonthlyLow.toLocaleString() + '\u2013$' + estMonthlyAvg.toLocaleString() + ' per month*<\/p>' +
+    '<p class="monthly-sub">Payment options available.<\/p>' +
+    '<p class="monthly-sub">No traditional credit score required.<\/p>' +
+    '<p class="monthly-footnote">*Example based on estimated project total. Final terms are confirmed during verification.<\/p>' +
+  '<\/div>';
 
   // ===== SECTION DIVIDER =====
-  html += '<div class="section-divider"></div>';
+  html += '<div class="section-divider"><\/div>';
 
   // ===== STRUCTURED STARTING POINT =====
   html += '<div class="summary-section structured-starting-point">' +
-    '<h3>Your Estimate Is Structured and Verifiable</h3>' +
-    '<p style="font-size:0.85rem; color:var(--charcoal); margin-bottom:0.5rem;">This estimate reflects the window selections and preliminary measurements you provided.</p>' +
-    '<p style="font-size:0.85rem; color:var(--charcoal); margin-bottom:0.35rem;">Before materials are ordered, we verify:</p>' +
+    '<h3>Your Estimate Is Structured and Verifiable<\/h3>' +
+    '<p style="font-size:0.85rem; color:var(--charcoal); margin-bottom:0.5rem;">This estimate reflects the window selections and preliminary measurements you provided.<\/p>' +
+    '<p style="font-size:0.85rem; color:var(--charcoal); margin-bottom:0.35rem;">Before materials are ordered, we verify:<\/p>' +
     '<ul style="padding-left:1.25rem; margin:0.25rem 0 0.5rem 0;">' +
-      '<li style="font-size:0.85rem; color:var(--charcoal); line-height:1.6;">Exact opening dimensions</li>' +
-      '<li style="font-size:0.85rem; color:var(--charcoal); line-height:1.6;">Installation conditions</li>' +
-      '<li style="font-size:0.85rem; color:var(--charcoal); line-height:1.6;">Florida code compliance requirements</li>' +
-      '<li style="font-size:0.85rem; color:var(--charcoal); line-height:1.6;">Geographic scheduling zone eligibility</li>' +
-    '</ul>' +
-    '<p style="font-size:0.85rem; color:var(--charcoal);">This protects you from unexpected changes \u2014 up or down.</p>' +
-  '</div>';
+      '<li style="font-size:0.85rem; color:var(--charcoal); line-height:1.6;">Exact opening dimensions<\/li>' +
+      '<li style="font-size:0.85rem; color:var(--charcoal); line-height:1.6;">Installation conditions<\/li>' +
+      '<li style="font-size:0.85rem; color:var(--charcoal); line-height:1.6;">Florida code compliance requirements<\/li>' +
+      '<li style="font-size:0.85rem; color:var(--charcoal); line-height:1.6;">Geographic scheduling zone eligibility<\/li>' +
+    '<\/ul>' +
+    '<p style="font-size:0.85rem; color:var(--charcoal);">This protects you from unexpected changes \u2014 up or down.<\/p>' +
+  '<\/div>';
   // ===== ESTIMATED RANGE BLOCK =====
   html += '<div class="estimate-range">' +
-    '<p class="range-label">Estimated Range</p>' +
-    '<p class="range-values">' + fmt(lowEstimate) + ' \u2013 ' + fmt(highEstimate) + '</p>' +
-    '<p>Most verified projects remain within this range.</p>' +
-    '<p>Final pricing is confirmed during professional verification.</p>' +
-    '<p style="margin-top:0.5rem; font-size:0.78rem; color:var(--text-gray);">This range reflects final measurement confirmation, installation conditions, and code compliance requirements.</p>' +
-  '</div>';
+    '<p class="range-label">Estimated Range<\/p>' +
+    '<p class="range-values">' + fmt(lowEstimate) + ' \u2013 ' + fmt(highEstimate) + '<\/p>' +
+    '<p>Most verified projects remain within this range.<\/p>' +
+    '<p>Final pricing is confirmed during professional verification.<\/p>' +
+    '<p style="margin-top:0.5rem; font-size:0.78rem; color:var(--text-gray);">This range reflects final measurement confirmation, installation conditions, and code compliance requirements.<\/p>' +
+  '<\/div>';
   // ===== PROJECT SUMMARY HEADER =====
-  html += '<h3 class="project-summary-header">Project Summary</h3>';
+  html += '<h3 class="project-summary-header">Project Summary<\/h3>';
   // ===== CUSTOMER INFORMATION =====
   html += '<div class="summary-section">' +
-    '<h3>Customer Information</h3>' +
+    '<h3>Customer Information<\/h3>' +
     '<table class="summary-table">' +
-      '<tr><td>Name</td><td>' + custName + '</td></tr>' +
-      '<tr><td>Address</td><td>' + custAddress + ', ' + custCity + ', ' + custState + ' ' + custPostal + '</td></tr>' +
-      '<tr><td>Phone</td><td>' + custPhone + '</td></tr>' +
-      (custEmail ? '<tr><td>Email</td><td>' + custEmail + '</td></tr>' : '') +
-    '</table>' +
-  '</div>';
+      '<tr><td>Name<\/td><td>' + custName + '<\/td><\/tr>' +
+      '<tr><td>Address<\/td><td>' + custAddress + ', ' + custCity + ', ' + custState + ' ' + custPostal + '<\/td><\/tr>' +
+      '<tr><td>Phone<\/td><td>' + custPhone + '<\/td><\/tr>' +
+      (custEmail ? '<tr><td>Email<\/td><td>' + custEmail + '<\/td><\/tr>' : '') +
+    '<\/table>' +
+  '<\/div>';
   // ===== PROJECT OVERVIEW =====
   html += '<div class="summary-section">' +
-    '<h3>Project Overview</h3>' +
+    '<h3>Project Overview<\/h3>' +
     '<table class="summary-table">' +
-      '<tr><td>Total Windows</td><td>' + totalWindows + '</td></tr>' +
-      '<tr><td>Installation Type</td><td>Full-Frame Replacement</td></tr>' +
-      '<tr><td>Building Stories</td><td>' + (document.getElementById('stories').value === '1' ? '1 Story' : document.getElementById('stories').value === '2' ? '2 Stories' : '3+ Stories') + '</td></tr>' +
-    '</table>' +
-  '</div>';
+      '<tr><td>Total Windows<\/td><td>' + totalWindows + '<\/td><\/tr>' +
+      '<tr><td>Installation Type<\/td><td>Full-Frame Replacement<\/td><\/tr>' +
+      '<tr><td>Building Stories<\/td><td>' + (document.getElementById('stories').value === '1' ? '1 Story' : document.getElementById('stories').value === '2' ? '2 Stories' : '3+ Stories') + '<\/td><\/tr>' +
+    '<\/table>' +
+  '<\/div>';
   // ===== ITEMIZED BREAKDOWN =====
   html += '<div class="summary-section">' +
-    '<h3>Itemized Breakdown</h3>' +
+    '<h3>Itemized Breakdown<\/h3>' +
     '<table class="summary-table">' +
-      '<thead><tr><th>Item</th><th>Per Unit</th><th>Qty</th><th style="text-align:right;">Total</th></tr></thead>' +
-      '<tbody>' + windowRows + '</tbody>' +
-    '</table>' +
-  '</div>';
+      '<thead><tr><th>Item<\/th><th>Per Unit<\/th><th>Qty<\/th><th style="text-align:right;">Total<\/th><\/tr><\/thead>' +
+      '<tbody>' + windowRows + '<\/tbody>' +
+    '<\/table>' +
+  '<\/div>';
   // ===== PROJECT COSTS =====
   html += '<div class="summary-section">' +
-    '<h3>Project Costs</h3>' +
+    '<h3>Project Costs<\/h3>' +
     '<table class="summary-table">' +
-      '<tr><td>Windows Subtotal (incl. installation)</td><td>' + fmt(windowSubtotal) + '</td></tr>';
+      '<tr><td>Windows Subtotal (incl. installation)<\/td><td>' + fmt(windowSubtotal) + '<\/td><\/tr>';
   if (bulkDiscountAmt > 0) {
-    html += '<tr><td>Project Efficiency Adjustment (' + totalWindows + '-Window Scope)</td><td style="color:var(--cta-red);">-' + fmt(bulkDiscountAmt) + '</td></tr>';
+    html += '<tr><td>Project Efficiency Adjustment (' + totalWindows + '-Window Scope)<\/td><td style="color:var(--cta-red);">-' + fmt(bulkDiscountAmt) + '<\/td><\/tr>';
   }
-  html += '<tr><td>Permit Fee (3%)</td><td>' + fmt(permitFee) + '</td></tr>';
-  html += '<tr class="total"><td>Estimated Total</td><td>' + fmt(grandTotal) + '</td></tr>' +
-    '</table>' +
-  '</div>';
+  html += '<tr><td>Permit Fee (3%)<\/td><td>' + fmt(permitFee) + '<\/td><\/tr>';
+  html += '<tr class="total"><td>Estimated Total<\/td><td>' + fmt(grandTotal) + '<\/td><\/tr>' +
+    '<\/table>' +
+  '<\/div>';
   // ===== POTENTIAL SAVINGS =====
   html += '<div class="summary-section">' +
-    '<h3>Potential Savings</h3>' +
+    '<h3>Potential Savings<\/h3>' +
     '<ul style="padding-left:1.25rem; margin:0.25rem 0 0.5rem 0;">' +
-      '<li style="font-size:0.85rem; color:var(--charcoal); line-height:1.6;">Up to $600 Federal ENERGY STAR Tax Credit</li>' +
-      '<li style="font-size:0.85rem; color:var(--charcoal); line-height:1.6;">Estimated 12% annual heating/cooling efficiency improvement (varies by home)</li>' +
-    '</ul>' +
-    '<p style="font-size:0.82rem; color:var(--text-gray); margin-top:0.35rem;">Savings eligibility is confirmed during professional verification.</p>' +
-  '</div>';
+      '<li style="font-size:0.85rem; color:var(--charcoal); line-height:1.6;">Up to $600 Federal ENERGY STAR Tax Credit<\/li>' +
+      '<li style="font-size:0.85rem; color:var(--charcoal); line-height:1.6;">Estimated 12% annual heating/cooling efficiency improvement (varies by home)<\/li>' +
+    '<\/ul>' +
+    '<p style="font-size:0.82rem; color:var(--text-gray); margin-top:0.35rem;">Savings eligibility is confirmed during professional verification.<\/p>' +
+  '<\/div>';
   // ===== HOW SCHEDULING CAN INFLUENCE FINAL PRICING =====
   html += '<div class="routing-section">' +
-    '<h3>How Scheduling Can Influence Final Pricing</h3>' +
-    '<p>We organize installations by geographic zones.</p>' +
-    '<p>When multiple homes in the same area are completed during the same installation cycle, operational efficiencies may apply.</p>' +
-    '<p>These efficiencies can reduce:</p>' +
+    '<h3>How Scheduling Can Influence Final Pricing<\/h3>' +
+    '<p>We organize installations by geographic zones.<\/p>' +
+    '<p>When multiple homes in the same area are completed during the same installation cycle, operational efficiencies may apply.<\/p>' +
+    '<p>These efficiencies can reduce:<\/p>' +
     '<ul>' +
-      '<li>Crew travel time</li>' +
-      '<li>Equipment staging costs</li>' +
-      '<li>Material handling redundancies</li>' +
-    '</ul>' +
-    '<p>When routing efficiencies apply, they are reflected in final pricing.</p>' +
-    '<p>Unverified estimates are not assigned to an installation zone.</p>' +
-    '<p>Early confirmation improves access to the most efficient installation cycle.</p>' +
-  '</div>';
+      '<li>Crew travel time<\/li>' +
+      '<li>Equipment staging costs<\/li>' +
+      '<li>Material handling redundancies<\/li>' +
+    '<\/ul>' +
+    '<p>When routing efficiencies apply, they are reflected in final pricing.<\/p>' +
+    '<p>Unverified estimates are not assigned to an installation zone.<\/p>' +
+    '<p>Early confirmation improves access to the most efficient installation cycle.<\/p>' +
+  '<\/div>';
   document.getElementById('summaryContent').innerHTML = html;
   updateRunningTotal();
 }
@@ -1133,7 +1134,7 @@ function generateEstimatePDF() {
     var header = document.createElement('div');
     header.style.cssText = 'background:#122739; padding:14px 20px; margin:0 -20px 20px -20px; text-align:center; page-break-inside:avoid;';
     header.innerHTML =
-      '<h1 style="margin:0; font-family:Montserrat,sans-serif; font-size:20px; font-weight:700; color:#FFFFFF; letter-spacing:0.5px;">Reece Windows &amp; Doors</h1>';
+      '<h1 style="margin:0; font-family:Montserrat,sans-serif; font-size:20px; font-weight:700; color:#FFFFFF; letter-spacing:0.5px;">Reece Windows &amp; Doors<\/h1>';
     pdfContainer.appendChild(header);
     // ===== 2. PRICE AUTHORITY BLOCK =====
     var priceBlock = document.createElement('div');
@@ -1143,36 +1144,36 @@ function generateEstimatePDF() {
     var pdfMonthlyAvg = Math.round(total * 0.0107);
 
     priceBlock.innerHTML =
-      '<h3 style="margin:0 0 10px 0; padding-left:12px; font-size:14px; font-weight:700; color:#122739; border-left:3px solid #ED1E24; line-height:1.3;">Estimated Project Investment</h3>' +
-      '<p style="margin:0 0 6px 0; font-size:30px; font-weight:700; color:#122739; text-align:center; line-height:1.2;">' + fmt(total) + '</p>' +
-      '<p style="margin:4px 0 0 0; font-size:12px; color:#626060; text-align:center; letter-spacing:0.3px;">Full-Frame Replacement | ' + (window.latestWindowCount || 0) + ' Impact-Rated Windows</p>' +
-      '<p style="margin:2px 0 0 0; font-size:11px; color:#87898B; text-align:center; letter-spacing:0.5px;">Florida-Engineered | Impact-Rated | In-House Installation</p>' +
+      '<h3 style="margin:0 0 10px 0; padding-left:12px; font-size:14px; font-weight:700; color:#122739; border-left:3px solid #ED1E24; line-height:1.3;">Estimated Project Investment<\/h3>' +
+      '<p style="margin:0 0 6px 0; font-size:30px; font-weight:700; color:#122739; text-align:center; line-height:1.2;">' + fmt(total) + '<\/p>' +
+      '<p style="margin:4px 0 0 0; font-size:12px; color:#626060; text-align:center; letter-spacing:0.3px;">Full-Frame Replacement | ' + (window.latestWindowCount || 0) + ' Impact-Rated Windows<\/p>' +
+      '<p style="margin:2px 0 0 0; font-size:11px; color:#87898B; text-align:center; letter-spacing:0.5px;">Florida-Engineered | Impact-Rated | In-House Installation<\/p>' +
       // Monthly payment line — sits tight under credibility line
-      '<p style="margin:8px 0 0 0; font-size:18px; font-weight:900; color:#2e7d32; text-align:center; line-height:1.1;">Estimated $' + pdfMonthlyLow.toLocaleString() + '\u2013$' + pdfMonthlyAvg.toLocaleString() + ' per month*</p>' +
-      '<p style="margin:4px 0 0 0; font-size:11px; font-weight:700; color:#122739; text-align:center;">Payment options available.</p>' +
-      '<p style="margin:2px 0 0 0; font-size:11px; font-weight:700; color:#122739; text-align:center;">No traditional credit score required.</p>' +
-      '<p style="margin:4px 0 0 0; font-size:9px; color:#626060; text-align:center; line-height:1.35;">*Example based on estimated project total. Final terms are confirmed during verification.</p>' +
-      '<div style="border-top:1px solid #C1D5DB; margin:12px 0;"></div>' +
-      '<p style="margin:0 0 2px 0; font-size:10px; font-weight:700; color:#0C2340; text-align:center;">Estimated Range</p>' +
-      '<p style="margin:0 0 6px 0; font-size:13px; font-weight:700; color:#0C2340; text-align:center;">' + fmt(lowPrice) + ' \u2013 ' + fmt(highPrice) + '</p>' +
-      '<p style="margin:0 0 8px 0; font-size:11px; color:#626060; text-align:center;">Most verified projects remain within this range.</p>' +
-      '<p style="margin:0 0 8px 0; font-size:11px; color:#626060; text-align:center;">Final pricing is confirmed during professional verification.</p>' +
-      '<p style="margin:0; font-size:10px; color:#626060; text-align:center; line-height:1.4;">This range reflects final measurement confirmation, installation method adjustments, and Florida code requirements.</p>';
+      '<p style="margin:8px 0 0 0; font-size:18px; font-weight:900; color:#2e7d32; text-align:center; line-height:1.1;">Estimated $' + pdfMonthlyLow.toLocaleString() + '\u2013$' + pdfMonthlyAvg.toLocaleString() + ' per month*<\/p>' +
+      '<p style="margin:4px 0 0 0; font-size:11px; font-weight:700; color:#122739; text-align:center;">Payment options available.<\/p>' +
+      '<p style="margin:2px 0 0 0; font-size:11px; font-weight:700; color:#122739; text-align:center;">No traditional credit score required.<\/p>' +
+      '<p style="margin:4px 0 0 0; font-size:9px; color:#626060; text-align:center; line-height:1.35;">*Example based on estimated project total. Final terms are confirmed during verification.<\/p>' +
+      '<div style="border-top:1px solid #C1D5DB; margin:12px 0;"><\/div>' +
+      '<p style="margin:0 0 2px 0; font-size:10px; font-weight:700; color:#0C2340; text-align:center;">Estimated Range<\/p>' +
+      '<p style="margin:0 0 6px 0; font-size:13px; font-weight:700; color:#0C2340; text-align:center;">' + fmt(lowPrice) + ' \u2013 ' + fmt(highPrice) + '<\/p>' +
+      '<p style="margin:0 0 8px 0; font-size:11px; color:#626060; text-align:center;">Most verified projects remain within this range.<\/p>' +
+      '<p style="margin:0 0 8px 0; font-size:11px; color:#626060; text-align:center;">Final pricing is confirmed during professional verification.<\/p>' +
+      '<p style="margin:0; font-size:10px; color:#626060; text-align:center; line-height:1.4;">This range reflects final measurement confirmation, installation method adjustments, and Florida code requirements.<\/p>';
     pdfContainer.appendChild(priceBlock);
     // ===== 2b. STRUCTURED STARTING POINT =====
     var startingPoint = document.createElement('div');
     startingPoint.style.cssText = 'border-top:1px solid #C1D5DB; margin-top:8px; padding-top:18px; margin-bottom:16px; page-break-inside:avoid;';
     startingPoint.innerHTML =
-      '<h3 style="margin:0 0 8px 0; font-size:13px; font-weight:700; color:#0C2340;">Your Estimate Is Structured and Verifiable</h3>' +
-      '<p style="margin:0 0 4px 0; font-size:11px; color:#626060; line-height:1.5;">This estimate reflects the window selections and preliminary measurements you provided.</p>' +
-      '<p style="margin:0 0 4px 0; font-size:11px; color:#626060; line-height:1.5;">Before materials are ordered, we verify:</p>' +
+      '<h3 style="margin:0 0 8px 0; font-size:13px; font-weight:700; color:#0C2340;">Your Estimate Is Structured and Verifiable<\/h3>' +
+      '<p style="margin:0 0 4px 0; font-size:11px; color:#626060; line-height:1.5;">This estimate reflects the window selections and preliminary measurements you provided.<\/p>' +
+      '<p style="margin:0 0 4px 0; font-size:11px; color:#626060; line-height:1.5;">Before materials are ordered, we verify:<\/p>' +
       '<ul style="margin:4px 0 8px 0; padding-left:20px; font-size:11px; color:#626060; line-height:1.6;">' +
-        '<li>Exact opening dimensions</li>' +
-        '<li>Installation conditions</li>' +
-        '<li>Florida code compliance requirements</li>' +
-        '<li>Geographic scheduling zone eligibility</li>' +
-      '</ul>' +
-      '<p style="margin:0; font-size:11px; color:#626060; line-height:1.5;">This protects you from unexpected changes \u2014 up or down.</p>';
+        '<li>Exact opening dimensions<\/li>' +
+        '<li>Installation conditions<\/li>' +
+        '<li>Florida code compliance requirements<\/li>' +
+        '<li>Geographic scheduling zone eligibility<\/li>' +
+      '<\/ul>' +
+      '<p style="margin:0; font-size:11px; color:#626060; line-height:1.5;">This protects you from unexpected changes \u2014 up or down.<\/p>';
     pdfContainer.appendChild(startingPoint);
     // ===== 3. EXISTING PRICING CONTENT (cloned — unchanged) =====
     var contentClone = summaryEl.cloneNode(true);
@@ -1224,39 +1225,39 @@ function generateEstimatePDF() {
     var costRange = document.createElement('div');
     costRange.style.cssText = 'margin:0 0 8px 0; page-break-inside:avoid;';
     costRange.innerHTML =
-      '<h3 style="margin:0 0 4px 0; font-size:11px; font-weight:700; color:#0C2340;">Cost Range</h3>' +
+      '<h3 style="margin:0 0 4px 0; font-size:11px; font-weight:700; color:#0C2340;">Cost Range<\/h3>' +
       '<table style="width:100%; border-collapse:collapse; margin-bottom:12px; font-size:11px;">' +
-        '<tr><td style="padding:6px 8px; border-bottom:1px solid #e0e0e0;">Projected Low (-20%)</td><td style="padding:6px 8px; border-bottom:1px solid #e0e0e0; text-align:right; font-weight:500;">' + fmt(lowPrice) + '</td></tr>' +
-        '<tr><td style="padding:6px 8px; border-bottom:1px solid #e0e0e0; font-weight:600; color:#122738;">Verified Average</td><td style="padding:6px 8px; border-bottom:1px solid #e0e0e0; text-align:right; font-weight:600; color:#122738;">' + fmt(total) + '</td></tr>' +
-        '<tr><td style="padding:6px 8px; border-bottom:1px solid #e0e0e0;">Projected High (+20%)</td><td style="padding:6px 8px; border-bottom:1px solid #e0e0e0; text-align:right; font-weight:500;">' + fmt(highPrice) + '</td></tr>' +
-      '</table>' +
-      '<p style="font-size:10px; color:#87898B; margin-top:4px; line-height:1.4;">This range reflects final measurement confirmation, installation conditions, and code compliance requirements.</p>';
+        '<tr><td style="padding:6px 8px; border-bottom:1px solid #e0e0e0;">Projected Low (-20%)<\/td><td style="padding:6px 8px; border-bottom:1px solid #e0e0e0; text-align:right; font-weight:500;">' + fmt(lowPrice) + '<\/td><\/tr>' +
+        '<tr><td style="padding:6px 8px; border-bottom:1px solid #e0e0e0; font-weight:600; color:#122738;">Verified Average<\/td><td style="padding:6px 8px; border-bottom:1px solid #e0e0e0; text-align:right; font-weight:600; color:#122738;">' + fmt(total) + '<\/td><\/tr>' +
+        '<tr><td style="padding:6px 8px; border-bottom:1px solid #e0e0e0;">Projected High (+20%)<\/td><td style="padding:6px 8px; border-bottom:1px solid #e0e0e0; text-align:right; font-weight:500;">' + fmt(highPrice) + '<\/td><\/tr>' +
+      '<\/table>' +
+      '<p style="font-size:10px; color:#87898B; margin-top:4px; line-height:1.4;">This range reflects final measurement confirmation, installation conditions, and code compliance requirements.<\/p>';
     pdfContainer.appendChild(costRange);
     // ===== 3c. POTENTIAL SAVINGS TABLE =====
     var savings = document.createElement('div');
     savings.style.cssText = 'margin:0 0 8px 0; page-break-inside:avoid;';
     savings.innerHTML =
-      '<h3 style="margin:0 0 4px 0; font-size:11px; font-weight:700; color:#0C2340;">Potential Savings</h3>' +
+      '<h3 style="margin:0 0 4px 0; font-size:11px; font-weight:700; color:#0C2340;">Potential Savings<\/h3>' +
       '<table style="width:100%; border-collapse:collapse; margin-bottom:12px; font-size:11px;">' +
-        '<tr><td style="padding:6px 8px; border-bottom:1px solid #e0e0e0;">ENERGY STAR Tax Credit (up to 30%, max $600/yr Federal Tax Credit)</td><td style="padding:6px 8px; border-bottom:1px solid #e0e0e0; text-align:right; font-weight:500; color:#ED1F24;">Up to -' + fmt(Math.min(total * 0.30, 600)) + '</td></tr>' +
-      '<tr><td style="padding:6px 8px; border-bottom:1px solid #e0e0e0;">Energy Savings (est. 12% on heating/cooling bills annually)</td><td style="padding:6px 8px; border-bottom:1px solid #e0e0e0; text-align:right; font-weight:500; color:#ED1F24;">Varies by home</td></tr>' +
-      '</table>';
+        '<tr><td style="padding:6px 8px; border-bottom:1px solid #e0e0e0;">ENERGY STAR Tax Credit (up to 30%, max $600/yr Federal Tax Credit)<\/td><td style="padding:6px 8px; border-bottom:1px solid #e0e0e0; text-align:right; font-weight:500; color:#ED1F24;">Up to -' + fmt(Math.min(total * 0.30, 600)) + '<\/td><\/tr>' +
+      '<tr><td style="padding:6px 8px; border-bottom:1px solid #e0e0e0;">Energy Savings (est. 12% on heating/cooling bills annually)<\/td><td style="padding:6px 8px; border-bottom:1px solid #e0e0e0; text-align:right; font-weight:500; color:#ED1F24;">Varies by home<\/td><\/tr>' +
+      '<\/table>';
     pdfContainer.appendChild(savings);
     // ===== 4. ROUTING & INSTALLATION SECTION =====
     var routingBody = document.createElement('div');
     routingBody.style.cssText = 'padding:20px 0 0 0; margin-bottom:20px; page-break-inside:avoid;';
     routingBody.innerHTML =
-      '<h3 style="margin:0 0 10px 0; padding-left:12px; font-size:13px; font-weight:700; color:#122739; border-left:3px solid #ED1E24; line-height:1.3;">How Installation Scheduling Can Influence Final Pricing</h3>' +
-      '<p style="margin:0 0 4px 0; font-size:11px; color:#626060; line-height:1.5;">We organize installations by geographic zones.</p>' +
-      '<p style="margin:0 0 4px 0; font-size:11px; color:#626060; line-height:1.5;">When multiple homes in the same area are completed during the same installation cycle, we reduce:</p>' +
+      '<h3 style="margin:0 0 10px 0; padding-left:12px; font-size:13px; font-weight:700; color:#122739; border-left:3px solid #ED1E24; line-height:1.3;">How Installation Scheduling Can Influence Final Pricing<\/h3>' +
+      '<p style="margin:0 0 4px 0; font-size:11px; color:#626060; line-height:1.5;">We organize installations by geographic zones.<\/p>' +
+      '<p style="margin:0 0 4px 0; font-size:11px; color:#626060; line-height:1.5;">When multiple homes in the same area are completed during the same installation cycle, we reduce:<\/p>' +
       '<ul style="margin:4px 0 8px 0; padding-left:20px; font-size:11px; color:#626060; line-height:1.6;">' +
-        '<li>Crew travel time</li>' +
-        '<li>Equipment staging costs</li>' +
-        '<li>Material handling inefficiencies</li>' +
-      '</ul>' +
-      '<p style="margin:0 0 4px 0; font-size:11px; color:#626060; line-height:1.5;">When routing efficiencies apply, they are reflected in final pricing.</p>' +
-      '<p style="margin:0 0 4px 0; font-size:11px; color:#626060; line-height:1.5;">Routing eligibility is confirmed during professional measurement verification.</p>' +
-      '<p style="margin:0; font-size:11px; color:#626060; line-height:1.5;">Early verification improves access to the most efficient installation cycle.</p>';
+        '<li>Crew travel time<\/li>' +
+        '<li>Equipment staging costs<\/li>' +
+        '<li>Material handling inefficiencies<\/li>' +
+      '<\/ul>' +
+      '<p style="margin:0 0 4px 0; font-size:11px; color:#626060; line-height:1.5;">When routing efficiencies apply, they are reflected in final pricing.<\/p>' +
+      '<p style="margin:0 0 4px 0; font-size:11px; color:#626060; line-height:1.5;">Routing eligibility is confirmed during professional measurement verification.<\/p>' +
+      '<p style="margin:0; font-size:11px; color:#626060; line-height:1.5;">Early verification improves access to the most efficient installation cycle.<\/p>';
     pdfContainer.appendChild(routingBody);
     // ===== 5. CLOSE SECTION =====
     var closeDivider = document.createElement('div');
@@ -1265,17 +1266,17 @@ function generateEstimatePDF() {
     var closeSection = document.createElement('div');
     closeSection.style.cssText = 'background:#FFFFFF; padding-top:18px; margin-bottom:20px; page-break-inside:avoid;';
     closeSection.innerHTML =
-      '<h3 style="margin:0 0 10px 0; padding-left:12px; font-size:14px; font-weight:700; color:#122739; border-left:3px solid #ED1E24; line-height:1.3;">Next Step: Confirm and Finalize</h3>' +
-      '<p style="margin:0 0 4px 0; font-size:11px; color:#626060; line-height:1.5;">A brief professional measurement allows us to:</p>' +
+      '<h3 style="margin:0 0 10px 0; padding-left:12px; font-size:14px; font-weight:700; color:#122739; border-left:3px solid #ED1E24; line-height:1.3;">Next Step: Confirm and Finalize<\/h3>' +
+      '<p style="margin:0 0 4px 0; font-size:11px; color:#626060; line-height:1.5;">A brief professional measurement allows us to:<\/p>' +
       '<ul style="margin:4px 0 10px 0; padding-left:20px; font-size:11px; color:#626060; line-height:1.6;">' +
-        '<li>Secure your exact price</li>' +
-        '<li>Confirm material allocation</li>' +
-        '<li>Determine routing efficiencies</li>' +
-        '<li>Finalize installation scheduling</li>' +
-      '</ul>' +
-      '<p style="margin:0 0 3px 0; font-size:11px; color:#626060; line-height:1.5;">There is no obligation.</p>' +
-      '<p style="margin:0 0 3px 0; font-size:11px; color:#626060; line-height:1.5;">No sales presentation.</p>' +
-      '<p style="margin:0; font-size:11px; color:#626060; font-weight:600; line-height:1.5;">Just precision.</p>';
+        '<li>Secure your exact price<\/li>' +
+        '<li>Confirm material allocation<\/li>' +
+        '<li>Determine routing efficiencies<\/li>' +
+        '<li>Finalize installation scheduling<\/li>' +
+      '<\/ul>' +
+      '<p style="margin:0 0 3px 0; font-size:11px; color:#626060; line-height:1.5;">There is no obligation.<\/p>' +
+      '<p style="margin:0 0 3px 0; font-size:11px; color:#626060; line-height:1.5;">No sales presentation.<\/p>' +
+      '<p style="margin:0; font-size:11px; color:#626060; font-weight:600; line-height:1.5;">Just precision.<\/p>';
     pdfContainer.appendChild(closeSection);
     // ===== 6. FOOTER =====
     var footer = document.createElement('div');
@@ -1339,45 +1340,23 @@ function generateEstimatePDF() {
   });
 }
 function sendPDFToWebhook(base64, contactId, contactName) {
-  var data = gatherContactData();
-  var grandTotal = window.latestEstimateTotal || 0;
-  var lowEst = window.latestEstimateLow || round2(grandTotal * 0.80);
-  var highEst = window.latestEstimateHigh || round2(grandTotal * 1.20);
-  var monthlyAvg = window.latestMonthlyAvg || Math.round(grandTotal * 0.0107);
-  var windowCount = window.latestWindowCount || 0;
-  var timestamp = new Date().toISOString();
-  var phoneDigits = (data.phone || '').replace(/\D/g, '');
-  var fileName = 'estimate_' + (data.firstName || 'unknown') + '_' + phoneDigits + '_' + Date.now() + '.pdf';
-
+  var fileName = 'Reece-Windows-Estimate-' + Date.now() + '.pdf';
   var payload = {
-    contact: {
-      first_name: data.firstName || '',
-      last_name: data.lastName || '',
-      phone: data.phone || '',
-      email: data.email || ''
-    },
-    estimate: {
-      total_low: lowEst,
-      total_high: highEst,
-      monthly_payment: monthlyAvg,
-      windows_count: windowCount,
-      step4_timestamp: timestamp
-    },
-    pdf: {
-      pdf_base64: base64,
-      pdf_filename: fileName
-    },
-    meta: {
-      source: 'window-estimator',
-      event: 'estimate_rendered_step_4'
-    }
+    type: 'pdf_attachment',
+    contact_id: contactId || '',
+    contact_name: contactName || '',
+    pdf_base64: base64,
+    file_name: fileName,
+    ghl_api_key: GHL_CONFIG.pit,
+    ghl_location_id: GHL_CONFIG.locationId
   };
 
+  // Comprehensive logging
   console.log('[Webhook] ===== BUILDING PAYLOAD =====');
   console.log('[Webhook] Endpoint:', GHL_CONFIG.pdfWebhookUrl);
-  console.log('[Webhook] Contact:', JSON.stringify(payload.contact));
-  console.log('[Webhook] Estimate:', JSON.stringify(payload.estimate));
-  console.log('[Webhook] PDF filename:', fileName);
+  console.log('[Webhook] contact_id:', payload.contact_id);
+  console.log('[Webhook] contact_name:', payload.contact_name);
+  console.log('[Webhook] file_name:', fileName);
   console.log('[Webhook] pdf_base64 length:', base64 ? base64.length : 0);
   var payloadStr = JSON.stringify(payload);
   console.log('[Webhook] Total payload size (chars):', payloadStr.length);
@@ -1397,7 +1376,7 @@ function sendPDFToWebhook(base64, contactId, contactName) {
       });
     }
     return resp.text().then(function(body) {
-      console.log('[Webhook] ✅ Success response body:', body);
+      console.log('[Webhook] Success response body:', body);
       window.__estimateWebhookError = false;
       return resp;
     });

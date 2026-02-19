@@ -814,13 +814,10 @@ header .header-intro {
   .how-it-works,
   .site-footer,
   .verify-cta,
-  .pricing-stability-note,
-  .estimate-hero,
-  .estimate-range,
-  .routing-section,
-  .section-divider,
   .sticky-cta,
-  .project-summary-header {
+  .cta-micro,
+  .cta-subtext,
+  .modal-overlay {
     display: none !important;
   }
   /* ===== SHOW ONLY ESTIMATE SECTION ===== */
@@ -913,6 +910,53 @@ header .header-intro {
   }
   .disclaimer strong {
     color: #0D2240 !important;
+  }
+  /* ===== ESTIMATE HERO (print) ===== */
+  .estimate-hero {
+    text-align: center !important;
+    margin-bottom: 0.15in !important;
+    page-break-inside: avoid;
+  }
+  .estimate-hero .price-display {
+    font-size: 22pt !important;
+    font-weight: 700 !important;
+    color: #0D2240 !important;
+  }
+  .estimate-hero .monthly-line {
+    font-size: 10pt !important;
+    color: #333 !important;
+  }
+  /* ===== ESTIMATE RANGE (print) ===== */
+  .estimate-range {
+    text-align: center !important;
+    font-size: 9pt !important;
+    color: #636060 !important;
+    margin-bottom: 0.1in !important;
+  }
+  /* ===== ROUTING SECTION (print) ===== */
+  .routing-section {
+    margin-bottom: 0.15in !important;
+    page-break-inside: avoid;
+  }
+  /* ===== SECTION DIVIDER (print) ===== */
+  .section-divider {
+    border: none !important;
+    border-top: 1pt solid #C1D5DB !important;
+    margin: 0.1in 0 !important;
+  }
+  /* ===== PROJECT SUMMARY HEADER (print) ===== */
+  .project-summary-header {
+    font-size: 14pt !important;
+    color: #0D2240 !important;
+    font-weight: 700 !important;
+    margin-bottom: 0.1in !important;
+  }
+  /* ===== PRICING STABILITY NOTE (print) ===== */
+  .pricing-stability-note {
+    font-size: 8.5pt !important;
+    color: #636060 !important;
+    margin-bottom: 0.1in !important;
+    page-break-inside: avoid;
   }
   /* ===== CUSTOM SIZE BADGE ===== */
   .custom-size-badge {
@@ -2992,46 +3036,23 @@ function generateEstimatePDF() {
   });
 }
 function sendPDFToWebhook(base64, contactId, contactName) {
-  var data = gatherContactData();
-  var grandTotal = window.latestEstimateTotal || 0;
-  var lowEst = window.latestEstimateLow || round2(grandTotal * 0.80);
-  var highEst = window.latestEstimateHigh || round2(grandTotal * 1.20);
-  var monthlyAvg = window.latestMonthlyAvg || Math.round(grandTotal * 0.0107);
-  var windowCount = window.latestWindowCount || 0;
-  var timestamp = new Date().toISOString();
-  var phoneDigits = (data.phone || '').replace(/\D/g, '');
-  var fileName = 'estimate_' + (data.firstName || 'unknown') + '_' + phoneDigits + '_' + Date.now() + '.pdf';
-
+  var fileName = 'Reece-Windows-Estimate-' + Date.now() + '.pdf';
   var payload = {
-    contact: {
-      first_name: data.firstName || '',
-      last_name: data.lastName || '',
-      phone: data.phone || '',
-      email: data.email || ''
-    },
-    estimate: {
-      total_low: lowEst,
-      total_high: highEst,
-      monthly_payment: monthlyAvg,
-      windows_count: windowCount,
-      step4_timestamp: timestamp
-    },
-    pdf: {
-      pdf_base64: base64,
-      pdf_filename: fileName
-    },
-    meta: {
-      source: 'window-estimator',
-      event: 'estimate_rendered_step_4'
-    }
+    type: 'pdf_attachment',
+    contact_id: contactId || '',
+    contact_name: contactName || '',
+    pdf_base64: base64,
+    file_name: fileName,
+    ghl_api_key: GHL_CONFIG.pit,
+    ghl_location_id: GHL_CONFIG.locationId
   };
 
   // Comprehensive logging
   console.log('[Webhook] ===== BUILDING PAYLOAD =====');
   console.log('[Webhook] Endpoint:', GHL_CONFIG.pdfWebhookUrl);
-  console.log('[Webhook] Contact:', JSON.stringify(payload.contact));
-  console.log('[Webhook] Estimate:', JSON.stringify(payload.estimate));
-  console.log('[Webhook] PDF filename:', fileName);
+  console.log('[Webhook] contact_id:', payload.contact_id);
+  console.log('[Webhook] contact_name:', payload.contact_name);
+  console.log('[Webhook] file_name:', fileName);
   console.log('[Webhook] pdf_base64 length:', base64 ? base64.length : 0);
   var payloadStr = JSON.stringify(payload);
   console.log('[Webhook] Total payload size (chars):', payloadStr.length);
@@ -3051,7 +3072,7 @@ function sendPDFToWebhook(base64, contactId, contactName) {
       });
     }
     return resp.text().then(function(body) {
-      console.log('[Webhook] \u2705 Success response body:', body);
+      console.log('[Webhook] Success response body:', body);
       window.__estimateWebhookError = false;
       return resp;
     });
