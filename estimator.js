@@ -956,28 +956,22 @@ function buildSummary() {
   const custPhone = document.getElementById('phone').value.trim();
   const custEmail = document.getElementById('email').value.trim();
   // ===== PRICE HERO BLOCK =====
+  var estMonthlyLow = Math.round(lowEstimate * 0.0107);
+  var estMonthlyAvg = Math.round(grandTotal * 0.0107);
+
   let html = '<div class="estimate-hero">' +
     '<h3>Estimated Project Investment</h3>' +
     '<p class="hero-price">' + fmt(grandTotal) + '</p>' +
     '<p class="hero-descriptor">Full-Frame Replacement | ' + totalWindows + ' Impact-Rated Windows</p>' +
     '<p class="hero-credibility">Florida-Engineered | Impact-Rated | In-House Installation</p>' +
+    '<p class="monthly-amount">Estimated $' + estMonthlyLow.toLocaleString() + ' to $' + estMonthlyAvg.toLocaleString() + ' per month*</p>' +
+    '<p class="monthly-sub">Payment options available. No traditional credit score required.</p>' +
+    '<p class="monthly-footnote">*Example based on estimated project total. Final terms are confirmed during verification.</p>' +
   '</div>';
-
-  // Monthly payment numbers
-  var estMonthlyLow = Math.round(lowEstimate * 0.0107);
-  var estMonthlyAvg = Math.round(grandTotal * 0.0107);
-
-  html +=
-    '<div class="monthly-hero">' +
-      '<div class="monthly-label">Estimated Monthly Payment</div>' +
-      '<p class="monthly-amount">$' + estMonthlyLow.toLocaleString() + ' to $' + estMonthlyAvg.toLocaleString() + '<span style="font-size:1rem; font-weight:800; color:var(--deep-navy);">, per month</span></p>' +
-      '<div class="monthly-sub">Payment options available, no traditional credit score required.</div>' +
-      '<div class="monthly-footnote">*Example based on estimated project total. Final terms are confirmed during verification.</div>' +
-    '</div>';
 
   // ===== STRUCTURED STARTING POINT =====
   html += '<div class="summary-section structured-starting-point">' +
-    '<h3>Your Online Estimate Is a Structured Starting Point</h3>' +
+    '<h3>Your Estimate Is Structured and Verifiable</h3>' +
     '<p style="font-size:0.85rem; color:var(--charcoal); margin-bottom:0.5rem;">This estimate reflects the window selections and preliminary measurements you provided.</p>' +
     '<p style="font-size:0.85rem; color:var(--charcoal); margin-bottom:0.35rem;">Before materials are ordered, we verify:</p>' +
     '<ul style="padding-left:1.25rem; margin:0.25rem 0 0.5rem 0;">' +
@@ -993,7 +987,6 @@ function buildSummary() {
     '<p class="range-label">Estimated Range</p>' +
     '<p class="range-values">' + fmt(lowEstimate) + ' \u2013 ' + fmt(highEstimate) + '</p>' +
     '<p>Most verified projects remain within this range.</p>' +
-    '<p>Verified projects rarely exceed the projected range.</p>' +
     '<p style="margin-top:0.5rem; font-size:0.78rem; color:var(--text-gray);">This range reflects final measurement confirmation, installation conditions, and code compliance requirements.</p>' +
   '</div>';
   // ===== PROJECT SUMMARY HEADER =====
@@ -1141,28 +1134,24 @@ function generateEstimatePDF() {
 
     priceBlock.innerHTML =
       '<h3 style="margin:0 0 10px 0; padding-left:12px; font-size:14px; font-weight:700; color:#122739; border-left:3px solid #ED1E24; line-height:1.3;">Estimated Project Investment</h3>' +
-      // Monthly payment hero box (FIRST — most visually prominent)
-      '<div style="margin:12px auto 8px; padding:12px 12px; border:2px solid #C1D5DB; background:#F2F3F7; text-align:center; page-break-inside:avoid;">' +
-        '<div style="font-size:11px; font-weight:800; letter-spacing:0.6px; text-transform:uppercase; color:#122739; margin-bottom:6px;">Estimated Monthly Payment</div>' +
-        '<div style="font-size:22px; font-weight:900; color:#ED1E24; line-height:1.1;">$' + pdfMonthlyLow.toLocaleString() + ' to $' + pdfMonthlyAvg.toLocaleString() + '<span style="font-size:12px; font-weight:800; color:#122739;">, per month</span></div>' +
-        '<div style="margin-top:6px; font-size:11px; font-weight:700; color:#122739;">Payment options available, no traditional credit score required.</div>' +
-        '<div style="margin-top:6px; font-size:9px; color:#626060; line-height:1.35;">*Example based on estimated project total. Final terms are confirmed during verification.</div>' +
-      '</div>' +
       '<p style="margin:0 0 6px 0; font-size:30px; font-weight:700; color:#122739; text-align:center; line-height:1.2;">' + fmt(total) + '</p>' +
       '<p style="margin:4px 0 0 0; font-size:12px; color:#626060; text-align:center; letter-spacing:0.3px;">Full-Frame Replacement | ' + (window.latestWindowCount || 0) + ' Impact-Rated Windows</p>' +
       '<p style="margin:2px 0 0 0; font-size:11px; color:#87898B; text-align:center; letter-spacing:0.5px;">Florida-Engineered | Impact-Rated | In-House Installation</p>' +
+      // Monthly payment line — sits tight under credibility line
+      '<p style="margin:8px 0 0 0; font-size:18px; font-weight:900; color:#2e7d32; text-align:center; line-height:1.1;">Estimated $' + pdfMonthlyLow.toLocaleString() + ' to $' + pdfMonthlyAvg.toLocaleString() + ' per month*</p>' +
+      '<p style="margin:4px 0 0 0; font-size:11px; font-weight:700; color:#122739; text-align:center;">Payment options available. No traditional credit score required.</p>' +
+      '<p style="margin:4px 0 0 0; font-size:9px; color:#626060; text-align:center; line-height:1.35;">*Example based on estimated project total. Final terms are confirmed during verification.</p>' +
       '<div style="border-top:1px solid #C1D5DB; margin:12px 0;"></div>' +
       '<p style="margin:0 0 2px 0; font-size:10px; font-weight:700; color:#0C2340; text-align:center;">Estimated Range</p>' +
       '<p style="margin:0 0 6px 0; font-size:13px; font-weight:700; color:#0C2340; text-align:center;">' + fmt(lowPrice) + ' \u2013 ' + fmt(highPrice) + '</p>' +
-      '<p style="margin:0 0 8px 0; font-size:11px; color:#626060; text-align:center;">Most projects fall within this estimated range.</p>' +
-      '<p style="margin:0 0 8px 0; font-size:11px; color:#626060; text-align:center;">Verified projects rarely exceed the projected range.</p>' +
+      '<p style="margin:0 0 8px 0; font-size:11px; color:#626060; text-align:center;">Most verified projects remain within this range.</p>' +
       '<p style="margin:0; font-size:10px; color:#626060; text-align:center; line-height:1.4;">This range reflects final measurement confirmation, installation method adjustments, and Florida code requirements.</p>';
     pdfContainer.appendChild(priceBlock);
     // ===== 2b. STRUCTURED STARTING POINT =====
     var startingPoint = document.createElement('div');
     startingPoint.style.cssText = 'border-top:1px solid #C1D5DB; padding-top:14px; margin-bottom:16px; page-break-inside:avoid;';
     startingPoint.innerHTML =
-      '<h3 style="margin:0 0 8px 0; font-size:13px; font-weight:700; color:#0C2340;">Your Online Estimate Is a Structured Starting Point</h3>' +
+      '<h3 style="margin:0 0 8px 0; font-size:13px; font-weight:700; color:#0C2340;">Your Estimate Is Structured and Verifiable</h3>' +
       '<p style="margin:0 0 4px 0; font-size:11px; color:#626060; line-height:1.5;">This estimate reflects the window selections and preliminary measurements you provided.</p>' +
       '<p style="margin:0 0 4px 0; font-size:11px; color:#626060; line-height:1.5;">Before materials are ordered, we verify:</p>' +
       '<ul style="margin:4px 0 8px 0; padding-left:20px; font-size:11px; color:#626060; line-height:1.6;">' +
@@ -1178,8 +1167,6 @@ function generateEstimatePDF() {
     // Remove sections already rendered with inline styles in the PDF above
     var heroEl = contentClone.querySelector('.estimate-hero');
     if (heroEl) heroEl.remove();
-    var monthlyHeroEl = contentClone.querySelector('.monthly-hero');
-    if (monthlyHeroEl) monthlyHeroEl.remove();
     var startingPt = contentClone.querySelector('.structured-starting-point');
     if (startingPt) startingPt.remove();
     var rangeEl = contentClone.querySelector('.estimate-range');
@@ -1269,7 +1256,7 @@ function generateEstimatePDF() {
       '<h3 style="margin:0 0 10px 0; padding-left:12px; font-size:14px; font-weight:700; color:#122739; border-left:3px solid #ED1E24; line-height:1.3;">Next Step: Confirm and Finalize</h3>' +
       '<p style="margin:0 0 4px 0; font-size:11px; color:#626060; line-height:1.5;">A brief professional measurement allows us to:</p>' +
       '<ul style="margin:4px 0 10px 0; padding-left:20px; font-size:11px; color:#626060; line-height:1.6;">' +
-        '<li>Lock in your exact price</li>' +
+        '<li>Secure your exact price</li>' +
         '<li>Confirm material allocation</li>' +
         '<li>Determine routing efficiencies</li>' +
         '<li>Finalize installation scheduling</li>' +
@@ -1340,6 +1327,7 @@ function generateEstimatePDF() {
   });
 }
 function sendPDFToWebhook(base64, contactId, contactName) {
+  console.warn('[PDF] ✅ sendPDFToWebhook CALLED — firing to:', GHL_CONFIG.pdfWebhookUrl);
   console.log('[PDF] sendPDFToWebhook: base64 length:', base64.length, 'contactId:', contactId);
   var fileName = 'Reece-Windows-Estimate-' + Date.now() + '.pdf';
   var payload = {
