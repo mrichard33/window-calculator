@@ -1068,6 +1068,55 @@ function buildSummary() {
   document.getElementById('summaryContent').innerHTML = html;
   updateRunningTotal();
 }
+function printEstimate() {
+  var printRoot = document.getElementById('printRoot');
+  printRoot.innerHTML = '';
+
+  // 1. Clone site header as branded banner
+  var siteHeader = document.querySelector('header');
+  var headerDiv = document.createElement('div');
+  headerDiv.className = 'print-header';
+  headerDiv.innerHTML = siteHeader.innerHTML;
+
+  // 2. Clone summary content
+  var summaryEl = document.getElementById('summaryContent');
+  var contentClone = summaryEl.cloneNode(true);
+  contentClone.removeAttribute('id');
+
+  // 3. Build Page 1 wrapper
+  var page1 = document.createElement('div');
+  page1.className = 'print-page-1';
+  page1.appendChild(headerDiv);
+
+  var heroEl = contentClone.querySelector('.estimate-hero');
+  if (heroEl) page1.appendChild(heroEl);
+  var dividerEl = contentClone.querySelector('.section-divider');
+  if (dividerEl) page1.appendChild(dividerEl);
+  var startingPt = contentClone.querySelector('.structured-starting-point');
+  if (startingPt) page1.appendChild(startingPt);
+  var rangeEl = contentClone.querySelector('.estimate-range');
+  if (rangeEl) page1.appendChild(rangeEl);
+
+  // 4. Build Page 2+ wrapper (everything remaining)
+  var page2 = document.createElement('div');
+  page2.className = 'print-page-2';
+  while (contentClone.firstChild) {
+    page2.appendChild(contentClone.firstChild);
+  }
+
+  // 5. Add disclaimer
+  var disclaimer = document.createElement('div');
+  disclaimer.className = 'print-disclaimer';
+  disclaimer.innerHTML = '<strong>Disclaimer:</strong> This estimate reflects current material pricing and standard installation conditions. Final pricing is confirmed following professional on-site verification. This document is not a contract or binding agreement.';
+  page2.appendChild(disclaimer);
+
+  // 6. Assemble
+  printRoot.appendChild(page1);
+  printRoot.appendChild(page2);
+
+  // 7. Print after render
+  requestAnimationFrame(function() { window.print(); });
+}
 function getStyleLabel(style) {
   const labels = {
     single_hung: 'Single-Hung', double_hung: 'Double-Hung', casement: 'Casement',

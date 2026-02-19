@@ -729,236 +729,151 @@ header .header-intro {
 /* ===== PRINT BUTTON ===== */
 .btn-print { background: transparent; color: var(--dark-navy); border: 1.5px solid var(--mist); }
 .btn-print:hover { background: var(--light-bg); color: var(--deep-navy); }
+/* printRoot is invisible on-screen */
+#printRoot { display: none; }
 @media print {
-  /* ===== PAGE SETUP ===== */
-  @page {
-    size: letter;
-    margin: 0.6in 0.7in;
-  }
+  @page { size: letter; margin: 18mm 14mm; }
   *, *::before, *::after {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
     color-adjust: exact !important;
   }
-  body {
-    background: #fff !important;
-    font-size: 11pt;
-    color: #333;
+  /* Hide everything */
+  body { visibility: hidden !important; margin: 0 !important; padding: 0 !important; background: #fff !important; }
+  body > * { display: none !important; }
+  /* Show only #printRoot */
+  #printRoot {
+    display: block !important;
+    visibility: visible !important;
+    position: absolute; top: 0; left: 0;
+    width: 100%; max-width: 800px; margin: 0 auto;
+    padding: 0;
+    font-family: 'Nunito Sans', sans-serif;
+    font-size: 10pt; color: #333; line-height: 1.45;
+    box-sizing: border-box;
   }
-  /* ===== HEADER — BRANDED BANNER ===== */
-  header {
-    background: #0D2240 !important;
-    color: #fff !important;
-    padding: 0.4in 0.5in !important;
-    margin: 0 0 0.3in 0;
-    width: 100%;
-    text-align: left;
-    position: relative;
-    overflow: visible;
+  #printRoot * { visibility: visible !important; }
+  /* === BRANDED HEADER === */
+  #printRoot .print-header {
+    background: #0D2240 !important; color: #fff !important;
+    padding: 0.3in 0.4in !important;
+    margin: 0 0 0.15in 0; width: 100%;
+    text-align: left; position: relative; overflow: visible;
     page-break-inside: avoid;
   }
-  header::after {
-    content: '' !important;
-    display: block !important;
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 50%;
-    height: 100%;
-    background: #ED1F24 !important;
-    opacity: 0.5;
+  #printRoot .print-header::after {
+    content: '' !important; display: block !important;
+    position: absolute; top: 0; right: 0; width: 50%; height: 100%;
+    background: #ED1F24 !important; opacity: 0.5;
     clip-path: polygon(45% 0, 100% 0, 100% 100%, 0 100%);
   }
-  header .header-content {
-    position: relative;
-    z-index: 1;
+  #printRoot .print-header .header-content { position: relative; z-index: 1; }
+  #printRoot .print-header .brand-name {
+    font-size: 8pt; letter-spacing: 2px; text-transform: uppercase;
+    opacity: 0.9; margin-bottom: 1pt; color: #fff !important;
   }
-  header .brand-name {
-    font-size: 9pt;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    opacity: 0.9;
-    margin-bottom: 2pt;
-    color: #fff !important;
+  #printRoot .print-header h1 {
+    font-size: 16pt; font-weight: 700; color: #fff !important; margin: 0;
   }
-  header h1 {
-    font-size: 20pt;
-    font-weight: 700;
-    color: #fff !important;
-    margin: 0;
+  #printRoot .print-header p {
+    font-size: 8pt; color: #C1D5DB !important; margin-top: 1pt;
   }
-  header p {
-    font-size: 9pt;
-    color: #C1D5DB !important;
-    margin-top: 2pt;
+  #printRoot .print-header .header-intro {
+    text-align: left !important; max-width: none !important;
+    margin: 2pt 0 0 0 !important; font-size: 7pt; line-height: 1.3;
   }
-  header .header-intro {
-    text-align: left !important;
-    max-width: none !important;
-    margin: 4pt 0 0 0 !important;
+  #printRoot .print-header .header-authority {
+    font-size: 8pt; font-weight: 600; color: #fff !important;
   }
-  /* ===== HIDE UI ELEMENTS ===== */
-  .stepper,
-  .btn-row,
-  .btn-print,
-  .btn,
-  .running-total,
-  #section-1,
-  #section-2,
-  #section-3,
-  .config-video,
-  .how-it-works,
-  .site-footer,
-  .verify-cta,
-  .sticky-cta,
-  .cta-micro,
-  .cta-subtext,
-  .modal-overlay {
-    display: none !important;
+  /* === PAGE 1: forced break after === */
+  #printRoot .print-page-1 { page-break-after: always; }
+  /* Page 1 tightening */
+  #printRoot .print-page-1 .estimate-hero {
+    text-align: center !important; margin-bottom: 0.06in !important;
+    padding: 0.04in 0 !important; page-break-inside: avoid;
   }
-  /* ===== SHOW ONLY ESTIMATE SECTION ===== */
-  .container {
-    max-width: 100%;
-    padding: 0 !important;
-    margin: 0;
+  #printRoot .print-page-1 .estimate-hero h3 { font-size: 9pt; margin-bottom: 2pt; color: #0D2240 !important; }
+  #printRoot .print-page-1 .estimate-hero .hero-price {
+    font-size: 20pt !important; font-weight: 700 !important;
+    color: #0D2240 !important; margin: 2pt 0 !important;
   }
-  .section {
-    display: none !important;
+  #printRoot .print-page-1 .estimate-hero .hero-descriptor { font-size: 8pt !important; margin: 1pt 0 !important; }
+  #printRoot .print-page-1 .estimate-hero .hero-credibility { font-size: 7pt !important; margin: 0 !important; color: #87898B !important; }
+  #printRoot .print-page-1 .estimate-hero .monthly-amount {
+    font-size: 13pt !important; font-weight: 900 !important;
+    color: #2e7d32 !important; margin: 4pt 0 0 0 !important;
   }
-  #section-4 {
-    display: block !important;
-    padding: 0 0.2in !important;
+  #printRoot .print-page-1 .estimate-hero .monthly-sub { font-size: 8pt !important; margin: 1pt 0 0 0 !important; }
+  #printRoot .print-page-1 .estimate-hero .monthly-footnote { font-size: 7pt !important; margin: 2pt 0 0 0 !important; }
+  #printRoot .print-page-1 .section-divider {
+    border: none !important; border-top: 0.5pt solid #C1D5DB !important;
+    margin: 0.05in 0 !important;
   }
-  /* ===== CARD STYLING ===== */
-  .card {
-    box-shadow: none !important;
-    padding: 0 !important;
-    margin-bottom: 0.2in !important;
-    border: none !important;
-  }
-  .card h2 {
-    font-size: 14pt;
-    color: #0D2240 !important;
-    border-bottom: 2pt solid #ED1F24 !important;
-    padding-bottom: 4pt;
-    margin-bottom: 10pt;
-  }
-  /* ===== SUMMARY SECTIONS ===== */
-  .summary-section {
-    margin-bottom: 0.18in !important;
-    page-break-inside: auto;
-  }
-  .summary-section h3 {
-    font-size: 11pt;
-    color: #0D2240 !important;
-    font-weight: 700;
-    margin-bottom: 4pt;
-    padding: 3pt 6pt;
-    background: #F2F3F7 !important;
-    border-left: 3pt solid #ED1F24 !important;
-  }
-  /* ===== SUMMARY TABLES ===== */
-  .summary-table {
-    width: 100%;
-    border-collapse: collapse;
-    table-layout: fixed;
-    overflow-wrap: break-word;
-  }
-  .summary-table th {
-    background: #0D2240 !important;
-    color: #fff !important;
-    font-size: 9pt;
-    font-weight: 600;
-    padding: 5pt 8pt;
-    text-align: left;
-    border: none;
-  }
-  .summary-table td {
-    padding: 4pt 8pt;
-    font-size: 9.5pt;
-    border-bottom: 0.5pt solid #C1D5DB !important;
-    color: #333;
-  }
-  .summary-table td:last-child {
-    text-align: right;
-    font-weight: 500;
-  }
-  .summary-table tr.total td {
-    font-weight: 700;
-    font-size: 11pt;
-    color: #0D2240 !important;
-    border-top: 2pt solid #0D2240 !important;
-    border-bottom: none;
-    padding-top: 6pt;
-  }
-  .summary-table tr.subtotal td {
-    font-weight: 600;
-    color: #122738 !important;
-  }
-  /* ===== DISCLAIMER ===== */
-  .disclaimer {
-    background: #F2F3F7 !important;
-    border-left: 3pt solid #ED1F24 !important;
-    padding: 8pt 10pt !important;
-    font-size: 8pt;
-    color: #636060 !important;
-    margin-top: 0.15in;
+  #printRoot .print-page-1 .structured-starting-point {
+    padding-top: 0.06in !important; margin-bottom: 0.05in !important;
     page-break-inside: avoid;
   }
-  .disclaimer strong {
-    color: #0D2240 !important;
+  #printRoot .print-page-1 .structured-starting-point h3 { font-size: 9pt !important; margin-bottom: 2pt !important; color: #0D2240 !important; }
+  #printRoot .print-page-1 .structured-starting-point p { font-size: 7.5pt !important; margin-bottom: 1pt !important; line-height: 1.3 !important; }
+  #printRoot .print-page-1 .structured-starting-point ul { margin: 1pt 0 2pt 0 !important; padding-left: 14pt !important; }
+  #printRoot .print-page-1 .structured-starting-point li { font-size: 7.5pt !important; line-height: 1.35 !important; margin-bottom: 0 !important; }
+  #printRoot .print-page-1 .estimate-range {
+    text-align: center !important; font-size: 7.5pt !important;
+    color: #636060 !important; margin: 0.05in 0 !important;
+    padding: 0.04in 0 !important;
+    border-top: 0.5pt solid #C1D5DB !important;
   }
-  /* ===== ESTIMATE HERO (print) ===== */
-  .estimate-hero {
-    text-align: center !important;
-    margin-bottom: 0.15in !important;
-    page-break-inside: avoid;
+  #printRoot .print-page-1 .estimate-range .range-label { font-size: 8pt !important; font-weight: 700 !important; margin-bottom: 1pt !important; color: #0D2240 !important; }
+  #printRoot .print-page-1 .estimate-range .range-values { font-size: 10pt !important; font-weight: 700 !important; margin-bottom: 2pt !important; color: #0D2240 !important; }
+  #printRoot .print-page-1 .estimate-range p { font-size: 7.5pt !important; margin: 1pt 0 !important; line-height: 1.3 !important; }
+  /* === PAGE 2+ === */
+  #printRoot .print-page-2 { padding-top: 0; }
+  #printRoot .project-summary-header {
+    font-size: 13pt !important; color: #0D2240 !important;
+    font-weight: 700 !important; margin: 0 0 8pt 0 !important;
+    border-left: 3pt solid #ED1F24 !important; padding-left: 8pt !important;
   }
-  .estimate-hero .price-display {
-    font-size: 22pt !important;
-    font-weight: 700 !important;
-    color: #0D2240 !important;
+  /* === SUMMARY SECTIONS === */
+  #printRoot .summary-section { margin-bottom: 0.12in !important; page-break-inside: auto; }
+  #printRoot .summary-section h3 {
+    font-size: 9.5pt; color: #0D2240 !important; font-weight: 700;
+    margin-bottom: 3pt; padding: 2pt 6pt;
+    background: #F2F3F7 !important; border-left: 3pt solid #ED1F24 !important;
   }
-  .estimate-hero .monthly-line {
-    font-size: 10pt !important;
-    color: #333 !important;
+  /* === TABLES === */
+  #printRoot .summary-table { width: 100%; border-collapse: collapse; table-layout: fixed; overflow-wrap: break-word; }
+  #printRoot .summary-table thead { display: table-header-group; }
+  #printRoot .summary-table th {
+    background: #0D2240 !important; color: #fff !important;
+    font-size: 8.5pt; font-weight: 600; padding: 4pt 6pt; text-align: left; border: none;
   }
-  /* ===== ESTIMATE RANGE (print) ===== */
-  .estimate-range {
-    text-align: center !important;
-    font-size: 9pt !important;
-    color: #636060 !important;
-    margin-bottom: 0.1in !important;
+  #printRoot .summary-table td {
+    padding: 3pt 6pt; font-size: 8.5pt;
+    border-bottom: 0.5pt solid #C1D5DB !important; color: #333;
   }
-  /* ===== ROUTING SECTION (print) ===== */
-  .routing-section {
-    margin-bottom: 0.15in !important;
-    page-break-inside: avoid;
+  #printRoot .summary-table td:last-child { text-align: right; font-weight: 500; }
+  #printRoot .summary-table tr { break-inside: avoid; page-break-inside: avoid; }
+  #printRoot .summary-table tr.total td {
+    font-weight: 700; font-size: 10pt; color: #0D2240 !important;
+    border-top: 2pt solid #0D2240 !important; border-bottom: none; padding-top: 5pt;
   }
-  /* ===== SECTION DIVIDER (print) ===== */
-  .section-divider {
-    border: none !important;
-    border-top: 1pt solid #C1D5DB !important;
-    margin: 0.1in 0 !important;
+  #printRoot .summary-table tr.subtotal td { font-weight: 600; color: #122738 !important; }
+  /* === ROUTING SECTION === */
+  #printRoot .routing-section { margin-bottom: 0.1in !important; page-break-inside: avoid; }
+  #printRoot .routing-section h3 { font-size: 9.5pt; color: #0D2240 !important; font-weight: 700; margin-bottom: 3pt; }
+  #printRoot .routing-section p { font-size: 8.5pt; color: #636060; line-height: 1.4; margin-bottom: 2pt; }
+  #printRoot .routing-section ul { padding-left: 16pt; margin: 2pt 0 4pt 0; }
+  #printRoot .routing-section li { font-size: 8.5pt; color: #636060; line-height: 1.4; }
+  /* === DISCLAIMER === */
+  #printRoot .print-disclaimer {
+    background: #F2F3F7 !important; border-left: 3pt solid #ED1F24 !important;
+    padding: 6pt 8pt !important; font-size: 7.5pt; color: #636060 !important;
+    margin-top: 0.12in; page-break-inside: avoid;
   }
-  /* ===== PROJECT SUMMARY HEADER (print) ===== */
-  .project-summary-header {
-    font-size: 14pt !important;
-    color: #0D2240 !important;
-    font-weight: 700 !important;
-    margin-bottom: 0.1in !important;
-  }
-  /* ===== PRICING STABILITY NOTE (print) ===== */
-  .pricing-stability-note {
-    font-size: 8.5pt !important;
-    color: #636060 !important;
-    margin-bottom: 0.1in !important;
-    page-break-inside: avoid;
-  }
-  /* ===== CUSTOM SIZE BADGE ===== */
-  .custom-size-badge {
-    color: #ED1F24 !important;
-  }
+  #printRoot .print-disclaimer strong { color: #0D2240 !important; }
+  /* === MISC === */
+  #printRoot .pricing-stability-note { font-size: 7.5pt !important; color: #636060 !important; page-break-inside: avoid; }
+  #printRoot .custom-size-badge { color: #ED1F24 !important; }
 }
 /* ===== RUNNING TOTAL BAR ===== */
 .running-total {
