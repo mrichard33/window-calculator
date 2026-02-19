@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Window Replacement Estimate — Reece Windows &amp; Doors</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <div class="header-content">
+      <div class="brand-name">Reece Windows &amp; Doors &bull; Est. 1972</div>
+      <h1>Get Your Window Replacement Estimate — No Sales Visit Required</h1>
+      <p>Family-Owned Since 1972. Trusted by Thousands of Florida Homeowners.</p>
+      <p class="header-authority">No in-home appointment required to see pricing.</p>
+      <p class="header-intro">New windows don't just improve how your home looks. They lower energy bills, increase storm protection, reduce outside noise, and raise your home's value.<br>This quick estimator shows you what that upgrade could realistically cost, before you commit to anything.</p>
+    </div>
+  </header>
+  <div class="container">
+    <!-- Stepper — 4 Steps -->
+    <div class="stepper" id="stepper">
+      <div class="step active" data-step="1"><span class="num">1</span> Home Details</div>
+      <div class="connector"></div>
+      <div class="step" data-step="2"><span class="num">2</span> Window Selection</div>
+      <div class="connector"></div>
+      <div class="step" data-step="3"><span class="num">3</span> Get Pricing</div>
+      <div class="connector"></div>
+      <div class="step" data-step="4"><span class="num">4</span> Your Estimate</div>
+    </div>
+    <!-- HOW THIS WORKS -->
+    <div class="how-it-works" id="howItWorks">
+      <h2>How This Works</h2>
+      <ul class="how-steps">
+        <li><span class="how-check">&#10003;</span> Enter your project details</li>
+        <li><span class="how-check">&#10003;</span> Select your window types</li>
+        <li><span class="how-check">&#10003;</span> Instantly see your estimated investment range</li>
+        <li><span class="how-check">&#10003;</span> Decide if you'd like to explore next steps</li>
+      </ul>
+      <p class="how-tagline">No appointment. No pressure. Just clarity.</p>
+    </div>
+    <!-- ========== STEP 1: PROJECT DETAILS ========== -->
+    <div class="section visible" id="section-1">
+      <div class="card">
+        <h2>Step 1: Tell Us About Your Home</h2>
+        <div class="form-row full">
+          <div class="field" id="field-fullName">
+            <label>Name <span style="color:var(--cta-red);">*</span></label>
+            <input type="text" id="fullName" placeholder="Name">
+            <div class="field-error-msg">Name is required.</div>
+          </div>
+        </div>
+        <div class="form-row full">
+          <div class="field" id="field-streetAddress">
+            <label>Street Address <span style="color:var(--cta-red);">*</span></label>
+            <input type="text" id="streetAddress" placeholder="Start typing your address...">
+            <div class="field-error-msg">Street address is required.</div>
+          </div>
+        </div>
+        <div class="form-row four">
+          <div class="field" id="field-city">
+            <label>City <span style="color:var(--cta-red);">*</span></label>
+            <input type="text" id="city" placeholder="City">
+            <div class="field-error-msg">City is required.</div>
+          </div>
+          <div class="field" id="field-state">
+            <label>State <span style="color:var(--cta-red);">*</span></label>
+            <input type="text" id="state" placeholder="FL">
+            <div class="field-error-msg">State is required.</div>
+          </div>
+          <div class="field" id="field-postalCode">
+            <label>Postal Code <span style="color:var(--cta-red);">*</span></label>
+            <input type="text" id="postalCode" placeholder="33601">
+            <div class="field-error-msg">Postal code is required.</div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Project Details</h2>
+        <div class="form-row">
+          <div class="field">
+            <label>Installation Type</label>
+            <div class="install-type-display">Full-Frame Replacement</div>
+          </div>
+          <div class="field">
+            <label>Building Stories <span class="info-tip" data-tip="Upper-story windows cost more due to scaffolding, ladders, and added labor time. 2-story adds $35/window, 3+ story adds $65/window.">?</span></label>
+            <select id="stories">
+              <option value="1">1 Story (Ground Floor)</option>
+              <option value="2">2 Stories (+$35/window)</option>
+              <option value="3">3+ Stories (+$65/window)</option>
+            </select>
+          </div>
+        </div>
+        <p style="font-size:0.8rem; color:var(--text-gray); margin-top:0.5rem;">A 3% permit fee and disposal of old windows are automatically included in every estimate.</p>
+      </div>
+      <p class="reassurance-note">We will NOT send a salesperson to your home unless you request it. Your information is only used to generate your estimate.</p>
+      <div class="btn-row">
+        <div></div>
+        <button class="btn btn-primary" onclick="validateAndGoToStep2()">Start My Estimate &rarr;</button>
+      </div>
+    </div>
+    <!-- ========== STEP 2: WINDOW CONFIGURATION ========== -->
+    <div class="section" id="section-2">
+      <div class="config-layout">
+      <div class="config-form">
+      <div class="card card--config">
+        <h2>Window Configuration</h2>
+        <!-- Window Style -->
+        <h3>Window Style</h3>
+        <div class="style-section">
+        <div class="tile-grid-wrapper">
+        <div class="tile-group" id="windowStyle">
+          <!-- Single-Hung -->
+          <div class="tile selected" data-value="single_hung" onclick="selectTile(this)">
+            <span class="tile-icon"><svg viewBox="0 0 80 80" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="10" y="5" width="60" height="70" rx="1"/>
+              <rect x="14" y="9" width="52" height="62" stroke-width="1"/>
+              <line x1="14" y1="40" x2="66" y2="40" stroke-width="2.5"/>
+              <line x1="40" y1="9" x2="40" y2="40" stroke-width="0.8" opacity="0.3" stroke-dasharray="3 2"/>
+              <line x1="14" y1="24" x2="66" y2="24" stroke-width="0.8" opacity="0.3" stroke-dasharray="3 2"/>
+              <path d="M35 54 L40 46 L45 54" stroke-width="2.5" fill="none"/>
+              <line x1="40" y1="46" x2="40" y2="64" stroke-width="2"/>
+              <rect x="37" y="37" width="6" height="6" rx="1" fill="currentColor" opacity="0.4"/>
+            </svg></span>
+            Single-Hung
+          </div>
+          <!-- Double-Hung -->
+          <div class="tile" data-value="double_hung" onclick="selectTile(this)">
+            <span class="tile-icon"><svg viewBox="0 0 80 80" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="10" y="5" width="60" height="70" rx="1"/>
+              <rect x="14" y="9" width="52" height="62" stroke-width="1"/>
+              <line x1="14" y1="40" x2="66" y2="40" stroke-width="2.5"/>
+              <path d="M35 28 L40 20 L45 28" stroke-width="2" fill="none"/>
+              <line x1="40" y1="20" x2="40" y2="12" stroke-width="2"/>
+              <path d="M35 52 L40 60 L45 52" stroke-width="2" fill="none"/>
+              <line x1="40" y1="60" x2="40" y2="68" stroke-width="2"/>
+              <rect x="37" y="37" width="6" height="6" rx="1" fill="currentColor" opacity="0.4"/>
+            </svg></span>
+            Double-Hung
+          </div>
+          <!-- Casement -->
+          <div class="tile" data-value="casement" onclick="selectTile(this)">
+            <span class="tile-icon"><svg viewBox="0 0 80 80" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="10" y="5" width="60" height="70" rx="1"/>
+              <rect x="14" y="9" width="52" height="62" stroke-width="1"/>
+              <circle cx="14" cy="18" r="2.5" fill="currentColor" opacity="0.5"/>
+              <circle cx="14" cy="40" r="2.5" fill="currentColor" opacity="0.5"/>
+              <circle cx="14" cy="62" r="2.5" fill="currentColor" opacity="0.5"/>
+              <path d="M60 22 Q72 40 60 58" stroke-width="1.5" stroke-dasharray="4 2" fill="none" opacity="0.5"/>
+              <path d="M56 38 L62 40 L56 42" stroke-width="1.5" fill="none"/>
+              <circle cx="62" cy="40" r="2" fill="currentColor" opacity="0.4"/>
+              <line x1="56" y1="68" x2="62" y2="68" stroke-width="2.5"/>
+              <circle cx="64" cy="68" r="2" fill="currentColor" opacity="0.4"/>
+            </svg></span>
+            Casement
+          </div>
+          <!-- Sliding -->
+          <div class="tile" data-value="sliding" onclick="selectTile(this)">
+            <span class="tile-icon"><svg viewBox="0 0 80 80" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="10" y="5" width="60" height="70" rx="1"/>
+              <rect x="14" y="9" width="52" height="62" stroke-width="1"/>
+              <line x1="40" y1="9" x2="40" y2="71" stroke-width="2.5"/>
+              <path d="M50 36 L58 40 L50 44" stroke-width="2.5" fill="none"/>
+              <line x1="44" y1="40" x2="58" y2="40" stroke-width="2"/>
+              <line x1="14" y1="68" x2="66" y2="68" stroke-width="1" opacity="0.3"/>
+              <line x1="14" y1="70" x2="66" y2="70" stroke-width="1" opacity="0.3"/>
+            </svg></span>
+            Sliding
+          </div>
+          <!-- Three Lite Slider -->
+          <div class="tile" data-value="three_lite" onclick="selectTile(this)">
+            <span class="tile-icon"><svg viewBox="0 0 80 80" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="6" y="8" width="68" height="60" rx="1"/>
+              <rect x="10" y="12" width="60" height="52" stroke-width="1"/>
+              <line x1="30" y1="12" x2="30" y2="64" stroke-width="2"/>
+              <line x1="50" y1="12" x2="50" y2="64" stroke-width="2"/>
+              <path d="M16 36 L22 38 L16 40" stroke-width="2" fill="none"/>
+              <line x1="12" y1="38" x2="22" y2="38" stroke-width="1.5"/>
+              <path d="M64 36 L58 38 L64 40" stroke-width="2" fill="none"/>
+              <line x1="58" y1="38" x2="68" y2="38" stroke-width="1.5"/>
+            </svg></span>
+            Three Lite Slider
+          </div>
+          <!-- Custom Shape -->
+          <div class="tile" data-value="custom_shape" onclick="selectTile(this)">
+            <span class="tile-icon"><svg viewBox="0 0 80 80" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M40 8 L68 28 L68 68 L12 68 L12 28 Z" stroke-width="2"/>
+              <path d="M40 14 L62 30 L62 62 L18 62 L18 30 Z" stroke-width="1"/>
+              <line x1="40" y1="14" x2="40" y2="62" stroke-width="0.8" opacity="0.3" stroke-dasharray="3 2"/>
+              <line x1="18" y1="46" x2="62" y2="46" stroke-width="0.8" opacity="0.3" stroke-dasharray="3 2"/>
+              <rect x="36" y="44" width="8" height="8" rx="1" stroke-width="1.5" opacity="0.4"/>
+              <line x1="40" y1="45" x2="40" y2="51" stroke-width="1" opacity="0.4"/>
+              <line x1="37" y1="48" x2="43" y2="48" stroke-width="1" opacity="0.4"/>
+            </svg></span>
+            Custom Shape
+          </div>
+          <!-- Awning -->
+          <div class="tile" data-value="awning" onclick="selectTile(this)">
+            <span class="tile-icon"><svg viewBox="0 0 80 80" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="10" y="5" width="60" height="70" rx="1"/>
+              <rect x="14" y="9" width="52" height="62" stroke-width="1"/>
+              <circle cx="26" cy="9" r="2.5" fill="currentColor" opacity="0.5"/>
+              <circle cx="40" cy="9" r="2.5" fill="currentColor" opacity="0.5"/>
+              <circle cx="54" cy="9" r="2.5" fill="currentColor" opacity="0.5"/>
+              <path d="M22 62 Q40 78 58 62" stroke-width="1.5" stroke-dasharray="4 2" fill="none" opacity="0.5"/>
+              <path d="M36 60 L40 66 L44 60" stroke-width="2" fill="none"/>
+              <line x1="40" y1="52" x2="40" y2="66" stroke-width="2"/>
+              <line x1="36" y1="68" x2="44" y2="68" stroke-width="2.5"/>
+              <circle cx="40" cy="70" r="1.5" fill="currentColor" opacity="0.4"/>
+            </svg></span>
+            Awning
+          </div>
+          <!-- Picture (Fixed) -->
+          <div class="tile" data-value="picture" onclick="selectTile(this)">
+            <span class="tile-icon"><svg viewBox="0 0 80 80" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="8" y="4" width="64" height="72" rx="1" stroke-width="3"/>
+              <rect x="14" y="10" width="52" height="60" stroke-width="2"/>
+              <rect x="18" y="14" width="44" height="52" stroke-width="0.8" opacity="0.2"/>
+              <line x1="20" y1="14" x2="56" y2="56" stroke-width="0.5" opacity="0.15"/>
+              <line x1="24" y1="14" x2="60" y2="54" stroke-width="0.5" opacity="0.1"/>
+              <rect x="36" y="36" width="8" height="8" rx="1" stroke-width="1.5" opacity="0.4"/>
+              <line x1="40" y1="37" x2="40" y2="43" stroke-width="1" opacity="0.4"/>
+              <line x1="37" y1="40" x2="43" y2="40" stroke-width="1" opacity="0.4"/>
+            </svg></span>
+            Picture (Fixed)
+          </div>
+        </div>
+        <!-- Frame Material -->
+        <h3>Frame Material</h3>
+        <div class="tile-group" id="frameMaterial">
+          <div class="tile" data-value="aluminum" onclick="selectTile(this)">
+            <span class="tile-icon"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="6" y="6" width="28" height="28" rx="1"/><rect x="10" y="10" width="20" height="20" rx="0"/><line x1="6" y1="6" x2="10" y2="10"/><line x1="34" y1="6" x2="30" y2="10"/><line x1="6" y1="34" x2="10" y2="30"/><line x1="34" y1="34" x2="30" y2="30"/></svg></span>
+            Aluminum
+          </div>
+          <div class="tile selected" data-value="vinyl" onclick="selectTile(this)">
+            <span class="tile-icon"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="6" y="6" width="28" height="28" rx="2"/><rect x="10" y="10" width="20" height="20" rx="1"/><line x1="6" y1="6" x2="10" y2="10"/><line x1="34" y1="6" x2="30" y2="10"/><line x1="6" y1="34" x2="10" y2="30"/><line x1="34" y1="34" x2="30" y2="30"/></svg></span>
+            Vinyl
+          </div>
+          <div class="tile" data-value="composite" onclick="selectTile(this)">
+            <span class="tile-icon"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="6" y="6" width="28" height="28" rx="1"/><rect x="10" y="10" width="20" height="20" rx="0"/><line x1="6" y1="6" x2="10" y2="10"/><line x1="34" y1="6" x2="30" y2="10"/><line x1="6" y1="34" x2="10" y2="30"/><line x1="34" y1="34" x2="30" y2="30"/><line x1="10" y1="20" x2="30" y2="20" stroke-dasharray="2 2"/><line x1="20" y1="10" x2="20" y2="30" stroke-dasharray="2 2"/></svg></span>
+            Composite
+          </div>
+        </div>
+        </div>
+        <div class="config-video">
+          <video id="introVideo" controls preload="metadata">
+            <source src="https://storage.googleapis.com/msgsndr/SsBG7j5KQAIP1SFP2Sca/media/698df13124813c50d4832586.mp4" type="video/mp4">
+            Your browser does not support the video tag.
+          </video>
+          <p class="video-caption">How to Measure Your Windows</p>
+        </div>
+        </div>
+        <!-- Glass Type -->
+        <h3>Glass Configuration</h3>
+        <div class="form-row three">
+          <div class="field">
+            <label>Panes</label>
+            <select id="glassPanes" onchange="handlePaneChange()">
+              <option value="single">Single Pane</option>
+              <option value="double" selected>Double Pane</option>
+            </select>
+          </div>
+          <div class="field" id="gasFillField">
+            <label>Gas Fill</label>
+            <select id="gasFill">
+              <option value="air" selected>Air (Standard)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Grid Pattern</label>
+            <select id="gridPattern">
+              <option value="none">No Grids</option>
+              <option value="colonial">Colonial</option>
+              <option value="prairie">Prairie</option>
+              <option value="custom">Custom Grids</option>
+            </select>
+          </div>
+        </div>
+        <!-- Glass Add-ons -->
+        <h3>Glass Upgrades <span class="hint">(select all that apply)</span></h3>
+        <div class="check-group" id="glassUpgrades">
+          <label class="check-item checked" onclick="toggleCheck(this)">
+            <input type="checkbox" value="low_e" checked>
+            <div>
+              <div class="check-label">Low-E Coating</div>
+              <div class="check-desc">Reflects heat, blocks UV.</div>
+            </div>
+          </label>
+          <label class="check-item" onclick="toggleCheck(this)">
+            <input type="checkbox" value="tempered">
+            <div>
+              <div class="check-label">Tempered Glass</div>
+              <div class="check-desc">Safety glass, 4x stronger.</div>
+            </div>
+          </label>
+          <label class="check-item" onclick="toggleCheck(this)">
+            <input type="checkbox" value="tinted">
+            <div>
+              <div class="check-label">Tinted Glass</div>
+              <div class="check-desc">Reduces glare &amp; solar heat.</div>
+            </div>
+          </label>
+          <label class="check-item" onclick="toggleCheck(this)">
+            <input type="checkbox" value="impact">
+            <div>
+              <div class="check-label">Impact Resistant</div>
+              <div class="check-desc">Hurricane/security rated.</div>
+            </div>
+          </label>
+          <label class="check-item" onclick="toggleCheck(this)">
+            <input type="checkbox" value="obscure">
+            <div>
+              <div class="check-label">Obscure / Privacy</div>
+              <div class="check-desc">Frosted or textured.</div>
+            </div>
+          </label>
+          <label class="check-item" onclick="toggleCheck(this)">
+            <input type="checkbox" value="sound">
+            <div>
+              <div class="check-label">Sound Reduction</div>
+              <div class="check-desc">Laminated acoustic glass.</div>
+            </div>
+          </label>
+        </div>
+        <!-- Dimensions -->
+        <h3>Window Dimensions</h3>
+        <div class="dim-row">
+          <div class="field">
+            <label>Width (inches)</label>
+            <input type="number" id="winWidth" value="36" min="12" max="120" step="1">
+          </div>
+          <div class="dim-x">&times;</div>
+          <div class="field">
+            <label>Height (inches)</label>
+            <input type="number" id="winHeight" value="48" min="12" max="120" step="1">
+          </div>
+        </div>
+        <p style="font-size:0.78rem; color:var(--text-gray); margin-top:0.3rem;">Price is based on united inches (width + height). Range: 24"-174".</p>
+        <!-- Quantity -->
+        <h3>Quantity</h3>
+        <div class="qty-control">
+          <button onclick="adjustQty(-1)">&#8722;</button>
+          <input type="number" id="winQty" value="1" min="1" max="50">
+          <button onclick="adjustQty(1)">+</button>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-secondary" onclick="goToStep(1)">&larr; Back</button>
+          <div style="display:flex; gap:0.5rem;">
+            <button class="btn btn-accent" onclick="addWindow()">Add Window to Estimate</button>
+          </div>
+        </div>
+      </div>
+      <!-- Cart Summary -->
+      <div class="card">
+        <h2>Windows in Estimate</h2>
+        <div id="windowList" class="window-list">
+          <div class="empty-state">No windows added yet. Configure a window above and click "Add Window to Estimate".</div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-secondary" onclick="goToStep(1)">&larr; Project Details</button>
+          <button class="btn btn-primary" id="btnToStep3" onclick="goToStep(3)" disabled>Show My Window Pricing &rarr;</button>
+        </div>
+      </div>
+      </div><!-- /.config-form -->
+      </div><!-- /.config-layout -->
+    </div>
+    <!-- ========== STEP 3: CONTACT INFORMATION ========== -->
+    <div class="section" id="section-3">
+      <div class="card">
+        <h2>Where Should We Send Your Estimate?</h2>
+        <p class="contact-note">We'll use your contact information to send you the detailed estimate. Your phone number is required so we can text you the results.</p>
+        <div class="form-row full">
+          <div class="field" id="field-phone">
+            <label>Phone Number <span style="color:var(--cta-red);">*</span></label>
+            <input type="tel" id="phone" placeholder="(555) 555-5555" inputmode="numeric">
+            <div class="field-error-msg">A valid 10-digit phone number is required.</div>
+            <p class="field-hint">We'll text your estimate to this number.</p>
+          </div>
+        </div>
+        <div class="form-row full">
+          <div class="field" id="field-email">
+            <label>Email Address <span class="hint">(optional)</span></label>
+            <input type="email" id="email" placeholder="you@example.com" inputmode="email">
+            <div class="field-error-msg">Please enter a valid email address.</div>
+            <p class="field-hint">If provided, we'll email a PDF copy of your estimate.</p>
+          </div>
+        </div>
+        <div class="form-row full">
+          <div class="field" id="field-consent">
+            <label class="consent-label">
+              <input type="checkbox" id="consentCheckbox">
+              <span>By checking this box and clicking Calculate My Estimate, I agree by electronic signature to be contacted by Reece Windows &amp; Doors through a live agent, AI generative voice, artificial or prerecorded voice, and automated SMS text at the number I entered above with reminders, offers and other info, including calls dialed manually or by auto dialer, text and recorded messages, and by email. I understand I am not required to sign/agree to this as a condition to purchase. Standard rates apply</span>
+            </label>
+            <div class="field-error-msg">You must agree to the consent terms to continue.</div>
+          </div>
+        </div>
+        <p class="reassurance-note">We respect your privacy. No spam. No surprise visits.</p>
+        <div class="btn-row">
+          <button class="btn btn-secondary" onclick="goToStep(2)">&larr; Edit Windows</button>
+          <button class="btn btn-primary" onclick="validateAndGoToStep4()">Calculate My Estimate &rarr;</button>
+        </div>
+      </div>
+    </div>
+    <!-- ========== STEP 4: ESTIMATE SUMMARY ========== -->
+    <div class="section" id="section-4">
+      <div class="card">
+        <div id="summaryContent"></div>
+      </div>
+      <!-- Lock In Your Exact Price CTA -->
+      <div class="verify-cta">
+        <h3>Lock In Your Exact Price</h3>
+        <p>This estimate is based on preliminary measurements.</p>
+        <p>A brief professional verification allows us to:</p>
+        <ul>
+          <li>Confirm final dimensions</li>
+          <li>Finalize installation method</li>
+          <li>Determine routing efficiencies</li>
+          <li>Allocate materials</li>
+          <li>Remove uncertainty</li>
+        </ul>
+        <button class="btn btn-primary" id="btnVerifyMeasurement" onclick="openMeasurementVerification()">
+          Lock In My Exact Price &rarr;
+        </button>
+        <p style="text-align:center; margin-top:0.5rem;">There is no obligation. No sales presentation. <span style="font-weight:600;">Just precision.</span></p>
+        <p class="verify-secondary">
+          <a href="#" onclick="event.preventDefault();">Keep My Estimate for Now</a>
+        </p>
+      </div>
+      <div class="disclaimer">
+        This estimate reflects current material pricing and standard installation conditions. Final pricing is confirmed following professional on-site verification.
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="goToStep(3)">&larr; Back</button>
+        <button class="btn btn-print" onclick="window.print()">Print Estimate</button>
+      </div>
+    </div>
+  </div>
+  <footer class="site-footer">
+    <p>Serving Homeowners Since 1972 &bull; Licensed, Insured, Hurricane Code Compliant</p>
+  </footer>
+  <!-- Running total — visible only on Step 4 (estimate) -->
+  <div class="running-total" id="runningTotal">
+    <div class="total-content">
+      Estimated Total: <span>$0</span>
+    </div>
+  </div>
+  <script src="estimator.js"></script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDHEXJFX600__uKskBl1RVs2wensuUW4c4&libraries=places&callback=initializeAddressForm" async defer></script>
+</body>
+</html>

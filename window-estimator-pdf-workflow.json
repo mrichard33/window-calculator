@@ -1,0 +1,150 @@
+{
+  "name": "Window Estimator PDF Generator",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "create-pdf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        32,
+        48
+      ],
+      "id": "4ce191cf-3c4b-4017-b270-5d1f7a2f7b5d",
+      "name": "Webhook",
+      "webhookId": "b562922e-b5d8-4c6f-8075-821049fac38e"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst item = items[0];\nconst data = item.json.body.customData;\n\nconst base64String = data.pdf_base64;\nconst fileName = data.file_name || 'estimate.pdf';\n\nconst binaryData = Buffer.from(base64String, 'base64');\n\nreturn [{\n  json: {\n    contact_id: data.contact_id,\n    contact_name: data.contact_name,\n    file_name: fileName,\n    ghl_api_key: data.ghl_api_key,\n    ghl_location_id: data.ghl_location_id,\n  },\n  binary: {\n    file: {\n      data: binaryData.toString('base64'),\n      mimeType: 'application/pdf',\n      fileName: fileName,\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        320,
+        48
+      ],
+      "id": "c1000001-0001-4000-8000-000000000001",
+      "name": "Convert Base64 to PDF"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://services.leadconnectorhq.com/medias/upload-file",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json.ghl_api_key }}"
+            },
+            {
+              "name": "Version",
+              "value": "2021-07-28"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "file"
+            },
+            {
+              "name": "name",
+              "value": "={{ $json.file_name }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        600,
+        48
+      ],
+      "id": "c1000001-0001-4000-8000-000000000002",
+      "name": "Upload PDF to GHL"
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://services.leadconnectorhq.com/contacts/{{ $('Convert Base64 to PDF').item.json.contact_id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('Convert Base64 to PDF').item.json.ghl_api_key }}"
+            },
+            {
+              "name": "Version",
+              "value": "2021-07-28"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"customFields\": [\n    {\n      \"id\": \"WwmVP3sAjdqYQbZyITZT\",\n      \"field_value\": \"{{ $json.uploadedFiles.url }}\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        880,
+        48
+      ],
+      "id": "c1000001-0001-4000-8000-000000000003",
+      "name": "Update GHL Contact"
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Convert Base64 to PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert Base64 to PDF": {
+      "main": [
+        [
+          {
+            "node": "Upload PDF to GHL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload PDF to GHL": {
+      "main": [
+        [
+          {
+            "node": "Update GHL Contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
