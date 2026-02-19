@@ -1151,6 +1151,64 @@ header .header-intro {
 @media (min-width: 769px) {
   .sticky-cta { display: none; }
 }
+/* ===== KEEP-ESTIMATE MODAL ===== */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 10000;
+  justify-content: center;
+  align-items: center;
+}
+.modal-overlay.active {
+  display: flex;
+}
+.modal-dialog {
+  background: var(--white);
+  border-radius: 12px;
+  padding: 2rem 1.75rem;
+  max-width: 420px;
+  width: 90%;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  text-align: center;
+  animation: modalFadeIn 0.2s ease;
+}
+@keyframes modalFadeIn {
+  from { opacity: 0; transform: translateY(-16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.modal-dialog h3 {
+  color: var(--deep-navy);
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+}
+.modal-dialog p {
+  color: var(--charcoal);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  margin-bottom: 1.25rem;
+}
+.modal-dialog .btn {
+  display: block;
+  width: 100%;
+  margin-bottom: 0.5rem;
+}
+.modal-dialog .btn-link {
+  background: none;
+  border: none;
+  color: var(--steel-blue);
+  font-size: 0.85rem;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0.5rem;
+  display: block;
+  width: 100%;
+}
 </style>
 </head>
 <body>
@@ -1570,7 +1628,7 @@ header .header-intro {
         </button>
         <p class="cta-subtext">There is no obligation. No sales presentation. <span style="font-weight:600;">Just precision.</span></p>
         <p class="verify-secondary">
-          <a href="#" onclick="event.preventDefault();">Keep My Estimate for Now</a>
+          <a href="#" onclick="event.preventDefault(); showKeepEstimateModal();">Keep My Estimate for Now</a>
         </p>
       </div>
       <div class="disclaimer">
@@ -2200,8 +2258,9 @@ function goToStep(n) {
         windowCount: windowCount
       });
       // PDF generation + webhook send (separate, can fail independently)
-      sendPDFToGHL().catch(function() {
-        // Allow retry on next Step 4 visit if PDF generation fails
+      sendPDFToGHL().catch(function(err) {
+        console.error('[Webhook] Step 4 PDF webhook failed, enabling retry:', err);
+        window.__estimateWebhookError = true;
         window._estimateSent = false;
       });
     }
@@ -2552,6 +2611,11 @@ function buildSummary() {
   // ===== PRICE HERO BLOCK =====
   var estMonthlyLow = Math.round(lowEstimate * 0.0107);
   var estMonthlyAvg = Math.round(grandTotal * 0.0107);
+  // Expose range + monthly for webhook payload
+  window.latestEstimateLow = lowEstimate;
+  window.latestEstimateHigh = highEstimate;
+  window.latestMonthlyLow = estMonthlyLow;
+  window.latestMonthlyAvg = estMonthlyAvg;
 
   let html = '<div class="estimate-hero">' +
     '<h3>Estimated Project Investment<\/h3>' +
@@ -2928,45 +2992,96 @@ function generateEstimatePDF() {
   });
 }
 function sendPDFToWebhook(base64, contactId, contactName) {
-  console.warn('[PDF] \u2705 sendPDFToWebhook CALLED — firing to:', GHL_CONFIG.pdfWebhookUrl);
-  console.log('[PDF] sendPDFToWebhook: base64 length:', base64.length, 'contactId:', contactId);
-  var fileName = 'Reece-Windows-Estimate-' + Date.now() + '.pdf';
+  var data = gatherContactData();
+  var grandTotal = window.latestEstimateTotal || 0;
+  var lowEst = window.latestEstimateLow || round2(grandTotal * 0.80);
+  var highEst = window.latestEstimateHigh || round2(grandTotal * 1.20);
+  var monthlyAvg = window.latestMonthlyAvg || Math.round(grandTotal * 0.0107);
+  var windowCount = window.latestWindowCount || 0;
+  var timestamp = new Date().toISOString();
+  var phoneDigits = (data.phone || '').replace(/\D/g, '');
+  var fileName = 'estimate_' + (data.firstName || 'unknown') + '_' + phoneDigits + '_' + Date.now() + '.pdf';
+
   var payload = {
-    type: 'pdf_attachment',
-    contact_id: contactId || '',
-    contact_name: contactName || '',
-    pdf_base64: base64,
-    file_name: fileName,
-    ghl_api_key: GHL_CONFIG.pit,
-    ghl_location_id: GHL_CONFIG.locationId
+    contact: {
+      first_name: data.firstName || '',
+      last_name: data.lastName || '',
+      phone: data.phone || '',
+      email: data.email || ''
+    },
+    estimate: {
+      total_low: lowEst,
+      total_high: highEst,
+      monthly_payment: monthlyAvg,
+      windows_count: windowCount,
+      step4_timestamp: timestamp
+    },
+    pdf: {
+      pdf_base64: base64,
+      pdf_filename: fileName
+    },
+    meta: {
+      source: 'window-estimator',
+      event: 'estimate_rendered_step_4'
+    }
   };
+
+  // Comprehensive logging
+  console.log('[Webhook] ===== BUILDING PAYLOAD =====');
+  console.log('[Webhook] Endpoint:', GHL_CONFIG.pdfWebhookUrl);
+  console.log('[Webhook] Contact:', JSON.stringify(payload.contact));
+  console.log('[Webhook] Estimate:', JSON.stringify(payload.estimate));
+  console.log('[Webhook] PDF filename:', fileName);
+  console.log('[Webhook] pdf_base64 length:', base64 ? base64.length : 0);
+  var payloadStr = JSON.stringify(payload);
+  console.log('[Webhook] Total payload size (chars):', payloadStr.length);
+  console.log('[Webhook] Total payload size (approx KB):', Math.round(payloadStr.length / 1024));
+
   return fetch(GHL_CONFIG.pdfWebhookUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
+    body: payloadStr
   }).then(function(resp) {
-    console.log('[PDF] webhook response:', resp.status);
+    console.log('[Webhook] Response status:', resp.status);
     if (!resp.ok) {
       return resp.text().then(function(body) {
-        throw new Error('[PDF] webhook error (' + resp.status + '): ' + body);
+        console.error('[Webhook] Error response body:', body);
+        window.__estimateWebhookError = true;
+        throw new Error('[Webhook] HTTP ' + resp.status + ': ' + body);
       });
     }
-    console.log('[PDF] PDF sent to GHL webhook, file:', fileName);
-    return resp;
+    return resp.text().then(function(body) {
+      console.log('[Webhook] \u2705 Success response body:', body);
+      window.__estimateWebhookError = false;
+      return resp;
+    });
+  }).catch(function(err) {
+    console.error('[Webhook] Fetch failed:', err);
+    window.__estimateWebhookError = true;
+    throw err;
   });
 }
 function sendPDFToGHL() {
-  console.log('[PDF] sendPDFToGHL: starting PDF generation...');
+  console.log('[Webhook] ===== sendPDFToGHL: starting PDF generation + webhook =====');
   return generateEstimatePDF().then(function(pdf) {
     var contactId = window.ghlContactId || null;
     var data = gatherContactData();
     var contactName = (data.firstName + ' ' + data.lastName).trim();
-    console.log('[PDF] sendPDFToGHL: PDF generated, base64 length:', pdf.base64.length);
+    console.log('[Webhook] PDF generated, base64 length:', pdf.base64.length, '| Sending to webhook...');
     return sendPDFToWebhook(pdf.base64, contactId, contactName);
   }).catch(function(err) {
-    console.error('[PDF] sendPDFToGHL: PDF generation failed:', err);
+    console.error('[Webhook] sendPDFToGHL pipeline failed:', err);
     throw err;
   });
+}
+// ============================================================
+//  KEEP ESTIMATE MODAL
+// ============================================================
+function showKeepEstimateModal() {
+  document.getElementById('keepEstimateModal').classList.add('active');
+}
+function hideKeepEstimateModal() {
+  document.getElementById('keepEstimateModal').classList.remove('active');
 }
 function openMeasurementVerification() {
   var fullName = (document.getElementById("fullName")?.value || "").trim();
@@ -2986,5 +3101,14 @@ function openMeasurementVerification() {
   <button class="sticky-cta" onclick="openMeasurementVerification()">
     Secure My Exact Price &rarr;
   </button>
+  <!-- Keep Estimate Modal -->
+  <div class="modal-overlay" id="keepEstimateModal" onclick="if(event.target===this) hideKeepEstimateModal()">
+    <div class="modal-dialog">
+      <h3>Leave Estimate Unverified?</h3>
+      <p>Your estimate will remain available, but final pricing and scheduling priority are confirmed during verification.</p>
+      <button class="btn btn-primary" onclick="openMeasurementVerification()">Secure My Exact Price &rarr;</button>
+      <button class="btn-link" onclick="window.location.href='https://reecewindows.com/';">Leave Unverified</button>
+    </div>
+  </div>
 </body>
 </html>

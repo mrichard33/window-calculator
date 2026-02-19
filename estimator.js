@@ -958,6 +958,11 @@ function buildSummary() {
   // ===== PRICE HERO BLOCK =====
   var estMonthlyLow = Math.round(lowEstimate * 0.0107);
   var estMonthlyAvg = Math.round(grandTotal * 0.0107);
+  // Expose range + monthly for webhook payload
+  window.latestEstimateLow = lowEstimate;
+  window.latestEstimateHigh = highEstimate;
+  window.latestMonthlyLow = estMonthlyLow;
+  window.latestMonthlyAvg = estMonthlyAvg;
 
   let html = '<div class="estimate-hero">' +
     '<h3>Estimated Project Investment</h3>' +
@@ -1334,45 +1339,95 @@ function generateEstimatePDF() {
   });
 }
 function sendPDFToWebhook(base64, contactId, contactName) {
-  console.warn('[PDF] ✅ sendPDFToWebhook CALLED — firing to:', GHL_CONFIG.pdfWebhookUrl);
-  console.log('[PDF] sendPDFToWebhook: base64 length:', base64.length, 'contactId:', contactId);
-  var fileName = 'Reece-Windows-Estimate-' + Date.now() + '.pdf';
+  var data = gatherContactData();
+  var grandTotal = window.latestEstimateTotal || 0;
+  var lowEst = window.latestEstimateLow || round2(grandTotal * 0.80);
+  var highEst = window.latestEstimateHigh || round2(grandTotal * 1.20);
+  var monthlyAvg = window.latestMonthlyAvg || Math.round(grandTotal * 0.0107);
+  var windowCount = window.latestWindowCount || 0;
+  var timestamp = new Date().toISOString();
+  var phoneDigits = (data.phone || '').replace(/\D/g, '');
+  var fileName = 'estimate_' + (data.firstName || 'unknown') + '_' + phoneDigits + '_' + Date.now() + '.pdf';
+
   var payload = {
-    type: 'pdf_attachment',
-    contact_id: contactId || '',
-    contact_name: contactName || '',
-    pdf_base64: base64,
-    file_name: fileName,
-    ghl_api_key: GHL_CONFIG.pit,
-    ghl_location_id: GHL_CONFIG.locationId
+    contact: {
+      first_name: data.firstName || '',
+      last_name: data.lastName || '',
+      phone: data.phone || '',
+      email: data.email || ''
+    },
+    estimate: {
+      total_low: lowEst,
+      total_high: highEst,
+      monthly_payment: monthlyAvg,
+      windows_count: windowCount,
+      step4_timestamp: timestamp
+    },
+    pdf: {
+      pdf_base64: base64,
+      pdf_filename: fileName
+    },
+    meta: {
+      source: 'window-estimator',
+      event: 'estimate_rendered_step_4'
+    }
   };
+
+  console.log('[Webhook] ===== BUILDING PAYLOAD =====');
+  console.log('[Webhook] Endpoint:', GHL_CONFIG.pdfWebhookUrl);
+  console.log('[Webhook] Contact:', JSON.stringify(payload.contact));
+  console.log('[Webhook] Estimate:', JSON.stringify(payload.estimate));
+  console.log('[Webhook] PDF filename:', fileName);
+  console.log('[Webhook] pdf_base64 length:', base64 ? base64.length : 0);
+  var payloadStr = JSON.stringify(payload);
+  console.log('[Webhook] Total payload size (chars):', payloadStr.length);
+  console.log('[Webhook] Total payload size (approx KB):', Math.round(payloadStr.length / 1024));
+
   return fetch(GHL_CONFIG.pdfWebhookUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
+    body: payloadStr
   }).then(function(resp) {
-    console.log('[PDF] webhook response:', resp.status);
+    console.log('[Webhook] Response status:', resp.status);
     if (!resp.ok) {
       return resp.text().then(function(body) {
-        throw new Error('[PDF] webhook error (' + resp.status + '): ' + body);
+        console.error('[Webhook] Error response body:', body);
+        window.__estimateWebhookError = true;
+        throw new Error('[Webhook] HTTP ' + resp.status + ': ' + body);
       });
     }
-    console.log('[PDF] PDF sent to GHL webhook, file:', fileName);
-    return resp;
+    return resp.text().then(function(body) {
+      console.log('[Webhook] ✅ Success response body:', body);
+      window.__estimateWebhookError = false;
+      return resp;
+    });
+  }).catch(function(err) {
+    console.error('[Webhook] Fetch failed:', err);
+    window.__estimateWebhookError = true;
+    throw err;
   });
 }
 function sendPDFToGHL() {
-  console.log('[PDF] sendPDFToGHL: starting PDF generation...');
+  console.log('[Webhook] ===== sendPDFToGHL: starting PDF generation + webhook =====');
   return generateEstimatePDF().then(function(pdf) {
     var contactId = window.ghlContactId || null;
     var data = gatherContactData();
     var contactName = (data.firstName + ' ' + data.lastName).trim();
-    console.log('[PDF] sendPDFToGHL: PDF generated, base64 length:', pdf.base64.length);
+    console.log('[Webhook] PDF generated, base64 length:', pdf.base64.length, '| Sending to webhook...');
     return sendPDFToWebhook(pdf.base64, contactId, contactName);
   }).catch(function(err) {
-    console.error('[PDF] sendPDFToGHL: PDF generation failed:', err);
+    console.error('[Webhook] sendPDFToGHL pipeline failed:', err);
     throw err;
   });
+}
+// ============================================================
+//  KEEP ESTIMATE MODAL
+// ============================================================
+function showKeepEstimateModal() {
+  document.getElementById('keepEstimateModal').classList.add('active');
+}
+function hideKeepEstimateModal() {
+  document.getElementById('keepEstimateModal').classList.remove('active');
 }
 function openMeasurementVerification() {
   var fullName = (document.getElementById("fullName")?.value || "").trim();
