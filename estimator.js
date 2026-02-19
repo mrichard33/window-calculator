@@ -1104,22 +1104,29 @@ function printEstimate() {
   if (sections[0]) page1.appendChild(sections[0]); // Customer Information
   if (sections[1]) page1.appendChild(sections[1]); // Project Overview
 
-  // 5. Build Page 2+ wrapper (everything remaining — starts at Itemized Breakdown)
+  // 5. Build Page 2 — Itemized Breakdown only
   var page2 = document.createElement('div');
   page2.className = 'print-page-2';
+  var itemizedSection = contentClone.querySelector('.summary-section');
+  if (itemizedSection) page2.appendChild(itemizedSection);
+
+  // 6. Build Page 3 — Project Costs onward
+  var page3 = document.createElement('div');
+  page3.className = 'print-page-3';
   while (contentClone.firstChild) {
-    page2.appendChild(contentClone.firstChild);
+    page3.appendChild(contentClone.firstChild);
   }
 
-  // 5. Add disclaimer
+  // 7. Add disclaimer
   var disclaimer = document.createElement('div');
   disclaimer.className = 'print-disclaimer';
   disclaimer.innerHTML = '<strong>Disclaimer:</strong> This estimate reflects current material pricing and standard installation conditions. Final pricing is confirmed following professional on-site verification. This document is not a contract or binding agreement.';
-  page2.appendChild(disclaimer);
+  page3.appendChild(disclaimer);
 
-  // 6. Assemble
+  // 8. Assemble
   printRoot.appendChild(page1);
   printRoot.appendChild(page2);
+  printRoot.appendChild(page3);
 
   // 7. Print after render
   requestAnimationFrame(function() { window.print(); });
