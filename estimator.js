@@ -1072,21 +1072,21 @@ function printEstimate() {
   var printRoot = document.getElementById('printRoot');
   printRoot.innerHTML = '';
 
-  // 1. Clone site header as branded banner
+  // 1. Clone site header as branded banner — direct child of #printRoot
   var siteHeader = document.querySelector('header');
   var headerDiv = document.createElement('div');
   headerDiv.className = 'print-header';
   headerDiv.innerHTML = siteHeader.innerHTML;
+  printRoot.appendChild(headerDiv);
 
   // 2. Clone summary content
   var summaryEl = document.getElementById('summaryContent');
   var contentClone = summaryEl.cloneNode(true);
   contentClone.removeAttribute('id');
 
-  // 3. Build Page 1 wrapper
+  // 3. Build Page 1 content wrapper
   var page1 = document.createElement('div');
-  page1.className = 'print-page-1';
-  page1.appendChild(headerDiv);
+  page1.className = 'print-page-1-content';
 
   var heroEl = contentClone.querySelector('.estimate-hero');
   if (heroEl) page1.appendChild(heroEl);
@@ -1097,38 +1097,40 @@ function printEstimate() {
   var rangeEl = contentClone.querySelector('.estimate-range');
   if (rangeEl) page1.appendChild(rangeEl);
 
-  // 4. Also move Project Summary header + Customer Info + Project Overview to Page 1
   var projHeader = contentClone.querySelector('.project-summary-header');
   if (projHeader) page1.appendChild(projHeader);
   var sections = contentClone.querySelectorAll('.summary-section');
   if (sections[0]) page1.appendChild(sections[0]); // Customer Information
   if (sections[1]) page1.appendChild(sections[1]); // Project Overview
 
-  // 5. Build Page 2 — Itemized Breakdown only
-  var page2 = document.createElement('div');
-  page2.className = 'print-page-2';
-  var itemizedSection = contentClone.querySelector('.summary-section');
-  if (itemizedSection) page2.appendChild(itemizedSection);
+  printRoot.appendChild(page1);
 
-  // 6. Build Page 3 — Project Costs onward
-  var page3 = document.createElement('div');
-  page3.className = 'print-page-3';
+  // 4. Itemized Breakdown — direct child with forced page break
+  var itemized = contentClone.querySelector('.summary-section');
+  if (itemized) {
+    itemized.classList.add('print-break');
+    printRoot.appendChild(itemized);
+  }
+
+  // 5. Project Costs — direct child with forced page break
+  var projectCosts = contentClone.querySelector('.summary-section');
+  if (projectCosts) {
+    projectCosts.classList.add('print-break');
+    printRoot.appendChild(projectCosts);
+  }
+
+  // 6. Remaining sections — direct children, flow naturally
   while (contentClone.firstChild) {
-    page3.appendChild(contentClone.firstChild);
+    printRoot.appendChild(contentClone.firstChild);
   }
 
   // 7. Add disclaimer
   var disclaimer = document.createElement('div');
   disclaimer.className = 'print-disclaimer';
   disclaimer.innerHTML = '<strong>Disclaimer:</strong> This estimate reflects current material pricing and standard installation conditions. Final pricing is confirmed following professional on-site verification. This document is not a contract or binding agreement.';
-  page3.appendChild(disclaimer);
+  printRoot.appendChild(disclaimer);
 
-  // 8. Assemble
-  printRoot.appendChild(page1);
-  printRoot.appendChild(page2);
-  printRoot.appendChild(page3);
-
-  // 7. Print after render
+  // 8. Print after render
   requestAnimationFrame(function() { window.print(); });
 }
 function getStyleLabel(style) {
