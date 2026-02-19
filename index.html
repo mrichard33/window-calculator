@@ -2990,8 +2990,8 @@ function generateEstimatePDF() {
     var opt = {
       margin:       [0.3, 0.5, 0.5, 0.5],
       filename:     'Reece-Windows-Estimate.pdf',
-      image:        { type: 'jpeg', quality: 0.98 },
-      html2canvas:  { scale: 2.0, useCORS: true, logging: false },
+      image:        { type: 'jpeg', quality: 0.75 },
+      html2canvas:  { scale: 1.5, useCORS: true, logging: false },
       jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' },
       pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
     };
@@ -3083,24 +3083,32 @@ function sendPDFToWebhook(base64, contactId, contactName) {
       return resp;
     });
   }).catch(function(err) {
-    console.warn('[Webhook] Standard fetch failed (likely CORS). Retrying with no-cors mode...');
-    console.warn('[Webhook] Original error:', err.message || err);
-    return fetch(GHL_CONFIG.pdfWebhookUrl, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'text/plain' },
-      body: payloadStr
-    }).then(function(resp) {
-      console.log('[Webhook] no-cors response status:', resp.status, '(0 = opaque, data was sent)');
-      console.log('[Webhook] no-cors response type:', resp.type);
-      window.__estimateWebhookError = false;
-      return resp;
-    }).catch(function(err2) {
-      console.error('[Webhook] no-cors fallback also failed:', err2);
-      console.error('[Webhook] This likely means outbound requests are blocked entirely (file:// protocol or network issue)');
-      window.__estimateWebhookError = true;
-      throw err2;
-    });
+    // Only retry with no-cors for actual network/CORS failures (TypeError),
+    // not HTTP error responses (which were already read successfully)
+    if (err instanceof TypeError) {
+      console.warn('[Webhook] Network/CORS failure. Retrying with no-cors mode...');
+      console.warn('[Webhook] Original error:', err.message || err);
+      return fetch(GHL_CONFIG.pdfWebhookUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain' },
+        body: payloadStr
+      }).then(function(resp) {
+        console.log('[Webhook] no-cors response status:', resp.status, '(0 = opaque, data was sent)');
+        console.log('[Webhook] no-cors response type:', resp.type);
+        window.__estimateWebhookError = false;
+        return resp;
+      }).catch(function(err2) {
+        console.error('[Webhook] no-cors fallback also failed:', err2);
+        console.error('[Webhook] Outbound requests may be blocked (file:// protocol or network issue)');
+        window.__estimateWebhookError = true;
+        throw err2;
+      });
+    }
+    // For HTTP errors (413, 500, etc.), don't retry — just log and propagate
+    console.error('[Webhook] Fetch failed:', err.message || err);
+    window.__estimateWebhookError = true;
+    throw err;
   });
 }
 function sendPDFToGHL() {
