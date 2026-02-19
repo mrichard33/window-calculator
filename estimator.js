@@ -970,6 +970,9 @@ function buildSummary() {
     '<p class="monthly-footnote">*Example based on estimated project total. Final terms are confirmed during verification.</p>' +
   '</div>';
 
+  // ===== SECTION DIVIDER =====
+  html += '<div class="section-divider"></div>';
+
   // ===== STRUCTURED STARTING POINT =====
   html += '<div class="summary-section structured-starting-point">' +
     '<h3>Your Estimate Is Structured and Verifiable</h3>' +

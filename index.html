@@ -30,7 +30,7 @@
 body {
   font-family: 'Nunito Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   background: var(--light-bg);
-  color: var(--text-gray);
+  color: var(--charcoal);
   line-height: 1.6;
   min-height: 100vh;
   font-size: 17px;
@@ -443,7 +443,6 @@ header .header-intro {
 }
 /* ===== STRUCTURED STARTING POINT ===== */
 .structured-starting-point {
-  border-top: 1px solid var(--mist);
   padding-top: 1.5rem;
   margin-top: 0;
 }
@@ -453,11 +452,16 @@ header .header-intro {
   font-weight: 700;
   margin-bottom: 0.6rem;
 }
+/* ===== SECTION DIVIDER ===== */
+.section-divider {
+  margin: 2.5rem 0;
+  border-top: 1px solid var(--mist);
+}
 /* ===== ESTIMATE HERO (Price Authority Block) ===== */
 .estimate-hero {
   text-align: center;
   padding: 1.25rem 0;
-  margin-bottom: 2.5rem;
+  margin-bottom: 2rem;
 }
 .estimate-hero h3 {
   font-size: 0.9rem;
@@ -633,6 +637,20 @@ header .header-intro {
   font-size: 0.9rem;
   opacity: 0.8;
 }
+.cta-micro {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--deep-navy);
+  margin-bottom: 0.4rem;
+  text-align: center;
+}
+.cta-subtext {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--text-gray);
+  margin-top: 0.5rem;
+  text-align: left;
+}
 /* ===== HOW THIS WORKS ===== */
 .how-it-works {
   background: var(--white);
@@ -800,6 +818,8 @@ header .header-intro {
   .estimate-hero,
   .estimate-range,
   .routing-section,
+  .section-divider,
+  .sticky-cta,
   .project-summary-header {
     display: none !important;
   }
@@ -1107,6 +1127,29 @@ header .header-intro {
 }
 @media (max-width: 600px) {
   .form-row.four { grid-template-columns: 1fr 1fr; }
+}
+/* ===== STICKY MOBILE CTA ===== */
+@media (max-width: 768px) {
+  .sticky-cta {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: var(--cta-red);
+    color: #FFFFFF;
+    padding: 1rem;
+    text-align: center;
+    font-weight: 700;
+    font-size: 1rem;
+    z-index: 1000;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 -2px 8px rgba(0,0,0,0.15);
+  }
+  body { padding-bottom: 3.5rem; }
+}
+@media (min-width: 769px) {
+  .sticky-cta { display: none; }
 }
 </style>
 </head>
@@ -1521,11 +1564,11 @@ header .header-intro {
           <li>Allocate materials</li>
           <li>Remove uncertainty</li>
         </ul>
-        <p style="text-align:center; font-size:0.85rem; color:var(--charcoal); margin-bottom:0.75rem;">Verification assigns your project to a scheduling zone.</p>
+        <p class="cta-micro">Verification assigns your project to a scheduling zone.</p>
         <button class="btn btn-primary" id="btnVerifyMeasurement" onclick="openMeasurementVerification()">
           Secure My Exact Price &rarr;
         </button>
-        <p style="text-align:center; margin-top:1rem;">There is no obligation. No sales presentation. <span style="font-weight:600;">Just precision.</span></p>
+        <p class="cta-subtext">There is no obligation. No sales presentation. <span style="font-weight:600;">Just precision.</span></p>
         <p class="verify-secondary">
           <a href="#" onclick="event.preventDefault();">Keep My Estimate for Now</a>
         </p>
@@ -2521,6 +2564,9 @@ function buildSummary() {
     '<p class="monthly-footnote">*Example based on estimated project total. Final terms are confirmed during verification.<\/p>' +
   '<\/div>';
 
+  // ===== SECTION DIVIDER =====
+  html += '<div class="section-divider"><\/div>';
+
   // ===== STRUCTURED STARTING POINT =====
   html += '<div class="summary-section structured-starting-point">' +
     '<h3>Your Estimate Is Structured and Verifiable<\/h3>' +
@@ -2936,5 +2982,9 @@ function openMeasurementVerification() {
 }
   </script>
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDHEXJFX600__uKskBl1RVs2wensuUW4c4&libraries=places&callback=initializeAddressForm" async defer></script>
+  <!-- Sticky Mobile CTA -->
+  <button class="sticky-cta" onclick="openMeasurementVerification()">
+    Secure My Exact Price &rarr;
+  </button>
 </body>
 </html>
