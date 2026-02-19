@@ -83,7 +83,8 @@ function gatherContactData() {
       content: params.get("utm_content") || "",
       term: params.get("utm_term") || ""
     },
-    lpSourceId: params.get("lp_source_id") || ""
+    lpSourceId: params.get("lp_source_id") || "",
+    proId: params.get("pro_id") || ""
   };
 }
 // ============================================================
@@ -108,6 +109,7 @@ function createContactInGHL() {
   if (data.utm.campaign) body.customFields.push({ key: 'utm_campaign', field_value: data.utm.campaign });
   if (data.utm.content) body.customFields.push({ key: 'utm_content', field_value: data.utm.content });
   if (data.lpSourceId) body.customFields.push({ key: 'lp_source_id', field_value: data.lpSourceId });
+  if (data.proId) body.customFields.push({ key: 'contact.pro_id', field_value: data.proId });
   return ghlApiFetch('/contacts/', {
     method: 'POST',
     body: JSON.stringify(body)
@@ -148,6 +150,7 @@ function updateContactPhone() {
   if (data.utm.campaign) body.customFields.push({ key: 'utm_campaign', field_value: data.utm.campaign });
   if (data.utm.content) body.customFields.push({ key: 'utm_content', field_value: data.utm.content });
   if (data.lpSourceId) body.customFields.push({ key: 'lp_source_id', field_value: data.lpSourceId });
+  if (data.proId) body.customFields.push({ key: 'contact.pro_id', field_value: data.proId });
   return ghlApiFetch('/contacts/upsert', {
     method: 'POST',
     body: JSON.stringify(body)
