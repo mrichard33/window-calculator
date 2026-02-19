@@ -1,6 +1,6 @@
 /* =============================================================
    Reece Windows & Doors — Window Cost Estimator
-   styles.css — All visual styling
+   All visual styling (inlined for standalone use)
    ============================================================= */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
@@ -21,7 +21,7 @@
 body {
   font-family: 'Nunito Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   background: var(--light-bg);
-  color: var(--text-gray);
+  color: var(--charcoal);
   line-height: 1.6;
   min-height: 100vh;
   font-size: 17px;
@@ -434,8 +434,7 @@ header .header-intro {
 }
 /* ===== STRUCTURED STARTING POINT ===== */
 .structured-starting-point {
-  border-top: 1px solid var(--mist);
-  padding-top: 1.25rem;
+  padding-top: 1.5rem;
   margin-top: 0;
 }
 .structured-starting-point h3 {
@@ -443,6 +442,11 @@ header .header-intro {
   color: var(--deep-navy);
   font-weight: 700;
   margin-bottom: 0.6rem;
+}
+/* ===== SECTION DIVIDER ===== */
+.section-divider {
+  margin: 2.5rem 0;
+  border-top: 1px solid var(--mist);
 }
 /* ===== ESTIMATE HERO (Price Authority Block) ===== */
 .estimate-hero {
@@ -624,6 +628,20 @@ header .header-intro {
   font-size: 0.9rem;
   opacity: 0.8;
 }
+.cta-micro {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--deep-navy);
+  margin-bottom: 0.4rem;
+  text-align: left;
+}
+.cta-subtext {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--text-gray);
+  margin-top: 0.5rem;
+  text-align: left;
+}
 /* ===== HOW THIS WORKS ===== */
 .how-it-works {
   background: var(--white);
@@ -711,184 +729,146 @@ header .header-intro {
 /* ===== PRINT BUTTON ===== */
 .btn-print { background: transparent; color: var(--dark-navy); border: 1.5px solid var(--mist); }
 .btn-print:hover { background: var(--light-bg); color: var(--deep-navy); }
+/* printRoot is invisible on-screen */
+#printRoot { display: none; }
 @media print {
   /* ===== PAGE SETUP ===== */
-  @page {
-    size: letter;
-    margin: 0.6in 0.7in;
-  }
+  @page { size: letter; margin: 0.5in 0.7in 0.6in 0.7in; }
   *, *::before, *::after {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
     color-adjust: exact !important;
   }
-  body {
-    background: #fff !important;
-    font-size: 11pt;
-    color: #333;
-  }
+  body { background: #fff !important; font-size: 11pt; color: #333; }
+  /* ===== HIDE UI CHROME & INTERACTIVE ELEMENTS ONLY ===== */
+  .stepper, .btn-row, .btn-print, .btn, .running-total,
+  #section-1, #section-2, #section-3,
+  .config-video, .how-it-works, .site-footer,
+  .verify-cta, .verify-secondary,
+  .pricing-stability-note,
+  #printRoot { display: none !important; }
+  /* Hide all sections, then show only Step 4 */
+  .section { display: none !important; }
+  #section-4 { display: block !important; }
   /* ===== HEADER — BRANDED BANNER ===== */
   header {
-    background: #0D2240 !important;
-    color: #fff !important;
-    padding: 0.4in 0.5in !important;
-    margin: 0 0 0.3in 0;
-    width: 100%;
-    text-align: left;
-    position: relative;
-    overflow: visible;
+    background: #0D2240 !important; color: #fff !important;
+    padding: 0.25in 0.5in !important;
+    margin: 0 0 0.15in 0; width: 100%;
+    text-align: left; position: relative; overflow: visible;
     page-break-inside: avoid;
   }
   header::after {
-    content: '' !important;
-    display: block !important;
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 50%;
-    height: 100%;
-    background: #ED1F24 !important;
-    opacity: 0.5;
+    content: '' !important; display: block !important;
+    position: absolute; top: 0; right: 0; width: 50%; height: 100%;
+    background: #ED1F24 !important; opacity: 0.5;
     clip-path: polygon(45% 0, 100% 0, 100% 100%, 0 100%);
   }
-  header .header-content {
-    position: relative;
-    z-index: 1;
-  }
+  header .header-content { position: relative; z-index: 1; }
   header .brand-name {
-    font-size: 9pt;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    opacity: 0.9;
-    margin-bottom: 2pt;
-    color: #fff !important;
+    font-size: 9pt; letter-spacing: 2px; text-transform: uppercase;
+    opacity: 0.9; margin-bottom: 2pt; color: #fff !important;
   }
-  header h1 {
-    font-size: 20pt;
-    font-weight: 700;
-    color: #fff !important;
-    margin: 0;
-  }
-  header p {
-    font-size: 9pt;
-    color: #C1D5DB !important;
-    margin-top: 2pt;
-  }
-  /* ===== HIDE UI ELEMENTS ===== */
-  .stepper,
-  .btn-row,
-  .btn-print,
-  .btn,
-  .running-total,
-  #section-1,
-  #section-2,
-  #section-3,
-  .config-video,
-  .how-it-works,
-  .site-footer,
-  .verify-cta,
-  .pricing-stability-note,
-  .estimate-hero,
-  .estimate-range,
-  .routing-section,
-  .project-summary-header {
-    display: none !important;
-  }
-  /* ===== SHOW ONLY ESTIMATE SECTION ===== */
-  .container {
-    max-width: 100%;
-    padding: 0 !important;
-    margin: 0;
-  }
-  .section {
-    display: none !important;
-  }
-  #section-4 {
-    display: block !important;
-  }
-  /* ===== CARD STYLING ===== */
+  header h1 { font-size: 20pt; font-weight: 700; color: #fff !important; margin: 0; }
+  header p { font-size: 9pt; color: #C1D5DB !important; margin-top: 2pt; }
+  /* ===== CONTAINER & CARD ===== */
+  .container { max-width: 100%; padding: 0 !important; margin: 0; }
   .card {
-    box-shadow: none !important;
-    padding: 0 !important;
-    margin-bottom: 0.2in !important;
-    border: none !important;
+    box-shadow: none !important; padding: 0 !important;
+    margin-bottom: 0 !important; border: none !important;
   }
   .card h2 {
-    font-size: 14pt;
-    color: #0D2240 !important;
+    font-size: 14pt; color: #0D2240 !important;
     border-bottom: 2pt solid #ED1F24 !important;
-    padding-bottom: 4pt;
-    margin-bottom: 10pt;
+    padding-bottom: 4pt; margin-bottom: 10pt;
   }
   /* ===== SUMMARY SECTIONS ===== */
-  .summary-section {
-    margin-bottom: 0.18in !important;
-    page-break-inside: auto;
-  }
+  .summary-section { margin-bottom: 0.08in !important; page-break-inside: auto; }
   .summary-section h3 {
-    font-size: 11pt;
-    color: #0D2240 !important;
-    font-weight: 700;
-    margin-bottom: 4pt;
-    padding: 3pt 6pt;
-    background: #F2F3F7 !important;
-    border-left: 3pt solid #ED1F24 !important;
+    font-size: 11pt; color: #0D2240 !important; font-weight: 700;
+    margin-bottom: 4pt; padding: 3pt 6pt;
+    background: #F2F3F7 !important; border-left: 3pt solid #ED1F24 !important;
   }
   /* ===== SUMMARY TABLES ===== */
-  .summary-table {
-    width: 100%;
-    border-collapse: collapse;
-    table-layout: fixed;
-    overflow-wrap: break-word;
-  }
+  .summary-table { width: 100%; border-collapse: collapse; table-layout: fixed; overflow-wrap: break-word; }
+  .summary-table thead { display: table-header-group; }
   .summary-table th {
-    background: #0D2240 !important;
-    color: #fff !important;
-    font-size: 9pt;
-    font-weight: 600;
-    padding: 5pt 8pt;
-    text-align: left;
-    border: none;
+    background: #0D2240 !important; color: #fff !important;
+    font-size: 9pt; font-weight: 600; padding: 5pt 8pt; text-align: left; border: none;
   }
   .summary-table td {
-    padding: 4pt 8pt;
-    font-size: 9.5pt;
-    border-bottom: 0.5pt solid #C1D5DB !important;
-    color: #333;
+    padding: 4pt 8pt; font-size: 9.5pt;
+    border-bottom: 0.5pt solid #C1D5DB !important; color: #333;
   }
-  .summary-table td:last-child {
-    text-align: right;
-    font-weight: 500;
-  }
+  .summary-table td:last-child { text-align: right; font-weight: 500; }
+  .summary-table tr { break-inside: avoid; page-break-inside: avoid; }
   .summary-table tr.total td {
-    font-weight: 700;
-    font-size: 11pt;
-    color: #0D2240 !important;
-    border-top: 2pt solid #0D2240 !important;
-    border-bottom: none;
-    padding-top: 6pt;
+    font-weight: 700; font-size: 11pt; color: #0D2240 !important;
+    border-top: 2pt solid #0D2240 !important; border-bottom: none; padding-top: 6pt;
   }
-  .summary-table tr.subtotal td {
-    font-weight: 600;
-    color: #122738 !important;
-  }
+  .summary-table tr.subtotal td { font-weight: 600; color: #122738 !important; }
+  /* ===== ROUTING SECTION ===== */
+  .routing-section { margin-bottom: 0.1in !important; page-break-inside: avoid; }
+  .routing-section h3 { font-size: 11pt; color: #0D2240 !important; font-weight: 700; margin-bottom: 3pt; }
+  .routing-section p { font-size: 10.5pt; color: #636060; line-height: 1.4; margin-bottom: 2pt; }
+  .routing-section ul { padding-left: 16pt; margin: 2pt 0 4pt 0; }
+  .routing-section li { font-size: 10.5pt; color: #636060; line-height: 1.4; }
   /* ===== DISCLAIMER ===== */
   .disclaimer {
-    background: #F2F3F7 !important;
-    border-left: 3pt solid #ED1F24 !important;
-    padding: 8pt 10pt !important;
-    font-size: 8pt;
-    color: #636060 !important;
-    margin-top: 0.15in;
-    page-break-inside: avoid;
+    background: #F2F3F7 !important; border-left: 3pt solid #ED1F24 !important;
+    padding: 8pt 10pt !important; font-size: 8pt; color: #636060 !important;
+    margin-top: 0.15in; page-break-inside: avoid;
   }
-  .disclaimer strong {
-    color: #0D2240 !important;
+  .disclaimer strong { color: #0D2240 !important; }
+  /* ===== HEADER INTRO — LEFT-JUSTIFIED ===== */
+  header .header-intro {
+    text-align: left !important;
+    max-width: none !important;
+    margin: 2pt 0 0 0 !important;
+    font-size: 9pt;
+    line-height: 1.3;
   }
-  /* ===== CUSTOM SIZE BADGE ===== */
-  .custom-size-badge {
-    color: #ED1F24 !important;
+  /* ===== ESTIMATE HERO — COMPACT FOR PAGE 1 ===== */
+  .estimate-hero {
+    padding: 4pt 0 2pt 0 !important;
+    margin-bottom: 2pt !important;
+    text-align: center;
   }
+  .estimate-hero h3 { font-size: 10pt !important; margin-bottom: 2pt !important; padding: 2pt 6pt !important; }
+  .estimate-hero .hero-price { font-size: 20pt !important; margin: 1pt 0 !important; }
+  .estimate-hero .hero-descriptor { font-size: 8.5pt !important; margin: 1pt 0 !important; }
+  .estimate-hero .hero-credibility { font-size: 8pt !important; margin: 0 !important; }
+  .estimate-hero .monthly-amount { font-size: 12pt !important; margin: 2pt 0 0 !important; }
+  .estimate-hero .monthly-sub { font-size: 8.5pt !important; margin: 1pt 0 !important; }
+  .estimate-hero .monthly-footnote { font-size: 7pt !important; margin: 1pt 0 0 !important; }
+  /* ===== SECTION DIVIDER — MINIMAL ===== */
+  .section-divider { margin: 4pt 0 !important; }
+  /* ===== STRUCTURED STARTING POINT — COMPACT ===== */
+  .structured-starting-point { padding-top: 4pt !important; margin-top: 0 !important; margin-bottom: 6pt !important; }
+  .structured-starting-point h3 { font-size: 10pt !important; margin-bottom: 2pt !important; }
+  .structured-starting-point p { font-size: 8.5pt !important; line-height: 1.3 !important; margin-bottom: 2pt !important; }
+  .structured-starting-point ul { margin: 1pt 0 3pt 0 !important; }
+  .structured-starting-point li { font-size: 8.5pt !important; line-height: 1.35 !important; }
+  /* ===== PROJECT SUMMARY HEADER — TIGHTEN ===== */
+  .project-summary-header { font-size: 11pt !important; margin: 6pt 0 4pt 0 !important; }
+  /* ===== ESTIMATE RANGE — TIGHTEN FOR PAGE 1 FIT ===== */
+  .estimate-range { padding: 6pt 0 !important; margin-top: 4pt !important; margin-bottom: 4pt !important; }
+  .estimate-range p { margin: 1pt 0 !important; font-size: 9pt; line-height: 1.3; }
+  .estimate-range .range-label { font-size: 9pt !important; margin-bottom: 1pt !important; }
+  .estimate-range .range-values { font-size: 12pt !important; margin-bottom: 3pt !important; }
+  /* ===== LEFT/RIGHT PADDING ON CONTENT ===== */
+  #section-4 { padding: 0 0.15in !important; }
+  /* ===== PAGE BREAKS ===== */
+  #printBreak-itemized {
+    page-break-before: always !important;
+    padding-top: 0.3in !important;
+  }
+  #printBreak-costs {
+    page-break-before: always !important;
+    padding-top: 0.3in !important;
+  }
+  /* ===== MISC ===== */
+  .custom-size-badge { color: #ED1F24 !important; }
 }
 /* ===== RUNNING TOTAL BAR ===== */
 .running-total {
@@ -1098,4 +1078,84 @@ header .header-intro {
 }
 @media (max-width: 600px) {
   .form-row.four { grid-template-columns: 1fr 1fr; }
+}
+/* ===== STICKY MOBILE CTA ===== */
+.sticky-cta { display: none; }
+@media (max-width: 768px) {
+  .sticky-cta.visible {
+    display: block;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: var(--cta-red);
+    color: #FFFFFF;
+    padding: 1rem;
+    text-align: center;
+    font-weight: 700;
+    font-size: 1rem;
+    z-index: 1000;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 -2px 8px rgba(0,0,0,0.15);
+  }
+  body.step-4-active { padding-bottom: 3.5rem; }
+}
+/* ===== KEEP-ESTIMATE MODAL ===== */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 10000;
+  justify-content: center;
+  align-items: center;
+}
+.modal-overlay.active {
+  display: flex;
+}
+.modal-dialog {
+  background: var(--white);
+  border-radius: 12px;
+  padding: 2rem 1.75rem;
+  max-width: 420px;
+  width: 90%;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  text-align: center;
+  animation: modalFadeIn 0.2s ease;
+}
+@keyframes modalFadeIn {
+  from { opacity: 0; transform: translateY(-16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.modal-dialog h3 {
+  color: var(--deep-navy);
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+}
+.modal-dialog p {
+  color: var(--charcoal);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  margin-bottom: 1.25rem;
+}
+.modal-dialog .btn {
+  display: block;
+  width: 100%;
+  margin-bottom: 0.5rem;
+}
+.modal-dialog .btn-link {
+  background: none;
+  border: none;
+  color: var(--steel-blue);
+  font-size: 0.85rem;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0.5rem;
+  display: block;
+  width: 100%;
 }
