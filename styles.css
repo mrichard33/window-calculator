@@ -435,7 +435,7 @@ header .header-intro {
 /* ===== STRUCTURED STARTING POINT ===== */
 .structured-starting-point {
   border-top: 1px solid var(--mist);
-  padding-top: 1.25rem;
+  padding-top: 1.5rem;
   margin-top: 0;
 }
 .structured-starting-point h3 {
@@ -448,7 +448,7 @@ header .header-intro {
 .estimate-hero {
   text-align: center;
   padding: 1.25rem 0;
-  margin-bottom: 2rem;
+  margin-bottom: 2.5rem;
 }
 .estimate-hero h3 {
   font-size: 0.9rem;
