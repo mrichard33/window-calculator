@@ -1129,7 +1129,7 @@ function generateEstimatePDF() {
     var highPrice = total * 1.20;
     // Build a self-contained HTML element for the PDF
     var pdfContainer = document.createElement('div');
-    pdfContainer.style.cssText = 'padding:0 20px 20px 20px; font-family:Nunito Sans,sans-serif; color:#626060; font-size:11px; line-height:1.5;';
+    pdfContainer.style.cssText = 'padding:0 20px 20px 20px; font-family:Nunito Sans,sans-serif; color:#626060; font-size:11px; line-height:1.35;';
     // ===== 1. HEADER BAR =====
     var header = document.createElement('div');
     header.style.cssText = 'background:#122739; padding:14px 20px; margin:0 -20px 20px -20px; text-align:center; page-break-inside:avoid;';
@@ -1138,42 +1138,41 @@ function generateEstimatePDF() {
     pdfContainer.appendChild(header);
     // ===== 2. PRICE AUTHORITY BLOCK =====
     var priceBlock = document.createElement('div');
-    priceBlock.style.cssText = 'background:#FFFFFF; margin-bottom:20px; padding:16px 0; page-break-inside:avoid;';
+    priceBlock.style.cssText = 'background:#FFFFFF; margin-bottom:12px; padding:10px 0; page-break-inside:avoid;';
 
     var pdfMonthlyLow = Math.round(lowPrice * 0.0107);
     var pdfMonthlyAvg = Math.round(total * 0.0107);
 
     priceBlock.innerHTML =
-      '<h3 style="margin:0 0 10px 0; padding-left:12px; font-size:14px; font-weight:700; color:#122739; border-left:3px solid #ED1E24; line-height:1.3;">Estimated Project Investment<\/h3>' +
-      '<p style="margin:0 0 6px 0; font-size:30px; font-weight:700; color:#122739; text-align:center; line-height:1.2;">' + fmt(total) + '<\/p>' +
-      '<p style="margin:4px 0 0 0; font-size:12px; color:#626060; text-align:center; letter-spacing:0.3px;">Full-Frame Replacement | ' + (window.latestWindowCount || 0) + ' Impact-Rated Windows<\/p>' +
-      '<p style="margin:2px 0 0 0; font-size:11px; color:#87898B; text-align:center; letter-spacing:0.5px;">Florida-Engineered | Impact-Rated | In-House Installation<\/p>' +
+      '<h3 style="margin:0 0 8px 0; padding-left:12px; font-size:14px; font-weight:700; color:#122739; border-left:3px solid #ED1E24; line-height:1.3;">Estimated Project Investment<\/h3>' +
+      '<p style="margin:0 0 4px 0; font-size:28px; font-weight:700; color:#122739; text-align:center; line-height:1.2;">' + fmt(total) + '<\/p>' +
+      '<p style="margin:2px 0 0 0; font-size:11px; color:#626060; text-align:center; letter-spacing:0.3px;">Full-Frame Replacement | ' + (window.latestWindowCount || 0) + ' Impact-Rated Windows<\/p>' +
+      '<p style="margin:1px 0 0 0; font-size:10px; color:#87898B; text-align:center; letter-spacing:0.5px;">Florida-Engineered | Impact-Rated | In-House Installation<\/p>' +
       // Monthly payment line — sits tight under credibility line
-      '<p style="margin:8px 0 0 0; font-size:18px; font-weight:900; color:#2e7d32; text-align:center; line-height:1.1;">Estimated $' + pdfMonthlyLow.toLocaleString() + '\u2013$' + pdfMonthlyAvg.toLocaleString() + ' per month*<\/p>' +
-      '<p style="margin:4px 0 0 0; font-size:11px; font-weight:700; color:#122739; text-align:center;">Payment options available.<\/p>' +
-      '<p style="margin:2px 0 0 0; font-size:11px; font-weight:700; color:#122739; text-align:center;">No traditional credit score required.<\/p>' +
-      '<p style="margin:4px 0 0 0; font-size:9px; color:#626060; text-align:center; line-height:1.35;">*Example based on estimated project total. Final terms are confirmed during verification.<\/p>' +
-      '<div style="border-top:1px solid #C1D5DB; margin:12px 0;"><\/div>' +
-      '<p style="margin:0 0 2px 0; font-size:10px; font-weight:700; color:#0C2340; text-align:center;">Estimated Range<\/p>' +
-      '<p style="margin:0 0 6px 0; font-size:13px; font-weight:700; color:#0C2340; text-align:center;">' + fmt(lowPrice) + ' \u2013 ' + fmt(highPrice) + '<\/p>' +
-      '<p style="margin:0 0 8px 0; font-size:11px; color:#626060; text-align:center;">Most verified projects remain within this range.<\/p>' +
-      '<p style="margin:0 0 8px 0; font-size:11px; color:#626060; text-align:center;">Final pricing is confirmed during professional verification.<\/p>' +
-      '<p style="margin:0; font-size:10px; color:#626060; text-align:center; line-height:1.4;">This range reflects final measurement confirmation, installation method adjustments, and Florida code requirements.<\/p>';
+      '<p style="margin:6px 0 0 0; font-size:16px; font-weight:900; color:#2e7d32; text-align:center; line-height:1.1;">Estimated $' + pdfMonthlyLow.toLocaleString() + '\u2013$' + pdfMonthlyAvg.toLocaleString() + ' per month*<\/p>' +
+      '<p style="margin:2px 0 0 0; font-size:10px; font-weight:700; color:#122739; text-align:center;">Payment options available. No traditional credit score required.<\/p>' +
+      '<p style="margin:3px 0 0 0; font-size:9px; color:#626060; text-align:center; line-height:1.35;">*Example based on estimated project total. Final terms are confirmed during verification.<\/p>' +
+      '<div style="border-top:1px solid #C1D5DB; margin:8px 0;"><\/div>' +
+      '<p style="margin:0 0 1px 0; font-size:10px; font-weight:700; color:#0C2340; text-align:center;">Estimated Range<\/p>' +
+      '<p style="margin:0 0 4px 0; font-size:12px; font-weight:700; color:#0C2340; text-align:center;">' + fmt(lowPrice) + ' \u2013 ' + fmt(highPrice) + '<\/p>' +
+      '<p style="margin:0 0 4px 0; font-size:10px; color:#626060; text-align:center;">Most verified projects remain within this range.<\/p>' +
+      '<p style="margin:0 0 4px 0; font-size:10px; color:#626060; text-align:center;">Final pricing is confirmed during professional verification.<\/p>' +
+      '<p style="margin:0; font-size:9px; color:#626060; text-align:center; line-height:1.4;">This range reflects final measurement confirmation, installation method adjustments, and Florida code requirements.<\/p>';
     pdfContainer.appendChild(priceBlock);
     // ===== 2b. STRUCTURED STARTING POINT =====
     var startingPoint = document.createElement('div');
-    startingPoint.style.cssText = 'border-top:1px solid #C1D5DB; margin-top:8px; padding-top:18px; margin-bottom:16px; page-break-inside:avoid;';
+    startingPoint.style.cssText = 'border-top:1px solid #C1D5DB; margin-top:6px; padding-top:12px; margin-bottom:10px; page-break-inside:avoid;';
     startingPoint.innerHTML =
-      '<h3 style="margin:0 0 8px 0; font-size:13px; font-weight:700; color:#0C2340;">Your Estimate Is Structured and Verifiable<\/h3>' +
-      '<p style="margin:0 0 4px 0; font-size:11px; color:#626060; line-height:1.5;">This estimate reflects the window selections and preliminary measurements you provided.<\/p>' +
-      '<p style="margin:0 0 4px 0; font-size:11px; color:#626060; line-height:1.5;">Before materials are ordered, we verify:<\/p>' +
-      '<ul style="margin:4px 0 8px 0; padding-left:20px; font-size:11px; color:#626060; line-height:1.6;">' +
-        '<li>Exact opening dimensions<\/li>' +
-        '<li>Installation conditions<\/li>' +
-        '<li>Florida code compliance requirements<\/li>' +
-        '<li>Geographic scheduling zone eligibility<\/li>' +
+      '<h3 style="margin:0 0 5px 0; font-size:12px; font-weight:700; color:#0C2340;">Your Estimate Is Structured and Verifiable<\/h3>' +
+      '<p style="margin:0 0 3px 0; font-size:10px; color:#626060; line-height:1.4;">This estimate reflects the window selections and preliminary measurements you provided.<\/p>' +
+      '<p style="margin:0 0 3px 0; font-size:10px; color:#626060; line-height:1.4;">Before materials are ordered, we verify:<\/p>' +
+      '<ul style="margin:2px 0 5px 0; padding-left:20px; font-size:10px; color:#626060; line-height:1.5;">' +
+        '<li style="margin-bottom:2px;">Exact opening dimensions<\/li>' +
+        '<li style="margin-bottom:2px;">Installation conditions<\/li>' +
+        '<li style="margin-bottom:2px;">Florida code compliance requirements<\/li>' +
+        '<li style="margin-bottom:2px;">Geographic scheduling zone eligibility<\/li>' +
       '<\/ul>' +
-      '<p style="margin:0; font-size:11px; color:#626060; line-height:1.5;">This protects you from unexpected changes \u2014 up or down.<\/p>';
+      '<p style="margin:0; font-size:10px; color:#626060; line-height:1.4;">This protects you from unexpected changes \u2014 up or down.<\/p>';
     pdfContainer.appendChild(startingPoint);
     // ===== 3. EXISTING PRICING CONTENT (cloned — unchanged) =====
     var contentClone = summaryEl.cloneNode(true);
@@ -1184,8 +1183,6 @@ function generateEstimatePDF() {
     if (startingPt) startingPt.remove();
     var rangeEl = contentClone.querySelector('.estimate-range');
     if (rangeEl) rangeEl.remove();
-    var projHeader = contentClone.querySelector('.project-summary-header');
-    if (projHeader) projHeader.remove();
     var routingEl = contentClone.querySelector('.routing-section');
     if (routingEl) routingEl.remove();
     // Remove list-based Potential Savings (replaced by inline-styled table below)
@@ -1219,6 +1216,15 @@ function generateEstimatePDF() {
           section.style.pageBreakInside = 'avoid';
         }
       }
+    });
+    // Force Page 2 to start at "Project Summary"
+    var projHeader = contentClone.querySelector('.project-summary-header');
+    if (projHeader) {
+      projHeader.style.cssText = 'margin:0 0 10px 0; padding-top:0.5in; font-size:14px; font-weight:700; color:#0C2340; page-break-before:always;';
+    }
+    // Prevent individual table rows from splitting across pages
+    contentClone.querySelectorAll('tr').forEach(function(row) {
+      row.style.pageBreakInside = 'avoid';
     });
     pdfContainer.appendChild(contentClone);
     // ===== 3b. COST RANGE TABLE =====
@@ -1291,7 +1297,7 @@ function generateEstimatePDF() {
       image:        { type: 'jpeg', quality: 0.75 },
       html2canvas:  { scale: 1.5, useCORS: true, logging: false },
       jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' },
-      pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
+      pagebreak:    { mode: ['css', 'legacy'] }
     };
     console.log('[PDF] pdfContainer built, child count:', pdfContainer.childNodes.length);
     // Dynamically load html2pdf if not already available; wait for fonts
