@@ -1068,98 +1068,6 @@ function buildSummary() {
   document.getElementById('summaryContent').innerHTML = html;
   updateRunningTotal();
 }
-// Split the Itemized Breakdown table into page-sized chunks so every
-// continuation page gets its own element with padding-top (CSS padding
-// only applies at the START of an element, not on overflow pages).
-function chunkAndAppendItemizedBreakdown(itemizedSection, printRoot) {
-  var tbody = itemizedSection.querySelector('.summary-table tbody');
-  var thead = itemizedSection.querySelector('.summary-table thead');
-  var sectionH3 = itemizedSection.querySelector('h3');
-
-  // Fallback: if no table structure found, append as single section
-  if (!tbody || !thead) {
-    itemizedSection.classList.add('print-break');
-    printRoot.appendChild(itemizedSection);
-    return;
-  }
-
-  // --- Parse rows into window groups ---
-  // Each group: header row (colspan=4) + detail rows + subtotal row
-  var allRows = Array.from(tbody.querySelectorAll('tr'));
-  var windowGroups = [];
-  var currentGroup = [];
-
-  for (var r = 0; r < allRows.length; r++) {
-    currentGroup.push(allRows[r]);
-    if (allRows[r].classList.contains('subtotal')) {
-      windowGroups.push(currentGroup);
-      currentGroup = [];
-    }
-  }
-  // Handle any trailing rows without a subtotal
-  if (currentGroup.length > 0) {
-    windowGroups.push(currentGroup);
-  }
-
-  // --- Chunk groups by row budget ---
-  // Letter page: 11in - 1.2in @page margins = 9.8in (705.6pt) usable
-  // First chunk: minus 0.4in pad + h3 + thead + margin ≈ 628pt → ~38 rows, use 34 for safety
-  // Continuation: minus 0.4in pad + thead + margin ≈ 650pt → ~39 rows, use 36 for safety
-  var FIRST_CHUNK_MAX = 34;
-  var CONT_CHUNK_MAX = 36;
-
-  var chunks = [];
-  var chunk = [];
-  var rowCount = 0;
-  var isFirst = true;
-
-  for (var g = 0; g < windowGroups.length; g++) {
-    var groupRows = windowGroups[g].length;
-    var limit = isFirst ? FIRST_CHUNK_MAX : CONT_CHUNK_MAX;
-
-    // If adding this group exceeds the budget, start a new chunk
-    // (unless chunk is empty — always add at least one group per chunk)
-    if (rowCount + groupRows > limit && chunk.length > 0) {
-      chunks.push(chunk);
-      chunk = [];
-      rowCount = 0;
-      isFirst = false;
-    }
-    chunk.push(windowGroups[g]);
-    rowCount += groupRows;
-  }
-  if (chunk.length > 0) {
-    chunks.push(chunk);
-  }
-
-  // --- Build a DOM section for each chunk ---
-  for (var ci = 0; ci < chunks.length; ci++) {
-    var section = document.createElement('div');
-    section.className = 'summary-section print-break';
-
-    // Only the first chunk gets the "Itemized Breakdown" heading
-    if (ci === 0 && sectionH3) {
-      section.appendChild(sectionH3.cloneNode(true));
-    }
-
-    var table = document.createElement('table');
-    table.className = 'summary-table';
-    table.appendChild(thead.cloneNode(true));
-
-    var newTbody = document.createElement('tbody');
-    for (var cg = 0; cg < chunks[ci].length; cg++) {
-      var rows = chunks[ci][cg];
-      for (var ri = 0; ri < rows.length; ri++) {
-        newTbody.appendChild(rows[ri]);
-      }
-    }
-    table.appendChild(newTbody);
-    section.appendChild(table);
-
-    printRoot.appendChild(section);
-  }
-}
-
 function printEstimate() {
   var printRoot = document.getElementById('printRoot');
   printRoot.innerHTML = '';
@@ -1197,10 +1105,11 @@ function printEstimate() {
 
   printRoot.appendChild(page1);
 
-  // 4. Itemized Breakdown — chunked for multi-page print support
+  // 4. Itemized Breakdown — direct child with forced page break
   var itemized = contentClone.querySelector('.summary-section');
   if (itemized) {
-    chunkAndAppendItemizedBreakdown(itemized, printRoot);
+    itemized.classList.add('print-break');
+    printRoot.appendChild(itemized);
   }
 
   // 5. Project Costs — direct child with forced page break
