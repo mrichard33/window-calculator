@@ -792,6 +792,11 @@ header .header-intro {
     color: #C1D5DB !important;
     margin-top: 2pt;
   }
+  header .header-intro {
+    text-align: left !important;
+    max-width: none !important;
+    margin: 4pt 0 0 0 !important;
+  }
   /* ===== HIDE UI ELEMENTS ===== */
   .stepper,
   .btn-row,
@@ -822,6 +827,7 @@ header .header-intro {
   }
   #section-4 {
     display: block !important;
+    padding: 0 0.2in !important;
   }
   /* ===== CARD STYLING ===== */
   .card {

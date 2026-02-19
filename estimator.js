@@ -1381,9 +1381,24 @@ function sendPDFToWebhook(base64, contactId, contactName) {
       return resp;
     });
   }).catch(function(err) {
-    console.error('[Webhook] Fetch failed:', err);
-    window.__estimateWebhookError = true;
-    throw err;
+    console.warn('[Webhook] Standard fetch failed (likely CORS). Retrying with no-cors mode...');
+    console.warn('[Webhook] Original error:', err.message || err);
+    return fetch(GHL_CONFIG.pdfWebhookUrl, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: payloadStr
+    }).then(function(resp) {
+      console.log('[Webhook] no-cors response status:', resp.status, '(0 = opaque, data was sent)');
+      console.log('[Webhook] no-cors response type:', resp.type);
+      window.__estimateWebhookError = false;
+      return resp;
+    }).catch(function(err2) {
+      console.error('[Webhook] no-cors fallback also failed:', err2);
+      console.error('[Webhook] This likely means outbound requests are blocked entirely (file:// protocol or network issue)');
+      window.__estimateWebhookError = true;
+      throw err2;
+    });
   });
 }
 function sendPDFToGHL() {
