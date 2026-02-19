@@ -486,48 +486,30 @@ header .header-intro {
   font-size: 0.62rem;
   margin-top: 0.15rem;
 }
-/* ===== MONTHLY PAYMENT HERO ===== */
-.monthly-hero {
-  margin: 0.9rem auto 0;
-  max-width: 720px;
-  border: 2px solid var(--mist);
-  background: #FFFFFF;
-  padding: 0.9rem 1rem;
-  box-shadow: var(--shadow);
-  text-align: center;
-}
-.monthly-hero .monthly-label {
-  font-size: 0.85rem;
-  font-weight: 800;
-  letter-spacing: 0.6px;
-  text-transform: uppercase;
-  color: var(--deep-navy);
-  margin-bottom: 0.35rem;
-}
-.monthly-hero .monthly-amount {
+/* ===== MONTHLY PAYMENT (inside estimate-hero) ===== */
+.estimate-hero .monthly-amount {
   font-size: 1.8rem;
   font-weight: 900;
   color: #2e7d32;
   line-height: 1.05;
-  margin: 0;
+  margin: 0.4rem 0 0;
 }
-.monthly-hero .monthly-sub {
+.estimate-hero .monthly-sub {
   font-size: 0.95rem;
   font-weight: 700;
   color: var(--deep-navy);
   margin-top: 0.25rem;
 }
-.monthly-hero .monthly-footnote {
-  font-size: 0.72rem;
+.estimate-hero .monthly-footnote {
+  font-size: 0.62rem;
   color: var(--text-gray);
-  margin-top: 0.35rem;
+  margin-top: 0.25rem;
   line-height: 1.35;
 }
 /* Mobile tuning */
 @media (max-width: 600px) {
-  .monthly-hero { padding: 0.85rem 0.9rem; }
-  .monthly-hero .monthly-amount { font-size: 1.5rem; }
-  .monthly-hero .monthly-sub { font-size: 0.9rem; }
+  .estimate-hero .monthly-amount { font-size: 1.5rem; }
+  .estimate-hero .monthly-sub { font-size: 0.9rem; }
 }
 /* ===== ESTIMATE RANGE BLOCK ===== */
 .estimate-range {
