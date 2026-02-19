@@ -1207,13 +1207,13 @@ function generateEstimatePDF() {
       // Monthly payment line — sits tight under credibility line
       '<p style="margin:6px 0 0 0; font-size:16px; font-weight:900; color:#2e7d32; text-align:center; line-height:1.1;">Estimated $' + pdfMonthlyLow.toLocaleString() + '\u2013$' + pdfMonthlyAvg.toLocaleString() + ' per month*<\/p>' +
       '<p style="margin:2px 0 0 0; font-size:10px; font-weight:700; color:#122739; text-align:center;">Payment options available. No traditional credit score required.<\/p>' +
-      '<p style="margin:3px 0 0 0; font-size:9px; color:#626060; text-align:center; line-height:1.35;">*Example based on estimated project total. Final terms are confirmed during verification.<\/p>' +
+      '<p style="margin:3px 0 0 0; font-size:10px; color:#626060; text-align:center; line-height:1.35;">*Example based on estimated project total. Final terms are confirmed during verification.<\/p>' +
       '<div style="border-top:1px solid #C1D5DB; margin:8px 0;"><\/div>' +
       '<p style="margin:0 0 1px 0; font-size:10px; font-weight:700; color:#0C2340; text-align:center;">Estimated Range<\/p>' +
       '<p style="margin:0 0 4px 0; font-size:12px; font-weight:700; color:#0C2340; text-align:center;">' + fmt(lowPrice) + ' \u2013 ' + fmt(highPrice) + '<\/p>' +
       '<p style="margin:0 0 4px 0; font-size:10px; color:#626060; text-align:center;">Most verified projects remain within this range.<\/p>' +
       '<p style="margin:0 0 4px 0; font-size:10px; color:#626060; text-align:center;">Final pricing is confirmed during professional verification.<\/p>' +
-      '<p style="margin:0; font-size:9px; color:#626060; text-align:center; line-height:1.4;">This range reflects final measurement confirmation, installation method adjustments, and Florida code requirements.<\/p>';
+      '<p style="margin:0; font-size:10px; color:#626060; text-align:center; line-height:1.4;">This range reflects final measurement confirmation, installation method adjustments, and Florida code requirements.<\/p>';
     pdfContainer.appendChild(priceBlock);
     // ===== 2b. STRUCTURED STARTING POINT =====
     var startingPoint = document.createElement('div');

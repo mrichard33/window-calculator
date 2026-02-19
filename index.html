@@ -754,7 +754,7 @@ header .header-intro {
   #printRoot {
     display: block !important;
     visibility: visible !important;
-    position: absolute; top: 0; left: 0;
+    position: relative;
     width: 100%; margin: 0;
     padding: 0;
     font-family: 'Nunito Sans', sans-serif;
@@ -766,7 +766,7 @@ header .header-intro {
   #printRoot .print-header {
     background: #0D2240 !important; color: #fff !important;
     padding: 0.3in 0.4in !important;
-    margin: 0 -0.15in 0.2in -0.15in; width: auto;
+    margin: 0 -0.15in 0.15in -0.15in; width: auto;
     text-align: left; position: relative; overflow: visible;
     page-break-inside: avoid;
   }
@@ -778,63 +778,63 @@ header .header-intro {
   }
   #printRoot .print-header .header-content { position: relative; z-index: 1; }
   #printRoot .print-header .brand-name {
-    font-size: 8pt; letter-spacing: 2px; text-transform: uppercase;
+    font-size: 10pt; letter-spacing: 2px; text-transform: uppercase;
     opacity: 0.9; margin-bottom: 1pt; color: #fff !important;
   }
   #printRoot .print-header h1 {
     font-size: 16pt; font-weight: 700; color: #fff !important; margin: 0;
   }
   #printRoot .print-header p {
-    font-size: 8pt; color: #C1D5DB !important; margin-top: 1pt;
+    font-size: 10pt; color: #C1D5DB !important; margin-top: 1pt;
   }
   #printRoot .print-header .header-intro {
     text-align: left !important; max-width: none !important;
-    margin: 2pt 0 0 0 !important; font-size: 7pt; line-height: 1.3;
+    margin: 2pt 0 0 0 !important; font-size: 10pt; line-height: 1.3;
   }
   #printRoot .print-header .header-authority {
-    font-size: 8pt; font-weight: 600; color: #fff !important;
+    font-size: 10pt; font-weight: 600; color: #fff !important;
   }
   /* === PAGE 1: forced break after === */
   #printRoot .print-page-1 { page-break-after: always; padding: 0 0.15in; }
   /* Page 1 tightening */
   #printRoot .print-page-1 .estimate-hero {
-    text-align: center !important; margin-bottom: 0.12in !important;
+    text-align: center !important; margin-bottom: 0.08in !important;
     padding: 0.04in 0 !important; page-break-inside: avoid;
   }
-  #printRoot .print-page-1 .estimate-hero h3 { font-size: 9pt; margin-bottom: 2pt; color: #0D2240 !important; }
+  #printRoot .print-page-1 .estimate-hero h3 { font-size: 10.5pt; margin-bottom: 2pt; color: #0D2240 !important; }
   #printRoot .print-page-1 .estimate-hero .hero-price {
     font-size: 20pt !important; font-weight: 700 !important;
     color: #0D2240 !important; margin: 2pt 0 !important;
   }
-  #printRoot .print-page-1 .estimate-hero .hero-descriptor { font-size: 8pt !important; margin: 1pt 0 !important; }
-  #printRoot .print-page-1 .estimate-hero .hero-credibility { font-size: 7pt !important; margin: 0 !important; color: #87898B !important; }
+  #printRoot .print-page-1 .estimate-hero .hero-descriptor { font-size: 10pt !important; margin: 1pt 0 !important; }
+  #printRoot .print-page-1 .estimate-hero .hero-credibility { font-size: 10pt !important; margin: 0 !important; color: #87898B !important; }
   #printRoot .print-page-1 .estimate-hero .monthly-amount {
     font-size: 13pt !important; font-weight: 900 !important;
     color: #2e7d32 !important; margin: 4pt 0 0 0 !important;
   }
-  #printRoot .print-page-1 .estimate-hero .monthly-sub { font-size: 8pt !important; margin: 1pt 0 0 0 !important; }
-  #printRoot .print-page-1 .estimate-hero .monthly-footnote { font-size: 7pt !important; margin: 2pt 0 0 0 !important; }
+  #printRoot .print-page-1 .estimate-hero .monthly-sub { font-size: 10pt !important; margin: 1pt 0 0 0 !important; }
+  #printRoot .print-page-1 .estimate-hero .monthly-footnote { font-size: 10pt !important; margin: 2pt 0 0 0 !important; }
   #printRoot .print-page-1 .section-divider {
     border: none !important; border-top: 0.5pt solid #C1D5DB !important;
-    margin: 0.08in 0 !important;
+    margin: 0.05in 0 !important;
   }
   #printRoot .print-page-1 .structured-starting-point {
-    padding-top: 0.08in !important; margin-bottom: 0.08in !important;
+    padding-top: 0.05in !important; margin-bottom: 0.05in !important;
     page-break-inside: avoid;
   }
-  #printRoot .print-page-1 .structured-starting-point h3 { font-size: 9pt !important; margin-bottom: 2pt !important; color: #0D2240 !important; }
-  #printRoot .print-page-1 .structured-starting-point p { font-size: 7.5pt !important; margin-bottom: 1pt !important; line-height: 1.3 !important; }
+  #printRoot .print-page-1 .structured-starting-point h3 { font-size: 10.5pt !important; margin-bottom: 2pt !important; color: #0D2240 !important; }
+  #printRoot .print-page-1 .structured-starting-point p { font-size: 10pt !important; margin-bottom: 1pt !important; line-height: 1.3 !important; }
   #printRoot .print-page-1 .structured-starting-point ul { margin: 1pt 0 2pt 0 !important; padding-left: 14pt !important; }
-  #printRoot .print-page-1 .structured-starting-point li { font-size: 7.5pt !important; line-height: 1.35 !important; margin-bottom: 0 !important; }
+  #printRoot .print-page-1 .structured-starting-point li { font-size: 10pt !important; line-height: 1.35 !important; margin-bottom: 0 !important; }
   #printRoot .print-page-1 .estimate-range {
-    text-align: center !important; font-size: 7.5pt !important;
-    color: #636060 !important; margin: 0.08in 0 !important;
+    text-align: center !important; font-size: 10pt !important;
+    color: #636060 !important; margin: 0.05in 0 !important;
     padding: 0.04in 0 !important;
     border-top: 0.5pt solid #C1D5DB !important;
   }
-  #printRoot .print-page-1 .estimate-range .range-label { font-size: 8pt !important; font-weight: 700 !important; margin-bottom: 1pt !important; color: #0D2240 !important; }
+  #printRoot .print-page-1 .estimate-range .range-label { font-size: 10pt !important; font-weight: 700 !important; margin-bottom: 1pt !important; color: #0D2240 !important; }
   #printRoot .print-page-1 .estimate-range .range-values { font-size: 10pt !important; font-weight: 700 !important; margin-bottom: 2pt !important; color: #0D2240 !important; }
-  #printRoot .print-page-1 .estimate-range p { font-size: 7.5pt !important; margin: 1pt 0 !important; line-height: 1.3 !important; }
+  #printRoot .print-page-1 .estimate-range p { font-size: 10pt !important; margin: 1pt 0 !important; line-height: 1.3 !important; }
   /* === PAGE 2+ === */
   #printRoot .print-page-2 { padding: 0 0.15in; }
   #printRoot .project-summary-header {
@@ -845,7 +845,7 @@ header .header-intro {
   /* === SUMMARY SECTIONS === */
   #printRoot .summary-section { margin-bottom: 0.12in !important; page-break-inside: auto; }
   #printRoot .summary-section h3 {
-    font-size: 9.5pt; color: #0D2240 !important; font-weight: 700;
+    font-size: 11pt; color: #0D2240 !important; font-weight: 700;
     margin-bottom: 3pt; padding: 2pt 6pt;
     background: #F2F3F7 !important; border-left: 3pt solid #ED1F24 !important;
   }
@@ -854,10 +854,10 @@ header .header-intro {
   #printRoot .summary-table thead { display: table-header-group; }
   #printRoot .summary-table th {
     background: #0D2240 !important; color: #fff !important;
-    font-size: 8.5pt; font-weight: 600; padding: 4pt 6pt; text-align: left; border: none;
+    font-size: 10.5pt; font-weight: 600; padding: 4pt 6pt; text-align: left; border: none;
   }
   #printRoot .summary-table td {
-    padding: 3pt 6pt; font-size: 8.5pt;
+    padding: 3pt 6pt; font-size: 10.5pt;
     border-bottom: 0.5pt solid #C1D5DB !important; color: #333;
   }
   #printRoot .summary-table td:last-child { text-align: right; font-weight: 500; }
@@ -869,19 +869,19 @@ header .header-intro {
   #printRoot .summary-table tr.subtotal td { font-weight: 600; color: #122738 !important; }
   /* === ROUTING SECTION === */
   #printRoot .routing-section { margin-bottom: 0.1in !important; page-break-inside: avoid; }
-  #printRoot .routing-section h3 { font-size: 9.5pt; color: #0D2240 !important; font-weight: 700; margin-bottom: 3pt; }
-  #printRoot .routing-section p { font-size: 8.5pt; color: #636060; line-height: 1.4; margin-bottom: 2pt; }
+  #printRoot .routing-section h3 { font-size: 11pt; color: #0D2240 !important; font-weight: 700; margin-bottom: 3pt; }
+  #printRoot .routing-section p { font-size: 10.5pt; color: #636060; line-height: 1.4; margin-bottom: 2pt; }
   #printRoot .routing-section ul { padding-left: 16pt; margin: 2pt 0 4pt 0; }
-  #printRoot .routing-section li { font-size: 8.5pt; color: #636060; line-height: 1.4; }
+  #printRoot .routing-section li { font-size: 10.5pt; color: #636060; line-height: 1.4; }
   /* === DISCLAIMER === */
   #printRoot .print-disclaimer {
     background: #F2F3F7 !important; border-left: 3pt solid #ED1F24 !important;
-    padding: 6pt 8pt !important; font-size: 7.5pt; color: #636060 !important;
+    padding: 6pt 8pt !important; font-size: 10pt; color: #636060 !important;
     margin-top: 0.12in; page-break-inside: avoid;
   }
   #printRoot .print-disclaimer strong { color: #0D2240 !important; }
   /* === MISC === */
-  #printRoot .pricing-stability-note { font-size: 7.5pt !important; color: #636060 !important; page-break-inside: avoid; }
+  #printRoot .pricing-stability-note { font-size: 10pt !important; color: #636060 !important; page-break-inside: avoid; }
   #printRoot .custom-size-badge { color: #ED1F24 !important; }
 }
 /* ===== RUNNING TOTAL BAR ===== */
@@ -2824,13 +2824,13 @@ function generateEstimatePDF() {
       // Monthly payment line — sits tight under credibility line
       '<p style="margin:6px 0 0 0; font-size:16px; font-weight:900; color:#2e7d32; text-align:center; line-height:1.1;">Estimated $' + pdfMonthlyLow.toLocaleString() + '\u2013$' + pdfMonthlyAvg.toLocaleString() + ' per month*<\/p>' +
       '<p style="margin:2px 0 0 0; font-size:10px; font-weight:700; color:#122739; text-align:center;">Payment options available. No traditional credit score required.<\/p>' +
-      '<p style="margin:3px 0 0 0; font-size:9px; color:#626060; text-align:center; line-height:1.35;">*Example based on estimated project total. Final terms are confirmed during verification.<\/p>' +
+      '<p style="margin:3px 0 0 0; font-size:10px; color:#626060; text-align:center; line-height:1.35;">*Example based on estimated project total. Final terms are confirmed during verification.<\/p>' +
       '<div style="border-top:1px solid #C1D5DB; margin:8px 0;"><\/div>' +
       '<p style="margin:0 0 1px 0; font-size:10px; font-weight:700; color:#0C2340; text-align:center;">Estimated Range<\/p>' +
       '<p style="margin:0 0 4px 0; font-size:12px; font-weight:700; color:#0C2340; text-align:center;">' + fmt(lowPrice) + ' \u2013 ' + fmt(highPrice) + '<\/p>' +
       '<p style="margin:0 0 4px 0; font-size:10px; color:#626060; text-align:center;">Most verified projects remain within this range.<\/p>' +
       '<p style="margin:0 0 4px 0; font-size:10px; color:#626060; text-align:center;">Final pricing is confirmed during professional verification.<\/p>' +
-      '<p style="margin:0; font-size:9px; color:#626060; text-align:center; line-height:1.4;">This range reflects final measurement confirmation, installation method adjustments, and Florida code requirements.<\/p>';
+      '<p style="margin:0; font-size:10px; color:#626060; text-align:center; line-height:1.4;">This range reflects final measurement confirmation, installation method adjustments, and Florida code requirements.<\/p>';
     pdfContainer.appendChild(priceBlock);
     // ===== 2b. STRUCTURED STARTING POINT =====
     var startingPoint = document.createElement('div');
