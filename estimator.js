@@ -1021,7 +1021,7 @@ function buildSummary() {
     '<\/table>' +
   '<\/div>';
   // ===== ITEMIZED BREAKDOWN =====
-  html += '<div class="summary-section">' +
+  html += '<div class="summary-section" id="printBreak-itemized">' +
     '<h3>Itemized Breakdown<\/h3>' +
     '<table class="summary-table">' +
       '<thead><tr><th>Item<\/th><th>Per Unit<\/th><th>Qty<\/th><th style="text-align:right;">Total<\/th><\/tr><\/thead>' +
@@ -1029,7 +1029,7 @@ function buildSummary() {
     '<\/table>' +
   '<\/div>';
   // ===== PROJECT COSTS =====
-  html += '<div class="summary-section">' +
+  html += '<div class="summary-section" id="printBreak-costs">' +
     '<h3>Project Costs<\/h3>' +
     '<table class="summary-table">' +
       '<tr><td>Windows Subtotal (incl. installation)<\/td><td>' + fmt(windowSubtotal) + '<\/td><\/tr>';
