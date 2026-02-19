@@ -1534,14 +1534,20 @@ function hideKeepEstimateModal() {
   document.getElementById('keepEstimateModal').classList.remove('active');
 }
 function openMeasurementVerification() {
-  var fullName = (document.getElementById("fullName")?.value || "").trim();
-  var nameParts = fullName.split(/\s+/);
-  var firstName = nameParts[0] || "";
-  var lastName = nameParts.slice(1).join(" ") || "";
-  var phone = (document.getElementById("phone")?.value || "").trim();
-  var email = (document.getElementById("email")?.value || "").trim();
-  const url =
-    `https://landing.reecewindows.com/confirm-your-pricing?` +
-    `first_name=${encodeURIComponent(firstName)}&last_name=${encodeURIComponent(lastName)}&phone=${encodeURIComponent(phone)}&email=${encodeURIComponent(email)}`;
+  var data = gatherContactData();
+  var params = new URLSearchParams(window.location.search);
+  var url = 'https://landing.reecewindows.com/confirm-your-pricing?' +
+    'first_name=' + encodeURIComponent(data.firstName) +
+    '&last_name=' + encodeURIComponent(data.lastName) +
+    '&phone=' + encodeURIComponent(data.phone) +
+    '&email=' + encodeURIComponent(data.email);
+  // Append UTM parameters
+  ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'].forEach(function(key) {
+    var val = params.get(key);
+    if (val) url += '&' + key + '=' + encodeURIComponent(val);
+  });
+  // Append pro_id and lp_source_id
+  if (data.proId) url += '&pro_id=' + encodeURIComponent(data.proId);
+  if (data.lpSourceId) url += '&lp_source_id=' + encodeURIComponent(data.lpSourceId);
   window.location.href = url;
 }
