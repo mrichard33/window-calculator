@@ -1089,8 +1089,10 @@ header .header-intro {
   .form-row.four { grid-template-columns: 1fr 1fr; }
 }
 /* ===== STICKY MOBILE CTA ===== */
+.sticky-cta { display: none; }
 @media (max-width: 768px) {
-  .sticky-cta {
+  .sticky-cta.visible {
+    display: block;
     position: fixed;
     bottom: 0;
     left: 0;
@@ -1106,10 +1108,7 @@ header .header-intro {
     cursor: pointer;
     box-shadow: 0 -2px 8px rgba(0,0,0,0.15);
   }
-  body { padding-bottom: 3.5rem; }
-}
-@media (min-width: 769px) {
-  .sticky-cta { display: none; }
+  body.step-4-active { padding-bottom: 3.5rem; }
 }
 /* ===== KEEP-ESTIMATE MODAL ===== */
 .modal-overlay {
@@ -2199,6 +2198,17 @@ function goToStep(n) {
   // Show running total only on the estimate step (step 4)
   const runningTotal = document.getElementById('runningTotal');
   runningTotal.style.display = (n === 4) ? '' : 'none';
+  // Show sticky mobile CTA only on step 4
+  var stickyCta = document.querySelector('.sticky-cta');
+  if (stickyCta) {
+    if (n === 4) {
+      stickyCta.classList.add('visible');
+      document.body.classList.add('step-4-active');
+    } else {
+      stickyCta.classList.remove('visible');
+      document.body.classList.remove('step-4-active');
+    }
+  }
   // Show "How This Works" only on step 1
   document.getElementById('howItWorks').style.display = (n === 1) ? '' : 'none';
   // Build summary and auto-send PDF to GHL when arriving at estimate step

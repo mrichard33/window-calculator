@@ -587,6 +587,17 @@ function goToStep(n) {
   // Show running total only on the estimate step (step 4)
   const runningTotal = document.getElementById('runningTotal');
   runningTotal.style.display = (n === 4) ? '' : 'none';
+  // Show sticky mobile CTA only on step 4
+  var stickyCta = document.querySelector('.sticky-cta');
+  if (stickyCta) {
+    if (n === 4) {
+      stickyCta.classList.add('visible');
+      document.body.classList.add('step-4-active');
+    } else {
+      stickyCta.classList.remove('visible');
+      document.body.classList.remove('step-4-active');
+    }
+  }
   // Show "How This Works" only on step 1
   document.getElementById('howItWorks').style.display = (n === 1) ? '' : 'none';
   // Build summary and auto-send PDF to GHL when arriving at estimate step
