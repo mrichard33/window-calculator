@@ -1097,7 +1097,14 @@ function printEstimate() {
   var rangeEl = contentClone.querySelector('.estimate-range');
   if (rangeEl) page1.appendChild(rangeEl);
 
-  // 4. Build Page 2+ wrapper (everything remaining)
+  // 4. Also move Project Summary header + Customer Info + Project Overview to Page 1
+  var projHeader = contentClone.querySelector('.project-summary-header');
+  if (projHeader) page1.appendChild(projHeader);
+  var sections = contentClone.querySelectorAll('.summary-section');
+  if (sections[0]) page1.appendChild(sections[0]); // Customer Information
+  if (sections[1]) page1.appendChild(sections[1]); // Project Overview
+
+  // 5. Build Page 2+ wrapper (everything remaining — starts at Itemized Breakdown)
   var page2 = document.createElement('div');
   page2.className = 'print-page-2';
   while (contentClone.firstChild) {
