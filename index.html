@@ -503,6 +503,7 @@ header .header-intro {
   background: #FFFFFF;
   padding: 0.9rem 1rem;
   box-shadow: var(--shadow);
+  text-align: center;
 }
 .monthly-hero .monthly-label {
   font-size: 0.85rem;
@@ -513,9 +514,9 @@ header .header-intro {
   margin-bottom: 0.35rem;
 }
 .monthly-hero .monthly-amount {
-  font-size: 2.2rem;
+  font-size: 1.8rem;
   font-weight: 900;
-  color: var(--cta-red);
+  color: #2e7d32;
   line-height: 1.05;
   margin: 0;
 }
@@ -534,7 +535,7 @@ header .header-intro {
 /* Mobile tuning */
 @media (max-width: 600px) {
   .monthly-hero { padding: 0.85rem 0.9rem; }
-  .monthly-hero .monthly-amount { font-size: 1.8rem; }
+  .monthly-hero .monthly-amount { font-size: 1.5rem; }
   .monthly-hero .monthly-sub { font-size: 0.9rem; }
 }
 /* ===== ESTIMATE RANGE BLOCK ===== */
@@ -2711,7 +2712,7 @@ function generateEstimatePDF() {
       // Monthly payment hero box (FIRST — most visually prominent)
       '<div style="margin:12px auto 8px; padding:12px 12px; border:2px solid #C1D5DB; background:#F2F3F7; text-align:center; page-break-inside:avoid;">' +
         '<div style="font-size:11px; font-weight:800; letter-spacing:0.6px; text-transform:uppercase; color:#122739; margin-bottom:6px;">Estimated Monthly Payment<\/div>' +
-        '<div style="font-size:22px; font-weight:900; color:#ED1E24; line-height:1.1;">$' + pdfMonthlyLow.toLocaleString() + ' to $' + pdfMonthlyAvg.toLocaleString() + '<span style="font-size:12px; font-weight:800; color:#122739;">, per month<\/span><\/div>' +
+        '<div style="font-size:18px; font-weight:900; color:#2e7d32; line-height:1.1;">$' + pdfMonthlyLow.toLocaleString() + ' to $' + pdfMonthlyAvg.toLocaleString() + '<span style="font-size:12px; font-weight:800; color:#122739;">, per month<\/span><\/div>' +
         '<div style="margin-top:6px; font-size:11px; font-weight:700; color:#122739;">Payment options available, no traditional credit score required.<\/div>' +
         '<div style="margin-top:6px; font-size:9px; color:#626060; line-height:1.35;">*Example based on estimated project total. Final terms are confirmed during verification.<\/div>' +
       '<\/div>' +
