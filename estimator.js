@@ -1286,9 +1286,9 @@ function generateEstimatePDF() {
     priceBlock.innerHTML =
       '<h3 style="margin:0 0 10px 0; padding-left:12px; font-size:14px; font-weight:700; color:#122739; border-left:3px solid #ED1E24; line-height:1.3;">Estimated Project Investment</h3>' +
       '<p style="margin:0 0 4px 0; font-size:30px; font-weight:700; color:#122739; text-align:center; line-height:1.2;">' + fmt(total) + '</p>' +
-      '<p style="margin:4px 0 0 0; font-size:11px; color:#626060; text-align:center; letter-spacing:0.3px;">Full-Frame Replacement | ' + (window.latestWindowCount || 0) + ' Impact-Rated Windows</p>' +
-      '<p style="margin:2px 0 0 0; font-size:9px; color:#87898B; text-align:center; letter-spacing:0.5px;">Florida-Engineered | Impact-Rated | In-House Installation</p>' +
-      '<p style="margin:4px 0 0 0; font-size:8px; color:#87898B; text-align:center; line-height:1.4;">Payment options available. Estimated $' + Math.round(lowPrice * 0.0107) + '\u2013$' + Math.round(total * 0.0107) + ' per month.* No traditional credit score required.</p>' +
+      '<p style="margin:4px 0 0 0; font-size:12px; color:#626060; text-align:center; letter-spacing:0.3px;">Full-Frame Replacement | ' + (window.latestWindowCount || 0) + ' Impact-Rated Windows</p>' +
+      '<p style="margin:2px 0 0 0; font-size:11px; color:#87898B; text-align:center; letter-spacing:0.5px;">Florida-Engineered | Impact-Rated | In-House Installation</p>' +
+      '<p style="margin:4px 0 0 0; font-size:10px; font-weight:700; color:#87898B; text-align:center; line-height:1.4;">Payment options available. Estimated $' + Math.round(lowPrice * 0.0107) + '\u2013$' + Math.round(total * 0.0107) + ' per month.* No traditional credit score required.</p>' +
       '<div style="border-top:1px solid #C1D5DB; margin:12px 0;"></div>' +
       '<p style="margin:0 0 2px 0; font-size:10px; font-weight:700; color:#0C2340; text-align:center;">Estimated Range</p>' +
       '<p style="margin:0 0 6px 0; font-size:13px; font-weight:700; color:#0C2340; text-align:center;">' + fmt(lowPrice) + ' \u2013 ' + fmt(highPrice) + '</p>' +
