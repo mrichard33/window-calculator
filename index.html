@@ -747,20 +747,25 @@ header .header-intro {
     print-color-adjust: exact !important;
     color-adjust: exact !important;
   }
-  /* Hide everything */
-  body { visibility: hidden !important; background: #fff !important; }
-  body > * { display: none !important; }
-  /* Show only #printRoot */
+  /* Hide EVERYTHING — universal selector works inside GHL wrappers too */
+  * { visibility: hidden !important; }
+  /* Reveal only #printRoot and its descendants */
+  #printRoot,
+  #printRoot * {
+    visibility: visible !important;
+  }
   #printRoot {
     display: block !important;
-    visibility: visible !important;
-    width: 100%; margin: 0;
-    padding: 0;
+    position: fixed !important;
+    left: 0; top: 0;
+    width: 100%; height: auto;
+    margin: 0; padding: 0;
+    z-index: 999999;
     font-family: 'Nunito Sans', sans-serif;
     font-size: 10pt; color: #333; line-height: 1.45;
     box-sizing: border-box;
+    background: #fff !important;
   }
-  #printRoot * { visibility: visible !important; }
   /* === BRANDED HEADER === */
   #printRoot .print-header {
     background: #0D2240 !important; color: #fff !important;
