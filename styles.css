@@ -828,6 +828,29 @@ header .header-intro {
     font-size: 9pt;
     line-height: 1.3;
   }
+  /* ===== ESTIMATE HERO — COMPACT FOR PAGE 1 ===== */
+  .estimate-hero {
+    padding: 6pt 0 4pt 0 !important;
+    margin-bottom: 4pt !important;
+    text-align: center;
+  }
+  .estimate-hero h3 { font-size: 10pt !important; margin-bottom: 2pt !important; padding: 2pt 6pt !important; }
+  .estimate-hero .hero-price { font-size: 22pt !important; margin: 2pt 0 !important; }
+  .estimate-hero .hero-descriptor { font-size: 8.5pt !important; margin: 1pt 0 !important; }
+  .estimate-hero .hero-credibility { font-size: 8pt !important; margin: 0 !important; }
+  .estimate-hero .monthly-amount { font-size: 14pt !important; margin: 3pt 0 0 !important; }
+  .estimate-hero .monthly-sub { font-size: 8.5pt !important; margin: 1pt 0 !important; }
+  .estimate-hero .monthly-footnote { font-size: 7pt !important; margin: 1pt 0 0 !important; }
+  /* ===== SECTION DIVIDER — MINIMAL ===== */
+  .section-divider { margin: 4pt 0 !important; }
+  /* ===== STRUCTURED STARTING POINT — COMPACT ===== */
+  .structured-starting-point { padding-top: 4pt !important; margin-top: 0 !important; margin-bottom: 6pt !important; }
+  .structured-starting-point h3 { font-size: 10pt !important; margin-bottom: 2pt !important; }
+  .structured-starting-point p { font-size: 8.5pt !important; line-height: 1.3 !important; margin-bottom: 2pt !important; }
+  .structured-starting-point ul { margin: 1pt 0 3pt 0 !important; }
+  .structured-starting-point li { font-size: 8.5pt !important; line-height: 1.35 !important; }
+  /* ===== PROJECT SUMMARY HEADER — TIGHTEN ===== */
+  .project-summary-header { font-size: 11pt !important; margin: 6pt 0 4pt 0 !important; }
   /* ===== ESTIMATE RANGE — TIGHTEN FOR PAGE 1 FIT ===== */
   .estimate-range { padding: 6pt 0 !important; margin-top: 4pt !important; margin-bottom: 8pt !important; }
   .estimate-range p { margin: 1pt 0 !important; font-size: 9pt; line-height: 1.3; }
