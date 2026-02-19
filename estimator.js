@@ -600,7 +600,6 @@ function goToStep(n) {
       var data = gatherContactData();
       var contactName = (data.firstName + ' ' + data.lastName).trim();
       updateContactEstimate(contactId, estimateTotal, windowCount);
-      triggerGHLWorkflow(contactId, 'estimate_completed');
       fireEstimateWebhook(contactId, contactName, {
         total: estimateTotal,
         windowCount: windowCount
