@@ -858,7 +858,7 @@ function getWindowLabel(config) {
     sliding: 'Sliding', awning: 'Awning', picture: 'Picture', three_lite: 'Three Lite Slider', custom_shape: 'Custom Shape'
   };
   const frameLabels = PRICING.frameMaterial[config.frame].label;
-  return styleLabels[config.style] + ' - ' + frameLabels + ' - ' + config.width + '"x' + config.height + '"';
+  return styleLabels[config.style] + ' - ' + frameLabels + ' - ' + config.width + '\u2033x' + config.height + '\u2033';
 }
 
 function addWindow() {
@@ -1029,7 +1029,7 @@ function buildSummary() {
     windowSubtotal += cost.totalCost;
     totalWindows += c.qty;
 
-    const impactLabel = cost.isImpact ? ' (Impact)' : '';
+    const impactLabel = cost.isImpact ? ' <span style="letter-spacing:0.3px;">(Impact)</span>' : '';
     windowRows += '<tr>' +
       '<td colspan="4" style="font-weight:700; background:#F2F3F7; color:#0D2240;">' +
         '#' + (i + 1) + ' ' + label + ' ' + (c.qty > 1 ? '&times; ' + c.qty : '') +
@@ -1333,7 +1333,7 @@ function generateEstimatePDF() {
     });
     // Style tables for PDF readability
     contentClone.querySelectorAll('table').forEach(function(table) {
-      table.style.cssText = 'width:100%; border-collapse:collapse; margin-bottom:12px; font-size:11px;';
+      table.style.cssText = 'width:100%; border-collapse:collapse; margin-bottom:12px; font-size:11px; table-layout:auto;';
     });
     contentClone.querySelectorAll('td, th').forEach(function(cell) {
       cell.style.cssText += '; padding:6px 8px; border-bottom:1px solid #e0e0e0;';
