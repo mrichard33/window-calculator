@@ -742,7 +742,7 @@ header .header-intro {
 #printRoot { display: none; }
 @media print {
   /* ===== PAGE SETUP ===== */
-  @page { size: letter; margin: 0.5in 0.7in 0.6in 0.7in; }
+  @page { size: letter; margin: 0.75in; }
   *, *::before, *::after {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
@@ -756,6 +756,7 @@ header .header-intro {
   .verify-cta, .verify-secondary,
   .pricing-stability-note,
   #printRoot { display: none !important; }
+  .running-total { position: static !important; }
   /* Hide all sections, then show only Step 4 */
   .section { display: none !important; }
   #section-4 { display: block !important; }
@@ -767,12 +768,7 @@ header .header-intro {
     text-align: left; position: relative; overflow: visible;
     page-break-inside: avoid;
   }
-  header::after {
-    content: '' !important; display: block !important;
-    position: absolute; top: 0; right: 0; width: 50%; height: 100%;
-    background: #ED1F24 !important; opacity: 0.5;
-    clip-path: polygon(45% 0, 100% 0, 100% 100%, 0 100%);
-  }
+  header::after { display: none !important; }
   header .header-content { position: relative; z-index: 1; }
   header .brand-name {
     font-size: 9pt; letter-spacing: 2px; text-transform: uppercase;
@@ -792,14 +788,14 @@ header .header-intro {
     padding-bottom: 4pt; margin-bottom: 10pt;
   }
   /* ===== SUMMARY SECTIONS ===== */
-  .summary-section { margin-bottom: 0.08in !important; page-break-inside: auto; }
+  .summary-section { margin-bottom: 0.18in !important; page-break-inside: auto; }
   .summary-section h3 {
     font-size: 11pt; color: #0D2240 !important; font-weight: 700;
     margin-bottom: 4pt; padding: 3pt 6pt;
     background: #F2F3F7 !important; border-left: 3pt solid #ED1F24 !important;
   }
   /* ===== SUMMARY TABLES ===== */
-  .summary-table { width: 100%; border-collapse: collapse; table-layout: fixed; overflow-wrap: break-word; }
+  .summary-table { width: 100%; border-collapse: collapse; }
   .summary-table thead { display: table-header-group; }
   .summary-table th {
     background: #0D2240 !important; color: #fff !important;
@@ -839,7 +835,7 @@ header .header-intro {
   }
   /* ===== ESTIMATE HERO — COMPACT FOR PAGE 1 ===== */
   .estimate-hero {
-    padding: 4pt 0 2pt 0 !important;
+    padding: 8pt 0 6pt 0 !important;
     margin-bottom: 2pt !important;
     text-align: center;
   }
@@ -851,7 +847,7 @@ header .header-intro {
   .estimate-hero .monthly-sub { font-size: 8.5pt !important; margin: 1pt 0 !important; }
   .estimate-hero .monthly-footnote { font-size: 7pt !important; margin: 1pt 0 0 !important; }
   /* ===== SECTION DIVIDER — MINIMAL ===== */
-  .section-divider { margin: 4pt 0 !important; }
+  .section-divider { margin: 8pt 0 !important; }
   /* ===== STRUCTURED STARTING POINT — COMPACT ===== */
   .structured-starting-point { padding-top: 4pt !important; margin-top: 0 !important; margin-bottom: 6pt !important; }
   .structured-starting-point h3 { font-size: 10pt !important; margin-bottom: 2pt !important; }
@@ -869,12 +865,10 @@ header .header-intro {
   #section-4 { padding: 0 0.15in !important; }
   /* ===== PAGE BREAKS ===== */
   #printBreak-itemized {
-    page-break-before: always !important;
-    padding-top: 0.3in !important;
+    break-before: page !important;
   }
   #printBreak-costs {
-    page-break-before: always !important;
-    padding-top: 0.3in !important;
+    break-before: page !important;
   }
   /* ===== MISC ===== */
   .custom-size-badge { color: #ED1F24 !important; }
@@ -2922,14 +2916,14 @@ function generateEstimatePDF() {
     }
     // Itemized Breakdown — forced page break (starts Page 2)
     if (sections[2]) {
-      sections[2].style.cssText = 'margin:0 0 8px 0; page-break-before:always; padding-top:0.3in; page-break-inside:auto;';
+      sections[2].style.cssText = 'margin:0 0 8px 0; break-before:page; page-break-inside:auto;';
       var h2 = sections[2].querySelector('h3');
       if (h2) h2.style.margin = '0 0 4px 0';
       pdfContainer.appendChild(sections[2]);
     }
     // Project Costs — forced page break (starts last page)
     if (sections[3]) {
-      sections[3].style.cssText = 'margin:0 0 8px 0; page-break-before:always; padding-top:0.3in; page-break-inside:avoid;';
+      sections[3].style.cssText = 'margin:0 0 8px 0; break-before:page; page-break-inside:avoid;';
       var h3 = sections[3].querySelector('h3');
       if (h3) h3.style.margin = '0 0 4px 0';
       pdfContainer.appendChild(sections[3]);
