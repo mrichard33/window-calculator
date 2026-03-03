@@ -1311,14 +1311,14 @@ function generateEstimatePDF() {
     }
     // Itemized Breakdown — forced page break (starts Page 2)
     if (sections[2]) {
-      sections[2].style.cssText = 'margin:0 0 8px 0; page-break-before:always; padding-top:0.3in; page-break-inside:auto;';
+      sections[2].style.cssText = 'margin:0 0 8px 0; break-before:page; page-break-inside:auto;';
       var h2 = sections[2].querySelector('h3');
       if (h2) h2.style.margin = '0 0 4px 0';
       pdfContainer.appendChild(sections[2]);
     }
     // Project Costs — forced page break (starts last page)
     if (sections[3]) {
-      sections[3].style.cssText = 'margin:0 0 8px 0; page-break-before:always; padding-top:0.3in; page-break-inside:avoid;';
+      sections[3].style.cssText = 'margin:0 0 8px 0; break-before:page; page-break-inside:avoid;';
       var h3 = sections[3].querySelector('h3');
       if (h3) h3.style.margin = '0 0 4px 0';
       pdfContainer.appendChild(sections[3]);
