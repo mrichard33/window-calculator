@@ -1889,15 +1889,24 @@ function updateContactPhone() {
 // ============================================================
 //  GHL API v2: UPDATE CONTACT WITH ESTIMATE DATA (Step 4)
 // ============================================================
-function updateContactEstimate(contactId, estimateTotal, windowCount) {
+function updateContactEstimate(contactId, estimateTotal, windowCount, contactData) {
   if (!contactId) {
     console.warn('No GHL contactId available, skipping estimate update');
     return Promise.resolve(null);
   }
+  var data = contactData || gatherContactData();
   var body = {
+    firstName: data.firstName,
+    lastName: data.lastName,
+    phone: data.phone,
+    address1: data.address1,
+    city: data.city,
+    state: data.state,
+    postalCode: data.postalCode,
     tags: ['window-estimator', 'estimator-completed'],
     customFields: []
   };
+  if (data.email) body.email = data.email;
   if (estimateTotal) {
     body.customFields.push({ key: 'estimate_total', field_value: String(estimateTotal) });
   }
@@ -2338,7 +2347,7 @@ function goToStep(n) {
       var contactId = window.ghlContactId || null;
       var data = gatherContactData();
       var contactName = (data.firstName + ' ' + data.lastName).trim();
-      updateContactEstimate(contactId, estimateTotal, windowCount);
+      updateContactEstimate(contactId, estimateTotal, windowCount, data);
       fireEstimateWebhook(contactId, contactName, {
         total: estimateTotal,
         windowCount: windowCount
