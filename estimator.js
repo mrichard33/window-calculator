@@ -280,15 +280,24 @@ function updateContactPhone() {
 // ============================================================
 //  GHL API v2: UPDATE CONTACT WITH ESTIMATE DATA (Step 4)
 // ============================================================
-function updateContactEstimate(contactId, estimateTotal, windowCount) {
+function updateContactEstimate(contactId, estimateTotal, windowCount, contactData) {
   if (!contactId) {
     console.warn('No GHL contactId available, skipping estimate update');
     return Promise.resolve(null);
   }
+  var data = contactData || gatherContactData();
   var body = {
+    firstName: data.firstName,
+    lastName: data.lastName,
+    phone: data.phone,
+    address1: data.address1,
+    city: data.city,
+    state: data.state,
+    postalCode: data.postalCode,
     tags: ['window-estimator', 'estimator-completed'],
     customFields: []
   };
+  if (data.email) body.email = data.email;
   if (estimateTotal) {
     body.customFields.push({ key: 'estimate_total', field_value: String(estimateTotal) });
   }
@@ -639,8 +648,16 @@ function validateAndGoToStep2() {
 //  STEP 3 (CONTACT) VALIDATION
 // ============================================================
 function validateAndGoToStep4() {
+  const phoneRaw = document.getElementById('phone').value.replace(/\D/g, '');
   const email = document.getElementById('email').value.trim();
   let valid = true;
+  // Phone is required, must be at least 10 digits
+  if (phoneRaw.length < 10) {
+    document.getElementById('field-phone').classList.add('field-error');
+    valid = false;
+  } else {
+    document.getElementById('field-phone').classList.remove('field-error');
+  }
   // Email is optional, but if provided must be valid format
   if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     document.getElementById('field-email').classList.add('field-error');
@@ -721,7 +738,7 @@ function goToStep(n) {
       var contactId = window.ghlContactId || null;
       var data = gatherContactData();
       var contactName = (data.firstName + ' ' + data.lastName).trim();
-      updateContactEstimate(contactId, estimateTotal, windowCount);
+      updateContactEstimate(contactId, estimateTotal, windowCount, data);
       fireEstimateWebhook(contactId, contactName, {
         total: estimateTotal,
         windowCount: windowCount
