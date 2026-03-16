@@ -88,7 +88,7 @@ function gatherContactData() {
   };
 }
 // ============================================================
-//  GHL API v2: CREATE CONTACT (Step 1 — name + address only)
+//  GHL API v2: CREATE CONTACT (Step 1 — name, phone + address)
 // ============================================================
 function createContactInGHL() {
   var data = gatherContactData();
@@ -96,6 +96,7 @@ function createContactInGHL() {
     locationId: GHL_CONFIG.locationId,
     firstName: data.firstName,
     lastName: data.lastName,
+    phone: data.phone,
     address1: data.address1,
     city: data.city,
     state: data.state,
@@ -124,7 +125,7 @@ function createContactInGHL() {
   });
 }
 // ============================================================
-//  GHL API v2: UPDATE CONTACT PHONE/EMAIL (Step 3)
+//  GHL API v2: UPSERT CONTACT WITH EMAIL (Step 3)
 // ============================================================
 function updateContactPhone() {
   var data = gatherContactData();
@@ -511,8 +512,16 @@ function validateAndGoToStep2() {
       wrapper.classList.remove('field-error');
     }
   });
+  // Phone is required, must be at least 10 digits
+  const phoneRaw = document.getElementById('phone').value.replace(/\D/g, '');
+  if (phoneRaw.length < 10) {
+    document.getElementById('field-phone').classList.add('field-error');
+    valid = false;
+  } else {
+    document.getElementById('field-phone').classList.remove('field-error');
+  }
   if (!valid) {
-    const firstError = document.querySelector('.field-error input');
+    const firstError = document.querySelector('#section-1 .field-error input');
     if (firstError) firstError.focus();
     return;
   }
@@ -523,16 +532,8 @@ function validateAndGoToStep2() {
 //  STEP 3 (CONTACT) VALIDATION
 // ============================================================
 function validateAndGoToStep4() {
-  const phoneRaw = document.getElementById('phone').value.replace(/\D/g, '');
   const email = document.getElementById('email').value.trim();
   let valid = true;
-  // Phone is required, must be at least 10 digits
-  if (phoneRaw.length < 10) {
-    document.getElementById('field-phone').classList.add('field-error');
-    valid = false;
-  } else {
-    document.getElementById('field-phone').classList.remove('field-error');
-  }
   // Email is optional, but if provided must be valid format
   if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     document.getElementById('field-email').classList.add('field-error');
