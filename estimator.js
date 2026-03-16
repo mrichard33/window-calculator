@@ -48,6 +48,49 @@ function ghlApiFetch(path, options) {
   });
 }
 // ============================================================
+//  GHL API v2: SEARCH CONTACT BY PHONE
+// ============================================================
+function searchContactByPhone(phone) {
+  var queryParams = '?locationId=' + encodeURIComponent(GHL_CONFIG.locationId) +
+                    '&number=' + encodeURIComponent(phone);
+  return ghlApiFetch('/contacts/search/duplicate' + queryParams, {
+    method: 'GET',
+    body: null
+  }).then(function(result) {
+    if (result && result.contacts && result.contacts.length > 0) {
+      return result.contacts[0];
+    }
+    return null;
+  }).catch(function(err) {
+    console.warn('GHL contact search failed, will create new:', err);
+    return null;
+  });
+}
+// ============================================================
+//  BUILD NOTES FROM EXISTING CONTACT (before overwriting)
+// ============================================================
+function buildNotesFromExistingContact(existingContact) {
+  var timestamp = new Date().toLocaleString();
+  var parts = ['[Previous contact info overwritten on ' + timestamp + ']'];
+  if (existingContact.firstName || existingContact.lastName) {
+    parts.push('Name: ' + (existingContact.firstName || '') + ' ' + (existingContact.lastName || ''));
+  }
+  if (existingContact.phone) {
+    parts.push('Phone: ' + existingContact.phone);
+  }
+  if (existingContact.email) {
+    parts.push('Email: ' + existingContact.email);
+  }
+  if (existingContact.address1) {
+    var addrParts = [existingContact.address1];
+    if (existingContact.city) addrParts.push(existingContact.city);
+    if (existingContact.state) addrParts.push(existingContact.state);
+    if (existingContact.postalCode) addrParts.push(existingContact.postalCode);
+    parts.push('Address: ' + addrParts.join(', '));
+  }
+  return parts.join('\n');
+}
+// ============================================================
 //  GATHER CONTACT DATA FROM FORM FIELDS
 // ============================================================
 function gatherContactData() {
@@ -88,9 +131,9 @@ function gatherContactData() {
   };
 }
 // ============================================================
-//  GHL API v2: CREATE CONTACT (Step 1 — name, phone + address)
+//  GHL API v2: FIND OR CREATE CONTACT (Step 1 — search-first)
 // ============================================================
-function createContactInGHL() {
+function findOrCreateContactInGHL() {
   var data = gatherContactData();
   var body = {
     locationId: GHL_CONFIG.locationId,
@@ -111,6 +154,46 @@ function createContactInGHL() {
   if (data.utm.content) body.customFields.push({ key: 'utm_content', field_value: data.utm.content });
   if (data.lpSourceId) body.customFields.push({ key: 'lp_source_id', field_value: data.lpSourceId });
   if (data.proId) body.customFields.push({ key: 'pro_id', field_value: data.proId });
+
+  if (!data.phone) {
+    return createNewContact(body);
+  }
+
+  return searchContactByPhone(data.phone).then(function(existingContact) {
+    if (!existingContact) {
+      console.log('No existing contact found for phone, creating new');
+      return createNewContact(body);
+    }
+
+    var formName = (data.firstName + ' ' + data.lastName).toLowerCase().trim();
+    var existingName = ((existingContact.firstName || '') + ' ' + (existingContact.lastName || '')).toLowerCase().trim();
+    var contactId = existingContact.id;
+
+    if (formName === existingName) {
+      console.log('Existing contact found with matching name, updating:', contactId);
+      return updateExistingContact(contactId, body);
+    } else {
+      console.log('Existing contact found with different name, saving previous info to notes:', contactId);
+      var previousNotes = buildNotesFromExistingContact(existingContact);
+      var existingNotes = existingContact.notes || '';
+      var combinedNotes = existingNotes
+        ? previousNotes + '\n\n' + existingNotes
+        : previousNotes;
+
+      return ghlApiFetch('/contacts/' + contactId, {
+        method: 'PUT',
+        body: JSON.stringify({ notes: combinedNotes })
+      }).then(function() {
+        return updateExistingContact(contactId, body);
+      }).catch(function(err) {
+        console.warn('Failed to save previous contact notes, updating anyway:', err);
+        return updateExistingContact(contactId, body);
+      });
+    }
+  });
+}
+
+function createNewContact(body) {
   return ghlApiFetch('/contacts/', {
     method: 'POST',
     body: JSON.stringify(body)
@@ -122,6 +205,26 @@ function createContactInGHL() {
     return result;
   }).catch(function(err) {
     console.error('GHL contact creation failed:', err);
+  });
+}
+
+function updateExistingContact(contactId, body) {
+  var updateBody = Object.assign({}, body);
+  delete updateBody.locationId;
+  return ghlApiFetch('/contacts/' + contactId, {
+    method: 'PUT',
+    body: JSON.stringify(updateBody)
+  }).then(function(result) {
+    if (result && result.contact && result.contact.id) {
+      window.ghlContactId = result.contact.id;
+      console.log('GHL contact updated:', window.ghlContactId);
+    } else {
+      window.ghlContactId = contactId;
+      console.log('GHL contact updated (id from search):', contactId);
+    }
+    return result;
+  }).catch(function(err) {
+    console.error('GHL contact update failed:', err);
   });
 }
 // ============================================================
@@ -525,8 +628,12 @@ function validateAndGoToStep2() {
     if (firstError) firstError.focus();
     return;
   }
-  createContactInGHL();
-  goToStep(2);
+  findOrCreateContactInGHL().then(function() {
+    goToStep(2);
+  }).catch(function(err) {
+    console.error('Contact search/create failed:', err);
+    goToStep(2);
+  });
 }
 // ============================================================
 //  STEP 3 (CONTACT) VALIDATION
