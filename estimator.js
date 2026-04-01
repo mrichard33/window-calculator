@@ -658,8 +658,8 @@ function validateAndGoToStep4() {
   } else {
     document.getElementById('field-phone').classList.remove('field-error');
   }
-  // Email is optional, but if provided must be valid format
-  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  // Email is required and must be valid format
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     document.getElementById('field-email').classList.add('field-error');
     valid = false;
   } else {
