@@ -1629,6 +1629,15 @@ var GHL_CONFIG = {
   pdfWebhookUrl: 'https://services.leadconnectorhq.com/hooks/SsBG7j5KQAIP1SFP2Sca/webhook-trigger/c1ab599c-1e35-4e57-a6a4-5492054fb2a0'
 };
 // ============================================================
+//  PDF MICROSERVICE CONFIGURATION
+//  Railway-hosted Puppeteer service that replaces the broken
+//  client-side html2pdf flow. Fill in the real Railway URL after
+//  deploying pdf-service/ to Railway.
+// ============================================================
+var PDF_SERVICE_CONFIG = {
+  url: 'https://REPLACE-WITH-RAILWAY-URL.up.railway.app/api/generate-estimate-pdf'
+};
+// ============================================================
 //  GHL API v2 FETCH HELPER
 // ============================================================
 function ghlApiFetch(path, options) {
@@ -2639,6 +2648,103 @@ function getProjectCosts() {
   };
 }
 // ============================================================
+//  BUILD ESTIMATE PAYLOAD FOR PDF MICROSERVICE
+//  Serializes the current estimate state (windows[], form fields,
+//  PRICING labels) into the JSON structure the Railway Puppeteer
+//  service expects. Replaces DOM-scraping + html2pdf.
+// ============================================================
+function buildEstimatePayload() {
+  var custName = (document.getElementById('fullName').value || '').trim();
+  var custAddress = (document.getElementById('streetAddress').value || '').trim();
+  var custCity = (document.getElementById('city').value || '').trim();
+  var custState = (document.getElementById('state').value || '').trim();
+  var custPostal = (document.getElementById('postalCode').value || '').trim();
+  var custPhone = (document.getElementById('phone').value || '').trim();
+  var custEmail = (document.getElementById('email').value || '').trim();
+  var storiesVal = document.getElementById('stories').value;
+  var storiesLabel = storiesVal === '1' ? '1 Story' : storiesVal === '2' ? '2 Stories' : '3+ Stories';
+
+  var project = getProjectCosts();
+  var windowSubtotal = 0;
+  var totalWindows = 0;
+
+  var windowData = windows.map(function(w, i) {
+    var c = w.config;
+    var cost = w.cost;
+    windowSubtotal += cost.totalCost;
+    totalWindows += c.qty;
+
+    var upgradeLabels = (c.upgrades || [])
+      .filter(function(u) { return u !== 'impact'; })
+      .map(function(u) {
+        return PRICING.glassUpgrades[u] ? PRICING.glassUpgrades[u].label : u;
+      });
+
+    return {
+      index: i + 1,
+      label: getWindowLabel(c),
+      style: c.style,
+      styleLabel: getStyleLabel(c.style),
+      frame: c.frame,
+      frameLabel: PRICING.frameMaterial[c.frame].label,
+      width: c.width,
+      height: c.height,
+      unitedInches: cost.unitedInches,
+      qty: c.qty,
+      isImpact: cost.isImpact,
+      panes: c.panes,
+      panesLabel: PRICING.glassPanes[c.panes].label,
+      gas: c.gas,
+      gasLabel: PRICING.gasFill[c.gas].label,
+      grid: c.grid,
+      gridLabel: PRICING.gridPattern[c.grid].label,
+      upgrades: c.upgrades,
+      upgradeLabels: upgradeLabels,
+      perWindowCost: cost.perWindowCost,
+      totalCost: cost.totalCost,
+      breakdown: cost.breakdown
+    };
+  });
+
+  var bulkDiscountAmt = project.bulkDiscountRate > 0 ? round2(windowSubtotal * project.bulkDiscountRate) : 0;
+  var subtotalBeforePermit = round2(windowSubtotal - bulkDiscountAmt);
+  var permitFee = round2(subtotalBeforePermit * 0.03);
+  var grandTotal = round2(subtotalBeforePermit + permitFee);
+  var lowEstimate = round2(grandTotal * 0.80);
+  var highEstimate = round2(grandTotal * 1.20);
+
+  return {
+    customer: {
+      name: custName,
+      address: custAddress,
+      city: custCity,
+      state: custState,
+      postalCode: custPostal,
+      phone: custPhone,
+      email: custEmail
+    },
+    project: {
+      totalWindows: totalWindows,
+      installationType: 'Full-Frame Replacement',
+      buildingStories: storiesLabel,
+      storiesValue: storiesVal
+    },
+    windows: windowData,
+    costs: {
+      windowSubtotal: round2(windowSubtotal),
+      bulkDiscountRate: project.bulkDiscountRate,
+      bulkDiscountAmount: bulkDiscountAmt,
+      subtotalBeforePermit: subtotalBeforePermit,
+      permitFee: permitFee,
+      grandTotal: grandTotal,
+      lowEstimate: lowEstimate,
+      highEstimate: highEstimate,
+      monthlyLow: Math.round(lowEstimate * 0.0107),
+      monthlyAvg: Math.round(grandTotal * 0.0107)
+    }
+  };
+}
+// ============================================================
 //  SUMMARY BUILDER
 // ============================================================
 function buildSummary() {
@@ -3287,15 +3393,48 @@ function sendPDFToWebhook(base64, contactId, contactName, contactData) {
   });
 }
 function sendPDFToGHL() {
-  console.log('[Webhook] ===== sendPDFToGHL: starting PDF generation + webhook =====');
-  return generateEstimatePDF().then(function(pdf) {
-    var contactId = window.ghlContactId || null;
-    var data = gatherContactData();
-    var contactName = (data.firstName + ' ' + data.lastName).trim();
-    console.log('[Webhook] PDF generated, base64 length:', pdf.base64.length, '| Sending to webhook...');
-    return sendPDFToWebhook(pdf.base64, contactId, contactName, data);
+  // POSTs estimate data as JSON to the Railway Puppeteer microservice,
+  // which renders the PDF server-side and uploads it to GHL. Replaces
+  // the old client-side html2pdf flow that produced broken PDFs with
+  // mid-row splits and blank pages at variable window counts.
+  //
+  // The old functions (generateEstimatePDF, sendPDFToWebhook, loadHtml2Pdf)
+  // are intentionally left in place as dead code so rollback is a single-
+  // line revert of this function's body.
+  console.log('[PDF] sendPDFToGHL: posting estimate to microservice...');
+  var contactId = window.ghlContactId || null;
+  var data = gatherContactData();
+  var contactName = (data.firstName + ' ' + data.lastName).trim();
+  var payload = {
+    contact_id: contactId,
+    contact_name: contactName,
+    contact_phone: data.phone,
+    contact_email: data.email,
+    ghl_api_key: GHL_CONFIG.pit,
+    ghl_location_id: GHL_CONFIG.locationId,
+    estimate: buildEstimatePayload()
+  };
+  return fetch(PDF_SERVICE_CONFIG.url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  }).then(function(resp) {
+    if (!resp.ok) {
+      return resp.text().then(function(body) {
+        throw new Error('PDF service HTTP ' + resp.status + ': ' + body);
+      });
+    }
+    return resp.json();
+  }).then(function(result) {
+    console.log('[PDF] Microservice success:', result.pdfUrl || '(no pdfUrl)', '| contactUpdated:', result.contactUpdated);
+    if (result.warning) {
+      console.warn('[PDF] Microservice warning:', result.warning);
+    }
+    window.__estimateWebhookError = false;
+    return result;
   }).catch(function(err) {
-    console.error('[Webhook] sendPDFToGHL pipeline failed:', err);
+    console.error('[PDF] Microservice failed:', err);
+    window.__estimateWebhookError = true;
     throw err;
   });
 }
