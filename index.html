@@ -1540,7 +1540,7 @@ header .header-intro {
         <p class="contact-note">Enter your email address below to receive a PDF copy of your estimate.</p>
         <div class="form-row full">
           <div class="field" id="field-email">
-            <label>Email Address</label>
+            <label>Email Address <span style="color:var(--cta-red);">*</span></label>
             <input type="email" id="email" placeholder="you@example.com" inputmode="email" required>
             <div class="field-error-msg">Please enter a valid email address.</div>
             <p class="field-hint">We'll email a PDF copy of your estimate.</p>
@@ -2267,8 +2267,8 @@ function validateAndGoToStep4() {
   } else {
     document.getElementById('field-phone').classList.remove('field-error');
   }
-  // Email is optional, but if provided must be valid format
-  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  // Email is required and must be valid format
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     document.getElementById('field-email').classList.add('field-error');
     valid = false;
   } else {
@@ -2906,6 +2906,45 @@ function getInstallLabel(type) {
   setupPhoneFormatter();
   // Initialize gas fill options based on default pane selection
   handlePaneChange();
+
+  // ============================================================
+  //  URL PARAMETER PRE-FILL (for re-engagement SMS links)
+  // ============================================================
+  (function prefillFromURL() {
+    var params = new URLSearchParams(window.location.search);
+
+    var fieldMap = {
+      'fullName':      'fullName',
+      'streetAddress': 'streetAddress',
+      'city':          'city',
+      'state':         'state',
+      'postalCode':    'postalCode',
+      'phone':         'phone',
+      'email':         'email'
+    };
+
+    Object.keys(fieldMap).forEach(function(paramName) {
+      var value = params.get(paramName);
+      if (value) {
+        var el = document.getElementById(fieldMap[paramName]);
+        if (el) {
+          el.value = value;
+          var wrapper = document.getElementById('field-' + fieldMap[paramName]);
+          if (wrapper) wrapper.classList.remove('field-error');
+        }
+      }
+    });
+
+    // Run the phone formatter so pre-filled numbers display as (954) 500-0000
+    var phoneParam = params.get('phone');
+    if (phoneParam) {
+      var phoneEl = document.getElementById('phone');
+      if (phoneEl) {
+        phoneEl.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+    }
+})();
+
   updateRunningTotal();
 })();
 // ============================================================
@@ -3175,11 +3214,13 @@ function generateEstimatePDF() {
     });
   });
 }
-function sendPDFToWebhook(base64, contactId, contactName) {
+function sendPDFToWebhook(base64, contactId, contactName, contactData) {
   var fileName = 'Reece-Windows-Estimate-' + Date.now() + '.pdf';
   var payload = {
     type: 'pdf_attachment',
     contact_id: contactId || '',
+    contact_phone: (contactData && contactData.phone) || '',
+    contact_email: (contactData && contactData.email) || '',
     contact_name: contactName || '',
     pdf_base64: base64,
     file_name: fileName,
@@ -3252,7 +3293,7 @@ function sendPDFToGHL() {
     var data = gatherContactData();
     var contactName = (data.firstName + ' ' + data.lastName).trim();
     console.log('[Webhook] PDF generated, base64 length:', pdf.base64.length, '| Sending to webhook...');
-    return sendPDFToWebhook(pdf.base64, contactId, contactName);
+    return sendPDFToWebhook(pdf.base64, contactId, contactName, data);
   }).catch(function(err) {
     console.error('[Webhook] sendPDFToGHL pipeline failed:', err);
     throw err;
