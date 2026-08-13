@@ -1166,7 +1166,97 @@ header .header-intro {
   display: block;
   width: 100%;
 }
+/* ===== EMAIL VERIFICATION MODAL ===== */
+.verify-code-input {
+  width: 100%;
+  padding: 0.85rem 0.7rem;
+  border: 2px solid var(--mist);
+  border-radius: 0;
+  font-size: 1.5rem;
+  font-family: 'Courier New', monospace;
+  font-weight: 700;
+  text-align: center;
+  letter-spacing: 0.5rem;
+  color: var(--deep-navy);
+  background: var(--white);
+  margin-bottom: 0.5rem;
+}
+.verify-code-input:focus {
+  outline: none;
+  border-color: var(--steel-blue);
+  box-shadow: 0 0 0 3px rgba(100,136,160,0.15);
+}
+.verify-code-input.field-error {
+  border-color: var(--cta-red);
+}
+.verify-spam-note {
+  font-size: 0.78rem;
+  color: var(--text-gray);
+  margin-bottom: 1rem;
+  font-style: italic;
+}
+.verify-error-msg {
+  color: var(--cta-red);
+  font-size: 0.82rem;
+  font-weight: 600;
+  margin-top: 0.25rem;
+  margin-bottom: 0.75rem;
+  display: none;
+}
+.verify-error-msg.visible {
+  display: block;
+}
+.verify-success-msg {
+  color: #2e7d32;
+  font-size: 0.82rem;
+  font-weight: 600;
+  margin-top: 0.25rem;
+  margin-bottom: 0.75rem;
+  display: none;
+}
+.verify-success-msg.visible {
+  display: block;
+}
+.modal-dialog .btn-resend {
+  background: var(--white);
+  color: var(--deep-navy);
+  border: 1.5px solid var(--mist);
+}
+.modal-dialog .btn-resend:hover:not(:disabled) {
+  background: var(--light-bg);
+  border-color: var(--steel-blue);
+}
+.modal-dialog .btn-resend:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.verify-email-display {
+  font-weight: 700;
+  color: var(--deep-navy);
+  word-break: break-all;
+}
 </style>
+<!-- Facebook Pixel Code -->
+<script>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '926500861053624');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=926500861053624&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Facebook Pixel Code -->
+<script
+  src="https://link.reecewindows.com/js/external-tracking.js"
+  data-tracking-id="tk_e546f581cf8f430dad0ec8f0838d01d3"
+></script>
 </head>
 <body>
   <header>
@@ -1243,6 +1333,15 @@ header .header-intro {
             <p class="field-hint">We'll text your estimate to this number.</p>
           </div>
         </div>
+        <div class="form-row full">
+          <div class="field" id="field-consent">
+            <label class="consent-label">
+              <input type="checkbox" id="consentCheckbox">
+              <span>By checking this box and clicking Start My Estimate, I agree by electronic signature to be contacted by Reece Windows &amp; Doors through a live agent, AI generative voice, artificial or prerecorded voice, and automated SMS text at the number I entered above with reminders, offers and other info, including calls dialed manually or by auto dialer, text and recorded messages, and by email. I understand I am not required to sign/agree to this as a condition to purchase. Standard rates apply</span>
+            </label>
+            <div class="field-error-msg">You must agree to the consent terms to continue.</div>
+          </div>
+        </div>
       </div>
       <div class="card">
         <h2>Project Details</h2>
@@ -1252,11 +1351,11 @@ header .header-intro {
             <div class="install-type-display">Full-Frame Replacement</div>
           </div>
           <div class="field">
-            <label>Building Stories <span class="info-tip" data-tip="Upper-story windows cost more due to scaffolding, ladders, and added labor time. 2-story adds $65/window, 3+ story adds $100/window.">?</span></label>
+            <label>Building Stories <span class="info-tip" data-tip="Upper-story windows cost more due to scaffolding, ladders, and added labor time. 2-story adds $35/window, 3+ story adds $65/window.">?</span></label>
             <select id="stories">
               <option value="1">1 Story (Ground Floor)</option>
-              <option value="2">2 Stories (+$65/window)</option>
-              <option value="3">3+ Stories (+$100/window)</option>
+              <option value="2">2 Stories (+$35/window)</option>
+              <option value="3">3+ Stories (+$65/window)</option>
             </select>
           </div>
         </div>
@@ -1491,20 +1590,26 @@ header .header-intro {
             </div>
           </label>
         </div>
-        <!-- Dimensions -->
-        <h3>Window Dimensions</h3>
-        <div class="dim-row">
-          <div class="field">
-            <label>Width (inches)</label>
-            <input type="number" id="winWidth" value="36" min="12" max="120" step="1">
+        <!-- Window Size -->
+        <h3>Window Size</h3>
+        <div class="tile-group" id="windowSize">
+          <div class="tile" data-value="small" onclick="selectTile(this)">
+            <span class="tile-icon"><svg viewBox="0 0 80 80" fill="none" stroke="currentColor" stroke-width="2"><rect x="22" y="22" width="36" height="36" rx="1"/><rect x="26" y="26" width="28" height="28" stroke-width="1"/></svg></span>
+            Small
+            <span class="tile-price">~36&Prime;&times;36&Prime;</span>
           </div>
-          <div class="dim-x">&times;</div>
-          <div class="field">
-            <label>Height (inches)</label>
-            <input type="number" id="winHeight" value="48" min="12" max="120" step="1">
+          <div class="tile selected" data-value="medium" onclick="selectTile(this)">
+            <span class="tile-icon"><svg viewBox="0 0 80 80" fill="none" stroke="currentColor" stroke-width="2"><rect x="18" y="14" width="44" height="52" rx="1"/><rect x="22" y="18" width="36" height="44" stroke-width="1"/></svg></span>
+            Medium
+            <span class="tile-price">~36&Prime;&times;48&Prime;</span>
+          </div>
+          <div class="tile" data-value="large" onclick="selectTile(this)">
+            <span class="tile-icon"><svg viewBox="0 0 80 80" fill="none" stroke="currentColor" stroke-width="2"><rect x="10" y="6" width="60" height="68" rx="1"/><rect x="14" y="10" width="52" height="60" stroke-width="1"/></svg></span>
+            Large
+            <span class="tile-price">~48&Prime;&times;60&Prime;</span>
           </div>
         </div>
-        <p style="font-size:0.78rem; color:var(--text-gray); margin-top:0.3rem;">Price is based on united inches (width + height). Range: 24"-174".</p>
+        <p style="font-size:0.78rem; color:var(--text-gray); margin-top:0.3rem;">Exact measurements are confirmed during professional verification.</p>
         <!-- Quantity -->
         <h3>Quantity</h3>
         <div class="qty-control">
@@ -1544,15 +1649,6 @@ header .header-intro {
             <input type="email" id="email" placeholder="you@example.com" inputmode="email" required>
             <div class="field-error-msg">Please enter a valid email address.</div>
             <p class="field-hint">We'll email a PDF copy of your estimate.</p>
-          </div>
-        </div>
-        <div class="form-row full">
-          <div class="field" id="field-consent">
-            <label class="consent-label">
-              <input type="checkbox" id="consentCheckbox">
-              <span>By checking this box and clicking Calculate My Estimate, I agree by electronic signature to be contacted by Reece Windows &amp; Doors through a live agent, AI generative voice, artificial or prerecorded voice, and automated SMS text at the number I entered above with reminders, offers and other info, including calls dialed manually or by auto dialer, text and recorded messages, and by email. I understand I am not required to sign/agree to this as a condition to purchase. Standard rates apply</span>
-            </label>
-            <div class="field-error-msg">You must agree to the consent terms to continue.</div>
           </div>
         </div>
         <p class="reassurance-note">We respect your privacy. No spam. No surprise visits.</p>
@@ -1618,95 +1714,59 @@ const DEFAULTS = {
   installType: 'fullframe'
 };
 // ============================================================
-//  GHL API v2 CONFIGURATION
+//  BACKEND API CLIENT
+//  All GHL, PDF, and verification traffic goes through the
+//  same-origin Express server. No tokens ever ship to the browser.
 // ============================================================
-var GHL_CONFIG = {
-  baseUrl: 'https://services.leadconnectorhq.com',
-  pit: 'pit-57cd2e37-3b0f-4d5d-8bdc-9f3780ea7e77',
-  locationId: 'SsBG7j5KQAIP1SFP2Sca',
-  apiVersion: '2021-07-28',
-  workflowWebhookUrl: 'https://services.leadconnectorhq.com/hooks/SsBG7j5KQAIP1SFP2Sca/webhook-trigger/f089d6ac-5aaa-425d-a109-300ec44fd8de',
-  pdfWebhookUrl: 'https://services.leadconnectorhq.com/hooks/SsBG7j5KQAIP1SFP2Sca/webhook-trigger/c1ab599c-1e35-4e57-a6a4-5492054fb2a0'
-};
-// ============================================================
-//  PDF MICROSERVICE CONFIGURATION
-//  Railway-hosted Puppeteer service that replaces the broken
-//  client-side html2pdf flow. Fill in the real Railway URL after
-//  deploying pdf-service/ to Railway.
-// ============================================================
-var PDF_SERVICE_CONFIG = {
-  url: 'https://pdf-service-production-ab6a.up.railway.app/api/generate-estimate-pdf'
-};
-// ============================================================
-//  GHL API v2 FETCH HELPER
-// ============================================================
-function ghlApiFetch(path, options) {
-  var url = GHL_CONFIG.baseUrl + path;
-  var headers = {
-    'Authorization': 'Bearer ' + GHL_CONFIG.pit,
-    'Version': GHL_CONFIG.apiVersion,
-    'Content-Type': 'application/json'
-  };
-  if (options.headers) {
-    Object.keys(options.headers).forEach(function(k) {
-      headers[k] = options.headers[k];
+var CONSENT_VERSION = 'calc-consent-2026-08-13-v1';
+var CALC_SESSION_ID = (window.crypto && crypto.randomUUID)
+  ? crypto.randomUUID()
+  : String(Date.now()) + '-' + Math.random().toString(16).slice(2);
+
+function apiPost(path, payload) {
+  return fetch(path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload || {})
+  }).then(function(resp) {
+    if (resp.status === 204) return null;
+    return resp.json().catch(function() { return null; }).then(function(body) {
+      if (!resp.ok) {
+        var err = new Error((body && body.error) || ('API ' + path + ' failed (' + resp.status + ')'));
+        err.status = resp.status;
+        err.body = body || {};
+        throw err;
+      }
+      return body;
     });
-  }
-  return fetch(url, {
-    method: options.method || 'POST',
-    headers: headers,
-    body: options.body || null
-  }).then(function(response) {
-    if (!response.ok) {
-      return response.text().then(function(text) {
-        throw new Error('GHL API ' + path + ' failed (' + response.status + '): ' + text);
-      });
-    }
-    return response.json();
   });
 }
-// ============================================================
-//  GHL API v2: SEARCH CONTACT BY PHONE
-// ============================================================
-function searchContactByPhone(phone) {
-  var queryParams = '?locationId=' + encodeURIComponent(GHL_CONFIG.locationId) +
-                    '&number=' + encodeURIComponent(phone);
-  return ghlApiFetch('/contacts/search/duplicate' + queryParams, {
-    method: 'GET',
-    body: null
-  }).then(function(result) {
-    if (result && result.contacts && result.contacts.length > 0) {
-      return result.contacts[0];
+
+// First-party funnel events. Analytics must never break the funnel.
+function sendEvent(eventName, extra) {
+  try {
+    var payload = {
+      session_id: CALC_SESSION_ID,
+      contact_id: window.ghlContactId || null,
+      event: eventName,
+      client_ts: new Date().toISOString()
+    };
+    if (extra && typeof extra === 'object') {
+      if (typeof extra.step === 'number') payload.step = extra.step;
+      if (extra.meta && typeof extra.meta === 'object') payload.meta = extra.meta;
     }
-    return null;
-  }).catch(function(err) {
-    console.warn('GHL contact search failed, will create new:', err);
-    return null;
-  });
-}
-// ============================================================
-//  BUILD NOTES FROM EXISTING CONTACT (before overwriting)
-// ============================================================
-function buildNotesFromExistingContact(existingContact) {
-  var timestamp = new Date().toLocaleString();
-  var parts = ['[Previous contact info overwritten on ' + timestamp + ']'];
-  if (existingContact.firstName || existingContact.lastName) {
-    parts.push('Name: ' + (existingContact.firstName || '') + ' ' + (existingContact.lastName || ''));
-  }
-  if (existingContact.phone) {
-    parts.push('Phone: ' + existingContact.phone);
-  }
-  if (existingContact.email) {
-    parts.push('Email: ' + existingContact.email);
-  }
-  if (existingContact.address1) {
-    var addrParts = [existingContact.address1];
-    if (existingContact.city) addrParts.push(existingContact.city);
-    if (existingContact.state) addrParts.push(existingContact.state);
-    if (existingContact.postalCode) addrParts.push(existingContact.postalCode);
-    parts.push('Address: ' + addrParts.join(', '));
-  }
-  return parts.join('\n');
+    var body = JSON.stringify(payload);
+    if (navigator.sendBeacon) {
+      navigator.sendBeacon('/api/events', new Blob([body], { type: 'application/json' }));
+    } else {
+      fetch('/api/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: body,
+        keepalive: true
+      }).catch(function() {});
+    }
+  } catch (e) { /* never throw from analytics */ }
 }
 // ============================================================
 //  GATHER CONTACT DATA FROM FORM FIELDS
@@ -1749,12 +1809,13 @@ function gatherContactData() {
   };
 }
 // ============================================================
-//  GHL API v2: FIND OR CREATE CONTACT (Step 1 — search-first)
+//  CONTACT SUBMIT (server-side GHL upsert)
+//  Step 1 sends without email; Step 3 re-sends with email.
+//  The server enforces consent and stamps the consent audit fields.
 // ============================================================
-function findOrCreateContactInGHL() {
+function submitContact(includeEmail) {
   var data = gatherContactData();
-  var body = {
-    locationId: GHL_CONFIG.locationId,
+  var payload = {
     firstName: data.firstName,
     lastName: data.lastName,
     phone: data.phone,
@@ -1762,213 +1823,19 @@ function findOrCreateContactInGHL() {
     city: data.city,
     state: data.state,
     postalCode: data.postalCode,
-    source: 'Window Estimator',
-    tags: ['window-estimator'],
-    customFields: []
+    utm: data.utm,
+    lpSourceId: data.lpSourceId,
+    proId: data.proId,
+    consent: !!(document.getElementById('consentCheckbox') && document.getElementById('consentCheckbox').checked),
+    consentVersion: CONSENT_VERSION
   };
-  if (data.utm.source) body.customFields.push({ key: 'utm_source', field_value: data.utm.source });
-  if (data.utm.medium) body.customFields.push({ key: 'utm_medium', field_value: data.utm.medium });
-  if (data.utm.campaign) body.customFields.push({ key: 'utm_campaign', field_value: data.utm.campaign });
-  if (data.utm.content) body.customFields.push({ key: 'utm_content', field_value: data.utm.content });
-  if (data.lpSourceId) body.customFields.push({ key: 'lp_source_id', field_value: data.lpSourceId });
-  if (data.proId) body.customFields.push({ key: 'pro_id', field_value: data.proId });
-
-  if (!data.phone) {
-    return createNewContact(body);
-  }
-
-  return searchContactByPhone(data.phone).then(function(existingContact) {
-    if (!existingContact) {
-      console.log('No existing contact found for phone, creating new');
-      return createNewContact(body);
-    }
-
-    var formName = (data.firstName + ' ' + data.lastName).toLowerCase().trim();
-    var existingName = ((existingContact.firstName || '') + ' ' + (existingContact.lastName || '')).toLowerCase().trim();
-    var contactId = existingContact.id;
-
-    if (formName === existingName) {
-      console.log('Existing contact found with matching name, updating:', contactId);
-      return updateExistingContact(contactId, body);
-    } else {
-      console.log('Existing contact found with different name, saving previous info to notes:', contactId);
-      var previousNotes = buildNotesFromExistingContact(existingContact);
-      var existingNotes = existingContact.notes || '';
-      var combinedNotes = existingNotes
-        ? previousNotes + '\n\n' + existingNotes
-        : previousNotes;
-
-      return ghlApiFetch('/contacts/' + contactId, {
-        method: 'PUT',
-        body: JSON.stringify({ notes: combinedNotes })
-      }).then(function() {
-        return updateExistingContact(contactId, body);
-      }).catch(function(err) {
-        console.warn('Failed to save previous contact notes, updating anyway:', err);
-        return updateExistingContact(contactId, body);
-      });
-    }
-  });
-}
-
-function createNewContact(body) {
-  return ghlApiFetch('/contacts/', {
-    method: 'POST',
-    body: JSON.stringify(body)
-  }).then(function(result) {
-    if (result && result.contact && result.contact.id) {
-      window.ghlContactId = result.contact.id;
-      console.log('GHL contact created:', window.ghlContactId);
+  if (includeEmail && data.email) payload.email = data.email;
+  return apiPost('/api/contact', payload).then(function(result) {
+    if (result && result.contactId) {
+      window.ghlContactId = result.contactId;
+      console.log('Contact upserted via server:', result.contactId);
     }
     return result;
-  }).catch(function(err) {
-    console.error('GHL contact creation failed:', err);
-  });
-}
-
-function updateExistingContact(contactId, body) {
-  var updateBody = Object.assign({}, body);
-  delete updateBody.locationId;
-  return ghlApiFetch('/contacts/' + contactId, {
-    method: 'PUT',
-    body: JSON.stringify(updateBody)
-  }).then(function(result) {
-    if (result && result.contact && result.contact.id) {
-      window.ghlContactId = result.contact.id;
-      console.log('GHL contact updated:', window.ghlContactId);
-    } else {
-      window.ghlContactId = contactId;
-      console.log('GHL contact updated (id from search):', contactId);
-    }
-    return result;
-  }).catch(function(err) {
-    console.error('GHL contact update failed:', err);
-  });
-}
-// ============================================================
-//  GHL API v2: UPDATE CONTACT PHONE/EMAIL (Step 3)
-// ============================================================
-function updateContactPhone() {
-  var data = gatherContactData();
-  var previousContactId = window.ghlContactId || null;
-  // Always upsert so that if the phone matches an existing GHL contact
-  // the records merge instead of creating a duplicate.
-  var body = {
-    locationId: GHL_CONFIG.locationId,
-    firstName: data.firstName,
-    lastName: data.lastName,
-    phone: data.phone,
-    address1: data.address1,
-    city: data.city,
-    state: data.state,
-    postalCode: data.postalCode,
-    source: 'Window Estimator',
-    tags: ['window-estimator'],
-    customFields: []
-  };
-  if (data.email) body.email = data.email;
-  if (data.utm.source) body.customFields.push({ key: 'utm_source', field_value: data.utm.source });
-  if (data.utm.medium) body.customFields.push({ key: 'utm_medium', field_value: data.utm.medium });
-  if (data.utm.campaign) body.customFields.push({ key: 'utm_campaign', field_value: data.utm.campaign });
-  if (data.utm.content) body.customFields.push({ key: 'utm_content', field_value: data.utm.content });
-  if (data.lpSourceId) body.customFields.push({ key: 'lp_source_id', field_value: data.lpSourceId });
-  if (data.proId) body.customFields.push({ key: 'pro_id', field_value: data.proId });
-  return ghlApiFetch('/contacts/upsert', {
-    method: 'POST',
-    body: JSON.stringify(body)
-  }).then(function(result) {
-    if (result && result.contact && result.contact.id) {
-      window.ghlContactId = result.contact.id;
-      console.log('GHL contact upserted:', window.ghlContactId);
-      // If upsert matched a different contact, delete the orphan from Step 1
-      if (previousContactId && previousContactId !== result.contact.id) {
-        console.log('Deleting orphan contact from Step 1:', previousContactId);
-        ghlApiFetch('/contacts/' + previousContactId, {
-          method: 'DELETE'
-        }).catch(function(err) {
-          console.warn('Failed to delete orphan contact:', err);
-        });
-      }
-    }
-    return result;
-  }).catch(function(err) {
-    console.error('GHL contact upsert failed:', err);
-  });
-}
-// ============================================================
-//  GHL API v2: UPDATE CONTACT WITH ESTIMATE DATA (Step 4)
-// ============================================================
-function updateContactEstimate(contactId, estimateTotal, windowCount, contactData) {
-  if (!contactId) {
-    console.warn('No GHL contactId available, skipping estimate update');
-    return Promise.resolve(null);
-  }
-  var data = contactData || gatherContactData();
-  var body = {
-    firstName: data.firstName,
-    lastName: data.lastName,
-    phone: data.phone,
-    address1: data.address1,
-    city: data.city,
-    state: data.state,
-    postalCode: data.postalCode,
-    tags: ['window-estimator', 'estimator-completed'],
-    customFields: []
-  };
-  if (data.email) body.email = data.email;
-  if (estimateTotal) {
-    body.customFields.push({ key: 'estimate_total', field_value: String(estimateTotal) });
-  }
-  if (windowCount) {
-    body.customFields.push({ key: 'window_count', field_value: String(windowCount) });
-  }
-  return ghlApiFetch('/contacts/' + contactId, {
-    method: 'PUT',
-    body: JSON.stringify(body)
-  }).then(function(result) {
-    console.log('GHL contact updated with estimate data:', contactId);
-    return result;
-  }).catch(function(err) {
-    console.error('GHL contact estimate update failed:', err);
-  });
-}
-// ============================================================
-//  GHL: LIGHTWEIGHT WORKFLOW TRIGGER (webhook with contactId)
-// ============================================================
-function triggerGHLWorkflow(contactId, eventType) {
-  if (!GHL_CONFIG.workflowWebhookUrl) return Promise.resolve(null);
-  return fetch(GHL_CONFIG.workflowWebhookUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contact_id: contactId || '',
-      event: eventType || 'estimate_completed'
-    })
-  }).catch(function(err) {
-    console.warn('GHL workflow trigger failed:', err);
-  });
-}
-// ============================================================
-//  GHL: IMMEDIATE ESTIMATE WEBHOOK (fires independently of PDF)
-// ============================================================
-function fireEstimateWebhook(contactId, contactName, estimateData) {
-  if (!GHL_CONFIG.workflowWebhookUrl) return Promise.resolve(null);
-  return fetch(GHL_CONFIG.workflowWebhookUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contact_id: contactId || '',
-      contact_name: contactName || '',
-      event: 'estimate_completed',
-      estimate_total: estimateData.total || '',
-      window_count: estimateData.windowCount || 0,
-      ghl_location_id: GHL_CONFIG.locationId,
-      ghl_api_key: GHL_CONFIG.pit
-    })
-  }).then(function(resp) {
-    console.log('Estimate webhook response:', resp.status);
-  }).catch(function(err) {
-    console.warn('Estimate webhook failed:', err);
   });
 }
 // ============================================================
@@ -2025,84 +1892,84 @@ window.initializeAddressForm = function() {
 // ============================================================
 const PRICE_TABLE = {
   dh_2ls_pic: [
-    {min:0,max:72,nonImpact:1290,impact:1911},
-    {min:73,max:78,nonImpact:1398,impact:2070},
-    {min:79,max:84,nonImpact:1505,impact:2229},
-    {min:85,max:90,nonImpact:1613,impact:2388},
-    {min:91,max:96,nonImpact:1721,impact:2548},
-    {min:97,max:102,nonImpact:1828,impact:2707},
-    {min:103,max:108,nonImpact:1936,impact:2866},
-    {min:109,max:114,nonImpact:2043,impact:3025},
-    {min:115,max:120,nonImpact:2151,impact:3185},
-    {min:121,max:126,nonImpact:2258,impact:3344},
-    {min:127,max:132,nonImpact:2366,impact:3503},
-    {min:133,max:138,nonImpact:2473,impact:3662},
-    {min:139,max:144,nonImpact:2581,impact:3822},
-    {min:145,max:150,nonImpact:2688,impact:3981},
-    {min:151,max:156,nonImpact:2796,impact:4140},
-    {min:157,max:162,nonImpact:2903,impact:4299},
-    {min:163,max:168,nonImpact:3011,impact:4458},
-    {min:169,max:174,nonImpact:3118,impact:4618}
+    {min:0,max:72,nonImpact:1229,impact:1820},
+    {min:73,max:78,nonImpact:1331,impact:1971},
+    {min:79,max:84,nonImpact:1434,impact:2123},
+    {min:85,max:90,nonImpact:1536,impact:2275},
+    {min:91,max:96,nonImpact:1639,impact:2426},
+    {min:97,max:102,nonImpact:1741,impact:2578},
+    {min:103,max:108,nonImpact:1843,impact:2730},
+    {min:109,max:114,nonImpact:1946,impact:2881},
+    {min:115,max:120,nonImpact:2048,impact:3033},
+    {min:121,max:126,nonImpact:2151,impact:3185},
+    {min:127,max:132,nonImpact:2253,impact:3336},
+    {min:133,max:138,nonImpact:2355,impact:3488},
+    {min:139,max:144,nonImpact:2458,impact:3640},
+    {min:145,max:150,nonImpact:2560,impact:3791},
+    {min:151,max:156,nonImpact:2663,impact:3943},
+    {min:157,max:162,nonImpact:2765,impact:4095},
+    {min:163,max:168,nonImpact:2868,impact:4246},
+    {min:169,max:174,nonImpact:2970,impact:4398}
   ],
   three_ls: [
-    {min:0,max:72,nonImpact:1489,impact:2978},
-    {min:73,max:78,nonImpact:1613,impact:3226},
-    {min:79,max:84,nonImpact:1737,impact:3474},
-    {min:85,max:90,nonImpact:1861,impact:3722},
-    {min:91,max:96,nonImpact:1985,impact:3970},
-    {min:97,max:102,nonImpact:2109,impact:4219},
-    {min:103,max:108,nonImpact:2233,impact:4467},
-    {min:109,max:114,nonImpact:2357,impact:4715},
-    {min:115,max:120,nonImpact:2482,impact:4963},
-    {min:121,max:126,nonImpact:2606,impact:5211},
-    {min:127,max:132,nonImpact:2730,impact:5459},
-    {min:133,max:138,nonImpact:2854,impact:5708},
-    {min:139,max:144,nonImpact:2978,impact:5956},
-    {min:145,max:150,nonImpact:3102,impact:6204},
-    {min:151,max:156,nonImpact:3226,impact:6452},
-    {min:157,max:162,nonImpact:3350,impact:6700},
-    {min:163,max:168,nonImpact:3474,impact:6948},
-    {min:169,max:174,nonImpact:3598,impact:7196}
+    {min:0,max:72,nonImpact:1418,impact:2836},
+    {min:73,max:78,nonImpact:1536,impact:3072},
+    {min:79,max:84,nonImpact:1654,impact:3309},
+    {min:85,max:90,nonImpact:1773,impact:3545},
+    {min:91,max:96,nonImpact:1891,impact:3781},
+    {min:97,max:102,nonImpact:2009,impact:4018},
+    {min:103,max:108,nonImpact:2127,impact:4254},
+    {min:109,max:114,nonImpact:2245,impact:4490},
+    {min:115,max:120,nonImpact:2363,impact:4727},
+    {min:121,max:126,nonImpact:2482,impact:4963},
+    {min:127,max:132,nonImpact:2600,impact:5199},
+    {min:133,max:138,nonImpact:2718,impact:5436},
+    {min:139,max:144,nonImpact:2836,impact:5672},
+    {min:145,max:150,nonImpact:2954,impact:5908},
+    {min:151,max:156,nonImpact:3072,impact:6145},
+    {min:157,max:162,nonImpact:3191,impact:6381},
+    {min:163,max:168,nonImpact:3309,impact:6617},
+    {min:169,max:174,nonImpact:3427,impact:6854}
   ],
   case_awn: [
-    {min:0,max:72,nonImpact:1390,impact:2109},
-    {min:73,max:78,nonImpact:1505,impact:2285},
-    {min:79,max:84,nonImpact:1621,impact:2461},
-    {min:85,max:90,nonImpact:1737,impact:2637},
-    {min:91,max:96,nonImpact:1853,impact:2812},
-    {min:97,max:102,nonImpact:1969,impact:2988},
-    {min:103,max:108,nonImpact:2084,impact:3164},
-    {min:109,max:114,nonImpact:2200,impact:3340},
-    {min:115,max:120,nonImpact:2316,impact:3515},
-    {min:121,max:126,nonImpact:2432,impact:3691},
-    {min:127,max:132,nonImpact:2548,impact:3867},
-    {min:133,max:138,nonImpact:2664,impact:4043},
-    {min:139,max:144,nonImpact:2779,impact:4219},
-    {min:145,max:150,nonImpact:2895,impact:4394},
-    {min:151,max:156,nonImpact:3011,impact:4570},
-    {min:157,max:162,nonImpact:3127,impact:4746},
-    {min:163,max:168,nonImpact:3243,impact:4922},
-    {min:169,max:174,nonImpact:3358,impact:5097}
+    {min:0,max:72,nonImpact:1323,impact:2009},
+    {min:73,max:78,nonImpact:1434,impact:2176},
+    {min:79,max:84,nonImpact:1544,impact:2344},
+    {min:85,max:90,nonImpact:1654,impact:2511},
+    {min:91,max:96,nonImpact:1765,impact:2678},
+    {min:97,max:102,nonImpact:1875,impact:2846},
+    {min:103,max:108,nonImpact:1985,impact:3013},
+    {min:109,max:114,nonImpact:2096,impact:3181},
+    {min:115,max:120,nonImpact:2206,impact:3348},
+    {min:121,max:126,nonImpact:2316,impact:3515},
+    {min:127,max:132,nonImpact:2426,impact:3683},
+    {min:133,max:138,nonImpact:2537,impact:3850},
+    {min:139,max:144,nonImpact:2647,impact:4018},
+    {min:145,max:150,nonImpact:2757,impact:4185},
+    {min:151,max:156,nonImpact:2868,impact:4353},
+    {min:157,max:162,nonImpact:2978,impact:4520},
+    {min:163,max:168,nonImpact:3088,impact:4687},
+    {min:169,max:174,nonImpact:3198,impact:4855}
   ],
   hr_specialty: [
-    {min:0,max:72,nonImpact:1985,impact:2978},
-    {min:73,max:78,nonImpact:2151,impact:3226},
-    {min:79,max:84,nonImpact:2316,impact:3474},
-    {min:85,max:90,nonImpact:2482,impact:3722},
-    {min:91,max:96,nonImpact:2647,impact:3970},
-    {min:97,max:102,nonImpact:2812,impact:4219},
-    {min:103,max:108,nonImpact:2978,impact:4467},
-    {min:109,max:114,nonImpact:3143,impact:4715},
-    {min:115,max:120,nonImpact:3309,impact:4963},
-    {min:121,max:126,nonImpact:3474,impact:5211},
-    {min:127,max:132,nonImpact:3640,impact:5459},
-    {min:133,max:138,nonImpact:3805,impact:5708},
-    {min:139,max:144,nonImpact:3970,impact:5956},
-    {min:145,max:150,nonImpact:4136,impact:6204},
-    {min:151,max:156,nonImpact:4301,impact:6452},
-    {min:157,max:162,nonImpact:4467,impact:6700},
-    {min:163,max:168,nonImpact:4632,impact:6948},
-    {min:169,max:174,nonImpact:4798,impact:7196}
+    {min:0,max:72,nonImpact:1891,impact:2836},
+    {min:73,max:78,nonImpact:2048,impact:3072},
+    {min:79,max:84,nonImpact:2206,impact:3309},
+    {min:85,max:90,nonImpact:2363,impact:3545},
+    {min:91,max:96,nonImpact:2521,impact:3781},
+    {min:97,max:102,nonImpact:2678,impact:4018},
+    {min:103,max:108,nonImpact:2836,impact:4254},
+    {min:109,max:114,nonImpact:2994,impact:4490},
+    {min:115,max:120,nonImpact:3151,impact:4727},
+    {min:121,max:126,nonImpact:3309,impact:4963},
+    {min:127,max:132,nonImpact:3466,impact:5199},
+    {min:133,max:138,nonImpact:3624,impact:5436},
+    {min:139,max:144,nonImpact:3781,impact:5672},
+    {min:145,max:150,nonImpact:3939,impact:5908},
+    {min:151,max:156,nonImpact:4096,impact:6145},
+    {min:157,max:162,nonImpact:4254,impact:6381},
+    {min:163,max:168,nonImpact:4412,impact:6617},
+    {min:169,max:174,nonImpact:4569,impact:6854}
   ]
 };
 // Style-to-category mapping for price table lookup
@@ -2115,6 +1982,12 @@ const STYLE_CATEGORY = {
   awning:      'case_awn',
   three_lite:  'three_ls',
   custom_shape:'hr_specialty'
+};
+// Size category mapping for S/M/L tile selector
+const SIZE_MAP = {
+  small:  { width: 36, height: 36, label: 'Small',  desc: '~36\u2033\u00d736\u2033' },
+  medium: { width: 36, height: 48, label: 'Medium', desc: '~36\u2033\u00d748\u2033' },
+  large:  { width: 48, height: 60, label: 'Large',  desc: '~48\u2033\u00d760\u2033' }
 };
 // Add-ons, surcharges, and multipliers applied on top of chart prices
 const PRICING = {
@@ -2142,9 +2015,9 @@ const PRICING = {
   // Grid pattern (added per window)
   gridPattern: {
     none:     { add: 0,   label: 'No Grids'     },
-    colonial: { add: 75,  label: 'Colonial Grid' },
-    prairie:  { add: 75,  label: 'Prairie Grid'  },
-    custom:   { add: 120, label: 'Custom Grid'   }
+    colonial: { add: 35,  label: 'Colonial Grid' },
+    prairie:  { add: 40,  label: 'Prairie Grid'  },
+    custom:   { add: 80,  label: 'Custom Grid'   }
   },
   // Glass upgrades (added per window)
   glassUpgrades: {
@@ -2152,15 +2025,15 @@ const PRICING = {
     tempered: { add: 75,  pct: 0,  label: 'Tempered Glass'    },
     tinted:   { add: 115, pct: 0,  label: 'Tinted Glass'      },
     impact:   { add: 0, pct: 0,  label: 'Impact Resistant'  },
-    obscure:  { add: 75,  pct: 0,  label: 'Obscure / Privacy' },
+    obscure:  { add: 45,  pct: 0,  label: 'Obscure / Privacy' },
     sound:    { add: 150, pct: 0,  label: 'Sound Reduction'   }
   },
   // (Labor is included in the PRICE_TABLE chart prices)
   // Story surcharge (per window)
   stories: {
     '1': 0,
-    '2': 65,
-    '3': 100
+    '2': 35,
+    '3': 65
   },
   // Permits
   permits: {
@@ -2250,15 +2123,25 @@ function validateAndGoToStep2() {
   } else {
     document.getElementById('field-phone').classList.remove('field-error');
   }
+  // Consent is required before the phone number leaves this page
+  var consentBox = document.getElementById('consentCheckbox');
+  if (!consentBox || !consentBox.checked) {
+    document.getElementById('field-consent').classList.add('field-error');
+    valid = false;
+  } else {
+    document.getElementById('field-consent').classList.remove('field-error');
+  }
   if (!valid) {
     const firstError = document.querySelector('#section-1 .field-error input');
     if (firstError) firstError.focus();
     return;
   }
-  findOrCreateContactInGHL().then(function() {
+  sendEvent('consent_checked');
+  submitContact(false).then(function() {
     goToStep(2);
   }).catch(function(err) {
-    console.error('Contact search/create failed:', err);
+    console.error('Contact submit failed:', err);
+    // The funnel continues; the Step 3 re-submit retries the upsert.
     goToStep(2);
   });
 }
@@ -2283,22 +2166,163 @@ function validateAndGoToStep4() {
   } else {
     document.getElementById('field-email').classList.remove('field-error');
   }
-  // Consent checkbox is required
-  var consentBox = document.getElementById('consentCheckbox');
-  if (!consentBox.checked) {
-    document.getElementById('field-consent').classList.add('field-error');
-    valid = false;
-  } else {
-    document.getElementById('field-consent').classList.remove('field-error');
-  }
   if (!valid) {
     const firstError = document.querySelector('#section-3 .field-error input');
     if (firstError) firstError.focus();
     return;
   }
-  updateContactPhone().finally(function() {
-    goToStep(4);
+  // Consent was captured on Step 1. Re-upsert the contact with email attached,
+  // then start server-side email verification. Step 4 is unreachable until the
+  // server confirms the 6-digit code.
+  submitContact(true).catch(function(err) {
+    console.error('Contact upsert with email failed:', err);
+  }).finally(function() {
+    startEmailVerification();
   });
+}
+// ============================================================
+//  EMAIL VERIFICATION FLOW
+// ============================================================
+
+function startEmailVerification() {
+  var email = document.getElementById('email').value.trim();
+  var data = gatherContactData();
+  showVerificationModal(email);
+  sendEvent('verify_sent');
+  apiPost('/api/verify/start', {
+    email: email,
+    contactId: window.ghlContactId || '',
+    contactName: (data.firstName + ' ' + data.lastName).trim()
+  }).then(function(result) {
+    if (result && result.verifyId) window._verifyId = result.verifyId;
+  }).catch(function(err) {
+    console.error('[Verify] start failed:', err);
+    var errorMsg = document.getElementById('verifyErrorMsg');
+    errorMsg.textContent = (err.status === 429)
+      ? 'Too many codes requested. Please wait a bit and try Resend Code.'
+      : 'We could not send the code. Please click Resend Code to try again.';
+    errorMsg.classList.add('visible');
+  });
+}
+
+function showVerificationModal(email) {
+  var modal = document.getElementById('verifyEmailModal');
+  var display = document.getElementById('verifyEmailDisplay');
+  var input = document.getElementById('verifyCodeInput');
+  var errorMsg = document.getElementById('verifyErrorMsg');
+  var successMsg = document.getElementById('verifySuccessMsg');
+  display.textContent = email;
+  input.value = '';
+  input.classList.remove('field-error');
+  errorMsg.classList.remove('visible');
+  successMsg.classList.remove('visible');
+  modal.classList.add('active');
+  setTimeout(function() { input.focus(); }, 100);
+}
+
+function hideVerificationModal() {
+  document.getElementById('verifyEmailModal').classList.remove('active');
+}
+
+function verifyEnteredCode() {
+  var input = document.getElementById('verifyCodeInput');
+  var entered = (input.value || '').trim();
+  var errorMsg = document.getElementById('verifyErrorMsg');
+  var successMsg = document.getElementById('verifySuccessMsg');
+  if (entered.length !== 6 || !/^\d{6}$/.test(entered)) {
+    input.classList.add('field-error');
+    errorMsg.textContent = 'Please enter the 6-digit code from your email.';
+    errorMsg.classList.add('visible');
+    successMsg.classList.remove('visible');
+    return;
+  }
+  var btn = document.getElementById('verifySubmitBtn');
+  if (btn) btn.disabled = true;
+  apiPost('/api/verify/check', {
+    verifyId: window._verifyId || '',
+    code: entered
+  }).then(function(result) {
+    window._estimateToken = (result && result.estimateToken) || '';
+    input.classList.remove('field-error');
+    errorMsg.classList.remove('visible');
+    successMsg.textContent = 'Verified! Loading your estimate...';
+    successMsg.classList.add('visible');
+    sendEvent('verify_success');
+    if (typeof fbq === 'function') { fbq('trackCustom', 'CalcVerified'); }
+    setTimeout(function() {
+      hideVerificationModal();
+      goToStep(4);
+    }, 600);
+  }).catch(function(err) {
+    sendEvent('verify_failed', { meta: { reason: (err.body && err.body.error) || String(err.status || 'network') } });
+    input.classList.add('field-error');
+    if (err.status === 503) {
+      // Server can't issue the token — the code was fine, so don't say otherwise.
+      errorMsg.textContent = 'Verification is temporarily unavailable. Please try again in a moment.';
+    } else if (err.status === 410) {
+      errorMsg.textContent = 'That code has expired. Click Resend Code for a fresh one.';
+    } else if (err.status === 429) {
+      errorMsg.textContent = 'Too many attempts. Click Resend Code to get a new code.';
+    } else if (err.body && err.body.attemptsRemaining !== undefined) {
+      errorMsg.textContent = 'Incorrect code. ' + err.body.attemptsRemaining + ' attempt' + (err.body.attemptsRemaining === 1 ? '' : 's') + ' remaining, or click Resend Code.';
+    } else {
+      errorMsg.textContent = 'Incorrect code. Please try again or click Resend Code.';
+    }
+    errorMsg.classList.add('visible');
+    successMsg.classList.remove('visible');
+    input.select();
+  }).finally(function() {
+    if (btn) btn.disabled = false;
+  });
+}
+
+function resendVerificationCode() {
+  var btn = document.getElementById('verifyResendBtn');
+  var email = document.getElementById('email').value.trim();
+  var data = gatherContactData();
+  // Ask the server for a fresh code (new verifyId invalidates the old one)
+  apiPost('/api/verify/start', {
+    email: email,
+    contactId: window.ghlContactId || '',
+    contactName: (data.firstName + ' ' + data.lastName).trim()
+  }).then(function(result) {
+    if (result && result.verifyId) window._verifyId = result.verifyId;
+  }).catch(function(err) {
+    console.error('[Verify] resend failed:', err);
+  });
+  sendEvent('verify_sent', { meta: { resend: true } });
+  // 30-second cooldown
+  btn.disabled = true;
+  var seconds = 30;
+  var originalText = 'Resend Code';
+  btn.textContent = 'Resend Code (' + seconds + 's)';
+  // Show success indicator for the resend action
+  var errorMsg = document.getElementById('verifyErrorMsg');
+  var successMsg = document.getElementById('verifySuccessMsg');
+  errorMsg.classList.remove('visible');
+  successMsg.textContent = 'New code sent. Check your email (and spam folder).';
+  successMsg.classList.add('visible');
+  setTimeout(function() {
+    successMsg.classList.remove('visible');
+    successMsg.textContent = 'Verified! Loading your estimate...';
+  }, 4000);
+  var interval = setInterval(function() {
+    seconds--;
+    if (seconds <= 0) {
+      clearInterval(interval);
+      btn.disabled = false;
+      btn.textContent = originalText;
+    } else {
+      btn.textContent = 'Resend Code (' + seconds + 's)';
+    }
+  }, 1000);
+}
+
+function changeEmail() {
+  hideVerificationModal();
+  var emailInput = document.getElementById('email');
+  emailInput.focus();
+  emailInput.select();
 }
 // ============================================================
 //  PHONE AUTO-FORMATTER
@@ -2319,6 +2343,8 @@ function setupPhoneFormatter() {
 //  STEP NAVIGATION — 4 STEPS
 // ============================================================
 function goToStep(n) {
+  sendEvent('step_view', { step: n });
+  if (typeof fbq === 'function' && n >= 2) { fbq('trackCustom', 'CalcStep' + n); }
   document.querySelectorAll('.section').forEach(s => s.classList.remove('visible'));
   document.getElementById('section-' + n).classList.add('visible');
   document.querySelectorAll('.stepper .step').forEach(s => {
@@ -2344,27 +2370,35 @@ function goToStep(n) {
   // Show "How This Works" only on step 1
   document.getElementById('howItWorks').style.display = (n === 1) ? '' : 'none';
   // Build summary and auto-send PDF to GHL when arriving at estimate step
-  if (n === 4) {
+if (n === 4) {
     buildSummary();
     // Only fire webhooks and PDF on first arrival at Step 4
-    // Prevents duplicate leads when user navigates back and re-submits
     if (!window._estimateSent) {
       window._estimateSent = true;
+      // Fire Facebook Lead event (once per session)
+      if (typeof fbq === 'function') {
+        fbq('track', 'Lead');
+      }
       // Update contact with estimate data immediately (independent of PDF generation)
       var estimateTotal = window.latestEstimateTotal || "";
       var windowCount = window.latestWindowCount || 0;
       var contactId = window.ghlContactId || null;
       var data = gatherContactData();
       var contactName = (data.firstName + ' ' + data.lastName).trim();
-      updateContactEstimate(contactId, estimateTotal, windowCount, data);
-      fireEstimateWebhook(contactId, contactName, {
-        total: estimateTotal,
-        windowCount: windowCount
-      });
-      // PDF generation + webhook send (separate, can fail independently)
-      sendPDFToGHL().catch(function(err) {
-        console.error('[Webhook] Step 4 PDF webhook failed, enabling retry:', err);
-        window.__estimateWebhookError = true;
+      sendEvent('estimate_viewed', { meta: { total: estimateTotal, window_count: windowCount } });
+      // One server call replaces the contact update, estimate webhook, and
+      // PDF chain. Requires the token issued by /api/verify/check.
+      apiPost('/api/estimate', {
+        estimateToken: window._estimateToken || '',
+        contactId: contactId || '',
+        contactName: contactName,
+        contactPhone: data.phone,
+        contactEmail: data.email,
+        estimateTotal: estimateTotal,
+        windowCount: windowCount,
+        estimate: buildEstimatePayload()
+      }).catch(function(err) {
+        console.error('[Estimate] server submit failed, enabling retry:', err);
         window._estimateSent = false;
       });
     }
@@ -2498,6 +2532,8 @@ function fmt(n) { return '$' + n.toLocaleString('en-US', { minimumFractionDigits
 //  WINDOW LIST MANAGEMENT
 // ============================================================
 function getWindowConfig() {
+  var size = getSelectedTile('windowSize') || 'medium';
+  var dims = SIZE_MAP[size];
   return {
     style: getSelectedTile('windowStyle') || 'single_hung',
     frame: getSelectedTile('frameMaterial') || 'vinyl',
@@ -2505,8 +2541,9 @@ function getWindowConfig() {
     gas: document.getElementById('gasFill').value,
     grid: document.getElementById('gridPattern').value,
     upgrades: getCheckedUpgrades(),
-    width: parseInt(document.getElementById('winWidth').value) || 36,
-    height: parseInt(document.getElementById('winHeight').value) || 48,
+    size: size,
+    width: dims.width,
+    height: dims.height,
     qty: parseInt(document.getElementById('winQty').value) || 1,
     installType: DEFAULTS.installType,
     stories: document.getElementById('stories').value
@@ -2518,11 +2555,13 @@ function getWindowLabel(config) {
     sliding: 'Sliding', awning: 'Awning', picture: 'Picture', three_lite: 'Three Lite Slider', custom_shape: 'Custom Shape'
   };
   const frameLabels = PRICING.frameMaterial[config.frame].label;
-  return styleLabels[config.style] + ' - ' + frameLabels + ' - ' + config.width + '\u2033x' + config.height + '\u2033';
+  const sizeLabel = SIZE_MAP[config.size] ? SIZE_MAP[config.size].label : (config.width + '\u2033x' + config.height + '\u2033');
+  return styleLabels[config.style] + ' - ' + frameLabels + ' - ' + sizeLabel;
 }
 function addWindow() {
   const config = getWindowConfig();
   const cost = calculateWindowCost(config);
+  sendEvent('window_added', { meta: { size: config.size, style: config.style, qty: config.qty } });
   if (editingIndex >= 0) {
     windows[editingIndex] = { config, cost };
     editingIndex = -1;
@@ -2547,8 +2586,9 @@ function editWindow(idx) {
   handlePaneChange();
   document.getElementById('gasFill').value = c.gas;
   document.getElementById('gridPattern').value = c.grid;
-  document.getElementById('winWidth').value = c.width;
-  document.getElementById('winHeight').value = c.height;
+  document.querySelectorAll('#windowSize .tile').forEach(t => {
+    t.classList.toggle('selected', t.dataset.value === c.size);
+  });
   document.getElementById('winQty').value = c.qty;
   document.querySelectorAll('#glassUpgrades .check-item').forEach(item => {
     const cb = item.querySelector('input[type="checkbox"]');
@@ -2674,6 +2714,8 @@ function buildEstimatePayload() {
     windowSubtotal += cost.totalCost;
     totalWindows += c.qty;
 
+    var sizeInfo = SIZE_MAP[c.size] || { label: 'Custom', desc: c.width + '\u2033x' + c.height + '\u2033' };
+
     var upgradeLabels = (c.upgrades || [])
       .filter(function(u) { return u !== 'impact'; })
       .map(function(u) {
@@ -2687,6 +2729,8 @@ function buildEstimatePayload() {
       styleLabel: getStyleLabel(c.style),
       frame: c.frame,
       frameLabel: PRICING.frameMaterial[c.frame].label,
+      size: c.size,
+      sizeLabel: sizeInfo.label,
       width: c.width,
       height: c.height,
       unitedInches: cost.unitedInches,
@@ -2765,7 +2809,8 @@ function buildSummary() {
         impactLabel +
       '<\/td>' +
     '<\/tr>';
-    windowRows += '<tr><td style="padding-left:1.5rem;">Base Price (' + getStyleLabel(c.style) + (cost.isImpact ? ', Impact' : '') + ', ' + cost.unitedInches + ' UI)<\/td><td>' + fmt(cost.breakdown.chartPrice) + '<\/td><td>&times; ' + c.qty + '<\/td><td>' + fmt(cost.breakdown.chartPrice * c.qty) + '<\/td><\/tr>';
+    var sizeDesc = SIZE_MAP[c.size] ? SIZE_MAP[c.size].label : (cost.unitedInches + ' UI');
+    windowRows += '<tr><td style="padding-left:1.5rem;">Base Price (' + getStyleLabel(c.style) + (cost.isImpact ? ', Impact' : '') + ', ' + sizeDesc + ')<\/td><td>' + fmt(cost.breakdown.chartPrice) + '<\/td><td>&times; ' + c.qty + '<\/td><td>' + fmt(cost.breakdown.chartPrice * c.qty) + '<\/td><\/tr>';
     if (cost.breakdown.frameMult !== 0) {
       windowRows += '<tr><td style="padding-left:1.5rem;">Frame Adj. (' + PRICING.frameMaterial[c.frame].label + ')<\/td><td>' + fmt(cost.breakdown.frameMult) + '<\/td><td>&times; ' + c.qty + '<\/td><td>' + fmt(cost.breakdown.frameMult * c.qty) + '<\/td><\/tr>';
     }
@@ -2898,7 +2943,6 @@ function buildSummary() {
   html += '<div class="summary-section">' +
     '<h3>Potential Savings<\/h3>' +
     '<ul style="padding-left:1.25rem; margin:0.25rem 0 0.5rem 0;">' +
-      '<li style="font-size:0.85rem; color:var(--charcoal); line-height:1.6;">Up to $600 Federal ENERGY STAR Tax Credit<\/li>' +
       '<li style="font-size:0.85rem; color:var(--charcoal); line-height:1.6;">Estimated 12% annual heating/cooling efficiency improvement (varies by home)<\/li>' +
     '<\/ul>' +
     '<p style="font-size:0.82rem; color:var(--text-gray); margin-top:0.35rem;">Savings eligibility is confirmed during professional verification.<\/p>' +
@@ -3051,393 +3095,32 @@ function getInstallLabel(type) {
     }
 })();
 
+  // ============================================================
+  //  VERIFICATION CODE INPUT — Enter to submit, digits-only filter
+  // ============================================================
+  (function setupVerifyCodeInput() {
+    var codeInput = document.getElementById('verifyCodeInput');
+    if (!codeInput) return;
+    codeInput.addEventListener('input', function(e) {
+      // Strip any non-digit characters as user types
+      var cleaned = (e.target.value || '').replace(/\D/g, '').slice(0, 6);
+      if (e.target.value !== cleaned) e.target.value = cleaned;
+      // Clear error styling once user starts typing again
+      if (cleaned.length > 0) {
+        e.target.classList.remove('field-error');
+        document.getElementById('verifyErrorMsg').classList.remove('visible');
+      }
+    });
+    codeInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        verifyEnteredCode();
+      }
+    });
+  })();
+
   updateRunningTotal();
 })();
-// ============================================================
-//  PDF GENERATION & SEND TO GHL
-// ============================================================
-function loadHtml2Pdf() {
-  return new Promise(function(resolve, reject) {
-    if (typeof html2pdf !== 'undefined') {
-      resolve();
-      return;
-    }
-    var script = document.createElement('script');
-    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.2/html2pdf.bundle.min.js';
-    script.onload = resolve;
-    script.onerror = function() { reject(new Error('Failed to load html2pdf library')); };
-    document.head.appendChild(script);
-  });
-}
-function generateEstimatePDF() {
-  console.log('[PDF] generateEstimatePDF: starting...');
-  return new Promise(function(resolve, reject) {
-    var summaryEl = document.getElementById('summaryContent');
-    if (!summaryEl || !summaryEl.innerHTML.trim()) {
-      console.error('[PDF] No summaryContent element found');
-      reject(new Error('No estimate content to generate PDF from.'));
-      return;
-    }
-    console.log('[PDF] summaryContent found, total:', window.latestEstimateTotal);
-    // Currency formatter
-    var fmt = function(v) { return '$' + v.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','); };
-    var total = window.latestEstimateTotal || 0;
-    var lowPrice = total * 0.80;
-    var highPrice = total * 1.20;
-    // Build a self-contained HTML element for the PDF
-    var pdfContainer = document.createElement('div');
-    pdfContainer.style.cssText = 'padding:0 20px 20px 20px; font-family:Nunito Sans,sans-serif; color:#626060; font-size:11px; line-height:1.35;';
-    // ===== 1. HEADER BAR =====
-    var header = document.createElement('div');
-    header.style.cssText = 'background:#122739; padding:14px 20px; margin:0 -20px 20px -20px; text-align:center; page-break-inside:avoid;';
-    header.innerHTML =
-      '<h1 style="margin:0; font-family:Montserrat,sans-serif; font-size:20px; font-weight:700; color:#FFFFFF; letter-spacing:0.5px;">Reece Windows &amp; Doors<\/h1>';
-    pdfContainer.appendChild(header);
-    // ===== 2. PRICE AUTHORITY BLOCK =====
-    var priceBlock = document.createElement('div');
-    priceBlock.style.cssText = 'background:#FFFFFF; margin-bottom:12px; padding:10px 0; page-break-inside:avoid;';
-
-    var pdfMonthlyLow = Math.round(lowPrice * 0.0107);
-    var pdfMonthlyAvg = Math.round(total * 0.0107);
-
-    priceBlock.innerHTML =
-      '<h3 style="margin:0 0 8px 0; padding-left:12px; font-size:14px; font-weight:700; color:#122739; border-left:3px solid #ED1E24; line-height:1.3;">Estimated Project Investment<\/h3>' +
-      '<p style="margin:0 0 4px 0; font-size:28px; font-weight:700; color:#122739; text-align:center; line-height:1.2;">' + fmt(total) + '<\/p>' +
-      '<p style="margin:2px 0 0 0; font-size:11px; color:#626060; text-align:center; letter-spacing:0.3px;">Full-Frame Replacement | ' + (window.latestWindowCount || 0) + ' Impact-Rated Windows<\/p>' +
-      '<p style="margin:1px 0 0 0; font-size:10px; color:#87898B; text-align:center; letter-spacing:0.5px;">Florida-Engineered | Impact-Rated | In-House Installation<\/p>' +
-      // Monthly payment line — sits tight under credibility line
-      '<p style="margin:6px 0 0 0; font-size:16px; font-weight:900; color:#2e7d32; text-align:center; line-height:1.1;">Estimated $' + pdfMonthlyLow.toLocaleString() + '\u2013$' + pdfMonthlyAvg.toLocaleString() + ' per month*<\/p>' +
-      '<p style="margin:2px 0 0 0; font-size:10px; font-weight:700; color:#122739; text-align:center;">Payment options available. No traditional credit score required.<\/p>' +
-      '<p style="margin:3px 0 0 0; font-size:10px; color:#626060; text-align:center; line-height:1.35;">*Example based on estimated project total. Final terms are confirmed during verification.<\/p>' +
-      '<div style="border-top:1px solid #C1D5DB; margin:8px 0;"><\/div>' +
-      '<p style="margin:0 0 1px 0; font-size:10px; font-weight:700; color:#0C2340; text-align:center;">Estimated Range<\/p>' +
-      '<p style="margin:0 0 4px 0; font-size:12px; font-weight:700; color:#0C2340; text-align:center;">' + fmt(lowPrice) + ' \u2013 ' + fmt(highPrice) + '<\/p>' +
-      '<p style="margin:0 0 4px 0; font-size:10px; color:#626060; text-align:center;">Most verified projects remain within this range.<\/p>' +
-      '<p style="margin:0 0 4px 0; font-size:10px; color:#626060; text-align:center;">Final pricing is confirmed during professional verification.<\/p>' +
-      '<p style="margin:0; font-size:10px; color:#626060; text-align:center; line-height:1.4;">This range reflects final measurement confirmation, installation method adjustments, and Florida code requirements.<\/p>';
-    pdfContainer.appendChild(priceBlock);
-    // ===== 2b. STRUCTURED STARTING POINT =====
-    var startingPoint = document.createElement('div');
-    startingPoint.style.cssText = 'border-top:1px solid #C1D5DB; margin-top:6px; padding-top:12px; margin-bottom:10px; page-break-inside:avoid;';
-    startingPoint.innerHTML =
-      '<h3 style="margin:0 0 5px 0; font-size:12px; font-weight:700; color:#0C2340;">Your Estimate Is Structured and Verifiable<\/h3>' +
-      '<p style="margin:0 0 3px 0; font-size:10px; color:#626060; line-height:1.4;">This estimate reflects the window selections and preliminary measurements you provided.<\/p>' +
-      '<p style="margin:0 0 3px 0; font-size:10px; color:#626060; line-height:1.4;">Before materials are ordered, we verify:<\/p>' +
-      '<ul style="margin:2px 0 5px 0; padding-left:20px; font-size:10px; color:#626060; line-height:1.5;">' +
-        '<li style="margin-bottom:2px;">Exact opening dimensions<\/li>' +
-        '<li style="margin-bottom:2px;">Installation conditions<\/li>' +
-        '<li style="margin-bottom:2px;">Florida code compliance requirements<\/li>' +
-        '<li style="margin-bottom:2px;">Geographic scheduling zone eligibility<\/li>' +
-      '<\/ul>' +
-      '<p style="margin:0; font-size:10px; color:#626060; line-height:1.4;">This protects you from unexpected changes \u2014 up or down.<\/p>';
-    pdfContainer.appendChild(startingPoint);
-    // ===== 3. EXTRACT SECTIONS FROM CLONED CONTENT =====
-    // Mirror the print layout: Page 1 ends after Project Overview,
-    // Page 2 starts with Itemized Breakdown, last page starts with Project Costs
-    var contentClone = summaryEl.cloneNode(true);
-    // Remove sections already rendered above (hero, starting point, range, routing)
-    var heroEl = contentClone.querySelector('.estimate-hero');
-    if (heroEl) heroEl.remove();
-    var startingPt = contentClone.querySelector('.structured-starting-point');
-    if (startingPt) startingPt.remove();
-    var rangeEl = contentClone.querySelector('.estimate-range');
-    if (rangeEl) rangeEl.remove();
-    var dividerEl = contentClone.querySelector('.section-divider');
-    if (dividerEl) dividerEl.remove();
-    var routingEl = contentClone.querySelector('.routing-section');
-    if (routingEl) routingEl.remove();
-    // Remove list-based Potential Savings (replaced by inline-styled table below)
-    contentClone.querySelectorAll('.summary-section').forEach(function(sec) {
-      var h = sec.querySelector('h3');
-      if (h && h.textContent === 'Potential Savings') sec.remove();
-    });
-    // Style all tables for PDF readability
-    contentClone.querySelectorAll('table').forEach(function(table) {
-      table.style.cssText = 'width:100%; border-collapse:collapse; margin-bottom:12px; font-size:11px; table-layout:auto;';
-    });
-    contentClone.querySelectorAll('td, th').forEach(function(cell) {
-      cell.style.cssText += '; padding:6px 8px; border-bottom:1px solid #e0e0e0;';
-    });
-    contentClone.querySelectorAll('.total td').forEach(function(cell) {
-      cell.style.cssText += '; font-weight:700; font-size:14px; border-top:2px solid #1a2a3a;';
-    });
-    // Prevent individual table rows from splitting across pages
-    contentClone.querySelectorAll('tr').forEach(function(row) {
-      row.style.pageBreakInside = 'avoid';
-    });
-    // Extract Project Summary header — stays on Page 1 (no page break)
-    var projHeader = contentClone.querySelector('.project-summary-header');
-    if (projHeader) {
-      projHeader.style.cssText = 'margin:0 0 10px 0; font-size:14px; font-weight:700; color:#0C2340; border-left:3px solid #ED1E24; padding-left:12px;';
-      pdfContainer.appendChild(projHeader);
-    }
-    // Extract sections one by one for precise page break control
-    var sections = contentClone.querySelectorAll('.summary-section');
-    // sections[0]=Customer Info, [1]=Project Overview, [2]=Itemized Breakdown, [3]=Project Costs
-    // Customer Information — stays on Page 1
-    if (sections[0]) {
-      sections[0].style.cssText = 'margin:0 0 8px 0; page-break-inside:avoid;';
-      var h0 = sections[0].querySelector('h3');
-      if (h0) h0.style.margin = '0 0 4px 0';
-      pdfContainer.appendChild(sections[0]);
-    }
-    // Project Overview — stays on Page 1
-    if (sections[1]) {
-      sections[1].style.cssText = 'margin:0 0 8px 0; page-break-inside:avoid;';
-      var h1 = sections[1].querySelector('h3');
-      if (h1) h1.style.margin = '0 0 4px 0';
-      pdfContainer.appendChild(sections[1]);
-    }
-    // Itemized Breakdown — forced page break (starts Page 2)
-    if (sections[2]) {
-      sections[2].style.cssText = 'margin:0 0 8px 0; break-before:page; page-break-inside:auto;';
-      var h2 = sections[2].querySelector('h3');
-      if (h2) h2.style.margin = '0 0 4px 0';
-      pdfContainer.appendChild(sections[2]);
-    }
-    // Project Costs — forced page break (starts last page)
-    if (sections[3]) {
-      sections[3].style.cssText = 'margin:0 0 8px 0; break-before:page; page-break-inside:avoid;';
-      var h3 = sections[3].querySelector('h3');
-      if (h3) h3.style.margin = '0 0 4px 0';
-      pdfContainer.appendChild(sections[3]);
-    }
-    // ===== 3b. COST RANGE TABLE =====
-    var costRange = document.createElement('div');
-    costRange.style.cssText = 'margin:0 0 8px 0; page-break-inside:avoid;';
-    costRange.innerHTML =
-      '<h3 style="margin:0 0 4px 0; font-size:11px; font-weight:700; color:#0C2340;">Cost Range<\/h3>' +
-      '<table style="width:100%; border-collapse:collapse; margin-bottom:12px; font-size:11px;">' +
-        '<tr><td style="padding:6px 8px; border-bottom:1px solid #e0e0e0;">Projected Low (-20%)<\/td><td style="padding:6px 8px; border-bottom:1px solid #e0e0e0; text-align:right; font-weight:500;">' + fmt(lowPrice) + '<\/td><\/tr>' +
-        '<tr><td style="padding:6px 8px; border-bottom:1px solid #e0e0e0; font-weight:600; color:#122738;">Verified Average<\/td><td style="padding:6px 8px; border-bottom:1px solid #e0e0e0; text-align:right; font-weight:600; color:#122738;">' + fmt(total) + '<\/td><\/tr>' +
-        '<tr><td style="padding:6px 8px; border-bottom:1px solid #e0e0e0;">Projected High (+20%)<\/td><td style="padding:6px 8px; border-bottom:1px solid #e0e0e0; text-align:right; font-weight:500;">' + fmt(highPrice) + '<\/td><\/tr>' +
-      '<\/table>' +
-      '<p style="font-size:10px; color:#87898B; margin-top:4px; line-height:1.4;">This range reflects final measurement confirmation, installation conditions, and code compliance requirements.<\/p>';
-    pdfContainer.appendChild(costRange);
-    // ===== 3c. POTENTIAL SAVINGS TABLE =====
-    var savings = document.createElement('div');
-    savings.style.cssText = 'margin:0 0 8px 0; page-break-inside:avoid;';
-    savings.innerHTML =
-      '<h3 style="margin:0 0 4px 0; font-size:11px; font-weight:700; color:#0C2340;">Potential Savings<\/h3>' +
-      '<table style="width:100%; border-collapse:collapse; margin-bottom:12px; font-size:11px;">' +
-        '<tr><td style="padding:6px 8px; border-bottom:1px solid #e0e0e0;">ENERGY STAR Tax Credit (up to 30%, max $600/yr Federal Tax Credit)<\/td><td style="padding:6px 8px; border-bottom:1px solid #e0e0e0; text-align:right; font-weight:500; color:#ED1F24;">Up to -' + fmt(Math.min(total * 0.30, 600)) + '<\/td><\/tr>' +
-      '<tr><td style="padding:6px 8px; border-bottom:1px solid #e0e0e0;">Energy Savings (est. 12% on heating/cooling bills annually)<\/td><td style="padding:6px 8px; border-bottom:1px solid #e0e0e0; text-align:right; font-weight:500; color:#ED1F24;">Varies by home<\/td><\/tr>' +
-      '<\/table>';
-    pdfContainer.appendChild(savings);
-    // ===== 4. ROUTING & INSTALLATION SECTION =====
-    var routingBody = document.createElement('div');
-    routingBody.style.cssText = 'padding:20px 0 0 0; margin-bottom:20px; page-break-inside:avoid;';
-    routingBody.innerHTML =
-      '<h3 style="margin:0 0 10px 0; padding-left:12px; font-size:13px; font-weight:700; color:#122739; border-left:3px solid #ED1E24; line-height:1.3;">How Installation Scheduling Can Influence Final Pricing<\/h3>' +
-      '<p style="margin:0 0 4px 0; font-size:11px; color:#626060; line-height:1.5;">We organize installations by geographic zones.<\/p>' +
-      '<p style="margin:0 0 4px 0; font-size:11px; color:#626060; line-height:1.5;">When multiple homes in the same area are completed during the same installation cycle, we reduce:<\/p>' +
-      '<ul style="margin:4px 0 8px 0; padding-left:20px; font-size:11px; color:#626060; line-height:1.6;">' +
-        '<li>Crew travel time<\/li>' +
-        '<li>Equipment staging costs<\/li>' +
-        '<li>Material handling inefficiencies<\/li>' +
-      '<\/ul>' +
-      '<p style="margin:0 0 4px 0; font-size:11px; color:#626060; line-height:1.5;">When routing efficiencies apply, they are reflected in final pricing.<\/p>' +
-      '<p style="margin:0 0 4px 0; font-size:11px; color:#626060; line-height:1.5;">Routing eligibility is confirmed during professional measurement verification.<\/p>' +
-      '<p style="margin:0; font-size:11px; color:#626060; line-height:1.5;">Early verification improves access to the most efficient installation cycle.<\/p>';
-    pdfContainer.appendChild(routingBody);
-    // ===== 5. CLOSE SECTION =====
-    var closeDivider = document.createElement('div');
-    closeDivider.style.cssText = 'border-top:1px solid #C1D5DB; margin:24px -20px 0 -20px;';
-    pdfContainer.appendChild(closeDivider);
-    var closeSection = document.createElement('div');
-    closeSection.style.cssText = 'background:#FFFFFF; padding-top:18px; margin-bottom:20px; page-break-inside:avoid;';
-    closeSection.innerHTML =
-      '<h3 style="margin:0 0 10px 0; padding-left:12px; font-size:14px; font-weight:700; color:#122739; border-left:3px solid #ED1E24; line-height:1.3;">Next Step: Confirm and Finalize<\/h3>' +
-      '<p style="margin:0 0 4px 0; font-size:11px; color:#626060; line-height:1.5;">A brief professional measurement allows us to:<\/p>' +
-      '<ul style="margin:4px 0 10px 0; padding-left:20px; font-size:11px; color:#626060; line-height:1.6;">' +
-        '<li>Secure your exact price<\/li>' +
-        '<li>Confirm material allocation<\/li>' +
-        '<li>Determine routing efficiencies<\/li>' +
-        '<li>Finalize installation scheduling<\/li>' +
-      '<\/ul>' +
-      '<p style="margin:0 0 3px 0; font-size:11px; color:#626060; line-height:1.5;">There is no obligation.<\/p>' +
-      '<p style="margin:0 0 3px 0; font-size:11px; color:#626060; line-height:1.5;">No sales presentation.<\/p>' +
-      '<p style="margin:0; font-size:11px; color:#626060; font-weight:600; line-height:1.5;">Just precision.<\/p>';
-    pdfContainer.appendChild(closeSection);
-    // ===== 6. FOOTER =====
-    var footer = document.createElement('div');
-    footer.style.cssText = 'margin-top:50px; padding-top:20px; border-top:1px solid #C1D5DB; font-size:11px; font-weight:700; color:#4A4A4A; text-align:center; line-height:1.6; page-break-inside:avoid;';
-    footer.innerHTML =
-      'Installation schedules are organized by geographic zone and material availability.<br>' +
-      'Early verification ensures access to the most efficient installation cycle.';
-    pdfContainer.appendChild(footer);
-    var opt = {
-      margin:       [0.3, 0.5, 0.5, 0.5],
-      filename:     'Reece-Windows-Estimate.pdf',
-      image:        { type: 'jpeg', quality: 0.75 },
-      html2canvas:  { scale: 1.5, useCORS: true, logging: false },
-      jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' },
-      pagebreak:    { mode: ['css', 'legacy'] }
-    };
-    console.log('[PDF] pdfContainer built, child count:', pdfContainer.childNodes.length);
-    // Dynamically load html2pdf if not already available; wait for fonts
-    loadHtml2Pdf().then(function() {
-      console.log('[PDF] html2pdf loaded, waiting for fonts...');
-      return document.fonts.ready;
-    }).then(function() {
-      console.log('[PDF] fonts ready, generating PDF...');
-      // Timeout to detect if html2pdf hangs
-      var pdfTimedOut = false;
-      var pdfTimeout = setTimeout(function() {
-        pdfTimedOut = true;
-        reject(new Error('PDF generation timed out after 30s'));
-      }, 30000);
-      try {
-        html2pdf().set(opt).from(pdfContainer).outputPdf('datauristring').then(function(dataUri) {
-          if (pdfTimedOut) return;
-          clearTimeout(pdfTimeout);
-          console.log('[PDF] html2pdf resolved, dataUri length:', dataUri.length);
-          var base64 = dataUri.split(',')[1];
-          // Convert base64 to Blob
-          var byteChars = atob(base64);
-          var byteNumbers = new Array(byteChars.length);
-          for (var i = 0; i < byteChars.length; i++) {
-            byteNumbers[i] = byteChars.charCodeAt(i);
-          }
-          var byteArray = new Uint8Array(byteNumbers);
-          var blob = new Blob([byteArray], { type: 'application/pdf' });
-          resolve({
-            base64: base64,
-            dataUri: dataUri,
-            blob: blob
-          });
-        }).catch(function(err) {
-          if (pdfTimedOut) return;
-          clearTimeout(pdfTimeout);
-          reject(err);
-        });
-      } catch (err) {
-        clearTimeout(pdfTimeout);
-        reject(new Error('html2pdf threw: ' + err.message));
-      }
-    }).catch(function(err) {
-      reject(err);
-    });
-  });
-}
-function sendPDFToWebhook(base64, contactId, contactName, contactData) {
-  var fileName = 'Reece-Windows-Estimate-' + Date.now() + '.pdf';
-  var payload = {
-    type: 'pdf_attachment',
-    contact_id: contactId || '',
-    contact_phone: (contactData && contactData.phone) || '',
-    contact_email: (contactData && contactData.email) || '',
-    contact_name: contactName || '',
-    pdf_base64: base64,
-    file_name: fileName,
-    ghl_api_key: GHL_CONFIG.pit,
-    ghl_location_id: GHL_CONFIG.locationId
-  };
-
-  // Comprehensive logging
-  console.log('[Webhook] ===== BUILDING PAYLOAD =====');
-  console.log('[Webhook] Endpoint:', GHL_CONFIG.pdfWebhookUrl);
-  console.log('[Webhook] contact_id:', payload.contact_id);
-  console.log('[Webhook] contact_name:', payload.contact_name);
-  console.log('[Webhook] file_name:', fileName);
-  console.log('[Webhook] pdf_base64 length:', base64 ? base64.length : 0);
-  var payloadStr = JSON.stringify(payload);
-  console.log('[Webhook] Total payload size (chars):', payloadStr.length);
-  console.log('[Webhook] Total payload size (approx KB):', Math.round(payloadStr.length / 1024));
-
-  return fetch(GHL_CONFIG.pdfWebhookUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: payloadStr
-  }).then(function(resp) {
-    console.log('[Webhook] Response status:', resp.status);
-    if (!resp.ok) {
-      return resp.text().then(function(body) {
-        console.error('[Webhook] Error response body:', body);
-        window.__estimateWebhookError = true;
-        throw new Error('[Webhook] HTTP ' + resp.status + ': ' + body);
-      });
-    }
-    return resp.text().then(function(body) {
-      console.log('[Webhook] Success response body:', body);
-      window.__estimateWebhookError = false;
-      return resp;
-    });
-  }).catch(function(err) {
-    // Only retry with no-cors for actual network/CORS failures (TypeError),
-    // not HTTP error responses (which were already read successfully)
-    if (err instanceof TypeError) {
-      console.warn('[Webhook] Network/CORS failure. Retrying with no-cors mode...');
-      console.warn('[Webhook] Original error:', err.message || err);
-      return fetch(GHL_CONFIG.pdfWebhookUrl, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'text/plain' },
-        body: payloadStr
-      }).then(function(resp) {
-        console.log('[Webhook] no-cors response status:', resp.status, '(0 = opaque, data was sent)');
-        console.log('[Webhook] no-cors response type:', resp.type);
-        window.__estimateWebhookError = false;
-        return resp;
-      }).catch(function(err2) {
-        console.error('[Webhook] no-cors fallback also failed:', err2);
-        console.error('[Webhook] Outbound requests may be blocked (file:// protocol or network issue)');
-        window.__estimateWebhookError = true;
-        throw err2;
-      });
-    }
-    // For HTTP errors (413, 500, etc.), don't retry — just log and propagate
-    console.error('[Webhook] Fetch failed:', err.message || err);
-    window.__estimateWebhookError = true;
-    throw err;
-  });
-}
-function sendPDFToGHL() {
-  // POSTs estimate data as JSON to the Railway Puppeteer microservice,
-  // which renders the PDF server-side and uploads it to GHL. Replaces
-  // the old client-side html2pdf flow that produced broken PDFs with
-  // mid-row splits and blank pages at variable window counts.
-  //
-  // The old functions (generateEstimatePDF, sendPDFToWebhook, loadHtml2Pdf)
-  // are intentionally left in place as dead code so rollback is a single-
-  // line revert of this function's body.
-  console.log('[PDF] sendPDFToGHL: posting estimate to microservice...');
-  var contactId = window.ghlContactId || null;
-  var data = gatherContactData();
-  var contactName = (data.firstName + ' ' + data.lastName).trim();
-  var payload = {
-    contact_id: contactId,
-    contact_name: contactName,
-    contact_phone: data.phone,
-    contact_email: data.email,
-    ghl_api_key: GHL_CONFIG.pit,
-    ghl_location_id: GHL_CONFIG.locationId,
-    estimate: buildEstimatePayload()
-  };
-  return fetch(PDF_SERVICE_CONFIG.url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
-  }).then(function(resp) {
-    if (!resp.ok) {
-      return resp.text().then(function(body) {
-        throw new Error('PDF service HTTP ' + resp.status + ': ' + body);
-      });
-    }
-    return resp.json();
-  }).then(function(result) {
-    console.log('[PDF] Microservice success:', result.pdfUrl || '(no pdfUrl)', '| contactUpdated:', result.contactUpdated);
-    if (result.warning) {
-      console.warn('[PDF] Microservice warning:', result.warning);
-    }
-    window.__estimateWebhookError = false;
-    return result;
-  }).catch(function(err) {
-    console.error('[PDF] Microservice failed:', err);
-    window.__estimateWebhookError = true;
-    throw err;
-  });
-}
 // ============================================================
 //  KEEP ESTIMATE MODAL
 // ============================================================
@@ -3480,6 +3163,365 @@ function openMeasurementVerification() {
       <button class="btn-link" onclick="window.location.href='https://reecewindows.com/';">Leave Unverified</button>
     </div>
   </div>
+  <!-- Email Verification Modal -->
+  <div class="modal-overlay" id="verifyEmailModal">
+    <div class="modal-dialog">
+      <h3>Verify Your Email</h3>
+      <p>We just sent a 6-digit verification code to<br><span class="verify-email-display" id="verifyEmailDisplay"></span></p>
+      <p class="verify-spam-note">Don't see it? Check your spam or junk folder.</p>
+      <input type="text"
+             class="verify-code-input"
+             id="verifyCodeInput"
+             placeholder="######"
+             maxlength="6"
+             inputmode="numeric"
+             autocomplete="one-time-code">
+      <div class="verify-error-msg" id="verifyErrorMsg">Incorrect code. Please try again.</div>
+      <div class="verify-success-msg" id="verifySuccessMsg">Verified! Loading your estimate...</div>
+      <button class="btn btn-primary" id="verifySubmitBtn" onclick="verifyEnteredCode()">Verify &amp; See My Estimate</button>
+      <button class="btn btn-resend" id="verifyResendBtn" onclick="resendVerificationCode()">Resend Code</button>
+      <button class="btn-link" onclick="changeEmail()">Use a different email address</button>
+    </div>
+  </div>
 <div id="printRoot"></div>
 </body>
 </html>
+<!-- FOOTER DIVIDER -->
+<div style="width:100%; height:1px; background:#C1D5DB;"></div>
+
+<!-- FOOTER START -->
+<footer class="hrir-footer">
+  <div class="hrir-footer__inner">
+
+    <!-- TRUST BADGES -->
+    <div class="hrir-trust" aria-label="Trust badges">
+      <img src="https://storage.googleapis.com/msgsndr/SsBG7j5KQAIP1SFP2Sca/media/68cd79e3fb98c8859da49752.png" alt="Trusted 50 plus years">
+      <img src="https://storage.googleapis.com/msgsndr/SsBG7j5KQAIP1SFP2Sca/media/68cd7dc3e8e00983775f45ab.webp" alt="BBB A plus rating">
+      <img src="https://storage.googleapis.com/msgsndr/SsBG7j5KQAIP1SFP2Sca/media/68cd79e327afc809f37b5868.png" alt="Double lifetime warranty">
+    </div>
+
+    <!-- SERVICE LOCATIONS -->
+    <nav class="hrir-locations" aria-label="Service areas">
+      <a href="#">Fort Lauderdale</a>
+      <a href="#">Tampa</a>
+      <a href="#">Orlando</a>
+      <a href="#">Sarasota</a>
+      <a href="#">Fort Myers</a>
+      <a href="#">Jacksonville</a>
+      <a href="#">Lakeland</a>
+      <a href="#">St. Petersburg</a>
+    </nav>
+
+    <!-- LOGO -->
+    <div class="hrir-logo">
+      <img src="https://storage.googleapis.com/msgsndr/SsBG7j5KQAIP1SFP2Sca/media/68c8417fa500176c396a096b.png" alt="{{location.name}}">
+    </div>
+
+    <!-- POLICY LINKS -->
+    <nav class="hrir-links" aria-label="Policies">
+      <a href="https://landing.reecewindows.com/privacy" target="_blank" rel="noopener">Privacy Policy</a>
+      <span>|</span>
+      <a href="https://landing.reecewindows.com/terms" target="_blank" rel="noopener">Terms &amp; Conditions</a>
+    </nav>
+
+    <!-- COPYRIGHT -->
+    <p class="hrir-copy">
+      © <span id="hrir-year"></span> <span id="hrir-company">{{location.name}}</span> All Rights Reserved
+    </p>
+
+    <!-- DISCLAIMER -->
+    <p class="hrir-disclaimer">
+      <span id="hrir-disclaimer-company">{{location.name}}</span> is an independent entity and is not affiliated with, endorsed by, or sponsored by Meta Platforms, Inc. or Google LLC.
+      The information provided is for informational purposes only. Client testimonials reflect individual experiences and do not guarantee future results.
+      This content is not a substitute for professional legal, financial, or insurance advice.
+    </p>
+
+  </div>
+</footer>
+
+<style>
+  .hrir-footer {
+    width: 100%;
+    background: #122739;
+    color: #FFFFFF;
+    font-family: Inter, Arial, sans-serif;
+    text-align: center;
+    padding: 40px 20px;
+    overflow-x: hidden;
+  }
+
+  body {
+    overflow-x: hidden;
+  }
+
+  .hrir-footer * {
+    box-sizing: border-box;
+  }
+
+  .hrir-footer__inner {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  /* TRUST BADGES */
+
+  .hrir-trust {
+    margin-bottom: 22px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 30px;
+    flex-wrap: wrap;
+  }
+
+  .hrir-trust img {
+    height: 38px;
+    width: auto;
+    display: block;
+    transition:
+      transform 0.3s ease,
+      filter 0.3s ease,
+      opacity 0.3s ease;
+    cursor: default;
+  }
+
+  .hrir-trust img:hover {
+    filter: grayscale(100%);
+    opacity: 0.65;
+    transform: translateY(-2px) scale(1.03);
+  }
+
+  /* LOCATIONS */
+
+  .hrir-locations {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 34px;
+    flex-wrap: wrap;
+    margin-bottom: 56px;
+  }
+
+  .hrir-locations a {
+    color: #FFFFFF;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    text-decoration: none;
+    transition: opacity 0.3s ease;
+  }
+
+  .hrir-locations a:hover {
+    opacity: 0.75;
+  }
+
+  /* LOGO */
+
+  .hrir-logo {
+    margin-bottom: 20px;
+  }
+
+  .hrir-logo img {
+    height: 64px;
+    width: auto;
+    display: inline-block;
+  }
+
+  /* POLICY LINKS */
+
+  .hrir-links {
+    margin-bottom: 20px;
+  }
+
+  .hrir-links a,
+  .hrir-links span {
+    color: #FFFFFF;
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  .hrir-links a {
+    transition: opacity 0.3s ease;
+  }
+
+  .hrir-links a:hover {
+    opacity: 0.75;
+  }
+
+  /* COPYRIGHT */
+
+  .hrir-copy {
+    width: 100%;
+    text-align: center;
+    font-size: 14px;
+    color: #C1D5DB;
+    margin: 0 auto 15px;
+    padding: 0 15px;
+  }
+
+  /* DISCLAIMER */
+
+  .hrir-disclaimer {
+    display: block;
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 20px;
+    font-size: 12px;
+    line-height: 1.6;
+    color: #C1D5DB;
+    text-align: center;
+    box-sizing: border-box;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    white-space: normal;
+  }
+
+  /* TABLET */
+
+  @media screen and (max-width: 768px) {
+
+    .hrir-footer {
+      padding: 36px 18px;
+    }
+
+    .hrir-trust {
+      gap: 16px;
+    }
+
+    .hrir-trust img {
+      height: 34px;
+    }
+
+    .hrir-locations {
+      gap: 18px 24px;
+      margin-bottom: 46px;
+    }
+
+    .hrir-locations a {
+      font-size: 12px;
+      letter-spacing: 1.5px;
+    }
+
+    .hrir-logo img {
+      height: 60px;
+    }
+  }
+
+  /* MOBILE */
+
+  @media screen and (max-width: 640px) {
+
+    .hrir-footer {
+      overflow-x: hidden;
+      padding: 36px 18px;
+    }
+
+    .hrir-footer__inner {
+      width: 100%;
+      max-width: 100%;
+      overflow-x: hidden;
+    }
+
+    .hrir-trust {
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .hrir-trust img {
+      height: 30px;
+      max-width: 100%;
+      width: auto;
+    }
+
+    .hrir-locations {
+      gap: 16px 22px;
+      margin-bottom: 42px;
+    }
+
+    .hrir-locations a {
+      font-size: 12px;
+      letter-spacing: 1.3px;
+    }
+
+    .hrir-logo img {
+      height: 58px;
+    }
+
+    .hrir-copy {
+      width: 100%;
+      text-align: center;
+      padding: 0 15px;
+    }
+
+    .hrir-disclaimer {
+      width: 100%;
+      max-width: 100%;
+      padding: 0 20px;
+      margin: 0 auto;
+      text-align: center !important;
+      font-size: 12px;
+      line-height: 1.6;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      white-space: normal;
+    }
+  }
+
+  /* SMALL PHONES */
+
+  @media screen and (max-width: 420px) {
+
+    .hrir-trust {
+      gap: 8px;
+    }
+
+    .hrir-trust img {
+      height: 27px;
+    }
+
+    .hrir-locations {
+      flex-direction: column;
+      gap: 13px;
+    }
+
+    .hrir-disclaimer {
+      padding: 0 15px;
+    }
+  }
+</style>
+<script>
+  (function() {
+    var currentYear = new Date().getFullYear();
+
+    var yearElement = document.getElementById('hrir-year');
+    if (yearElement) {
+      yearElement.textContent = currentYear;
+    }
+
+    function cleanDynamicValue(elementId, fallbackText) {
+      var element = document.getElementById(elementId);
+
+      if (!element) {
+        return;
+      }
+
+      var value = (element.textContent || '').trim();
+      var isEmpty = value === '';
+      var isUnrenderedCustomValue = value.indexOf('{{') > -1 || value.indexOf('}}') > -1;
+
+      if (isEmpty || isUnrenderedCustomValue) {
+        element.textContent = fallbackText;
+      }
+    }
+
+    cleanDynamicValue('hrir-company', 'Reece Windows & Doors');
+    cleanDynamicValue('hrir-disclaimer-company', 'Reece Windows & Doors');
+  })();
+</script>
+<!-- FOOTER END -->
