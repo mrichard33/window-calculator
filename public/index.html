@@ -1716,6 +1716,57 @@ var CALC_SESSION_ID = (window.crypto && crypto.randomUUID)
 // Same-origin deploys are unaffected — the origin resolves to itself.
 var API_BASE = 'https://estimate.getreecewindows.com';
 
+// Identifies THIS form as a source inside Lead Perfection. Constant regardless
+// of how the visitor arrived — a URL value still overrides (canvasser pro_id).
+// Without a default, organic arrivals on the main domain reach LP with no
+// source and route as generic.
+var DEFAULT_PRO_ID = '5862';
+var DEFAULT_LP_SOURCE_ID = '842';
+
+// Distinguishes the main-domain page from the legacy funnel in reporting.
+var PAGE_VARIANT = 'main-domain';
+
+// Attribution resolved once at load and reused for every event and the
+// contact upsert, so a mid-session URL change cannot split one session
+// across two sources.
+var ATTRIBUTION = (function () {
+  var q = new URLSearchParams(window.location.search);
+  var a = {
+    utm_source:   q.get('utm_source')   || '',
+    utm_medium:   q.get('utm_medium')   || '',
+    utm_campaign: q.get('utm_campaign') || '',
+    utm_content:  q.get('utm_content')  || '',
+    utm_term:     q.get('utm_term')     || '',
+    gclid:        q.get('gclid')    || q.get('wbraid') || q.get('gbraid') || '',
+    fbclid:       q.get('fbclid')   || '',
+    msclkid:      q.get('msclkid')  || '',
+    referrer:     document.referrer || '',
+    landing_path: window.location.pathname || ''
+  };
+
+  // Click IDs imply the channel even when the UTMs are missing.
+  if (!a.utm_source && a.gclid)  { a.utm_source = 'google';   a.utm_medium = a.utm_medium || 'cpc'; }
+  if (!a.utm_source && a.fbclid) { a.utm_source = 'facebook'; a.utm_medium = a.utm_medium || 'paidsocial'; }
+  if (!a.utm_source && a.msclkid){ a.utm_source = 'bing';     a.utm_medium = a.utm_medium || 'cpc'; }
+
+  // No UTMs and no click ID: classify from the referrer. Honest buckets only —
+  // never invent a campaign name.
+  if (!a.utm_source) {
+    var host = '';
+    try { host = a.referrer ? new URL(a.referrer).hostname.toLowerCase() : ''; } catch (e) { host = ''; }
+    if (!host) {
+      a.utm_source = 'direct';  a.utm_medium = 'none';
+    } else if (/(^|\.)reecewindows\.com$/.test(host) || /(^|\.)getreecewindows\.com$/.test(host)) {
+      a.utm_source = 'website'; a.utm_medium = 'internal';
+    } else if (/google\.|bing\.|duckduckgo\.|yahoo\.|search\.brave/.test(host)) {
+      a.utm_source = 'organic'; a.utm_medium = 'organic';
+    } else {
+      a.utm_source = host;      a.utm_medium = 'referral';
+    }
+  }
+  return a;
+})();
+
 function apiPost(path, payload) {
   return fetch(API_BASE + path, {
     method: 'POST',
@@ -1744,7 +1795,10 @@ function sendEvent(eventName, extra) {
       var dl = { event: 'calc_' + eventName };
       if (extra && typeof extra.step === 'number') dl.calc_step = extra.step;
       if (extra && extra.meta && typeof extra.meta === 'object') {
-        if (extra.meta.total) dl.calc_estimate_total = extra.meta.total;
+        // estimate_total is the current key; total is kept so any older caller
+        // still populates the GTM variable rather than dropping it silently.
+        var dlTotal = extra.meta.estimate_total || extra.meta.total;
+        if (dlTotal) dl.calc_estimate_total = dlTotal;
         if (extra.meta.window_count) dl.calc_window_count = extra.meta.window_count;
       }
       window.dataLayer.push(dl);
@@ -1753,7 +1807,13 @@ function sendEvent(eventName, extra) {
       session_id: CALC_SESSION_ID,
       contact_id: window.ghlContactId || null,
       event: eventName,
-      client_ts: new Date().toISOString()
+      client_ts: new Date().toISOString(),
+      page_variant: PAGE_VARIANT,
+      utm_source: ATTRIBUTION.utm_source,
+      utm_medium: ATTRIBUTION.utm_medium,
+      utm_campaign: ATTRIBUTION.utm_campaign,
+      utm_content: ATTRIBUTION.utm_content,
+      utm_term: ATTRIBUTION.utm_term
     };
     if (extra && typeof extra === 'object') {
       if (typeof extra.step === 'number') payload.step = extra.step;
@@ -1781,10 +1841,14 @@ function sendEvent(eventName, extra) {
 // no denominator. Emit it once at init instead. The flag is shared with
 // goToStep() so the Back buttons, which DO call goToStep(1), cannot fire a
 // second one and inflate the denominator.
+// page_view is the funnel's top in estimator_funnel_daily and shares this same
+// one-shot guard: the view counts distinct sessions, and a Back button firing a
+// second page_view would not double-count but would add noise to detail queries.
 var _step1ViewSent = false;
 function sendStep1View() {
   if (_step1ViewSent) return;
   _step1ViewSent = true;
+  sendEvent('page_view');
   sendEvent('step_view', { step: 1 });
 }
 // ============================================================
@@ -1817,14 +1881,21 @@ function gatherContactData() {
     state: state,
     postalCode: zip,
     utm: {
-      source: params.get("utm_source") || "",
-      medium: params.get("utm_medium") || "",
-      campaign: params.get("utm_campaign") || "",
-      content: params.get("utm_content") || "",
-      term: params.get("utm_term") || ""
+      source: ATTRIBUTION.utm_source,
+      medium: ATTRIBUTION.utm_medium,
+      campaign: ATTRIBUTION.utm_campaign,
+      content: ATTRIBUTION.utm_content,
+      term: ATTRIBUTION.utm_term
     },
-    lpSourceId: params.get("lp_source_id") || "",
-    proId: params.get("pro_id") || ""
+    clickIds: {
+      gclid: ATTRIBUTION.gclid,
+      fbclid: ATTRIBUTION.fbclid,
+      msclkid: ATTRIBUTION.msclkid
+    },
+    referrer: ATTRIBUTION.referrer,
+    // URL wins; the default only fills the gap for untagged arrivals.
+    lpSourceId: params.get("lp_source_id") || DEFAULT_LP_SOURCE_ID,
+    proId: params.get("pro_id") || DEFAULT_PRO_ID
   };
 }
 // ============================================================
@@ -1843,6 +1914,8 @@ function submitContact(includeEmail) {
     state: data.state,
     postalCode: data.postalCode,
     utm: data.utm,
+    clickIds: data.clickIds,
+    referrer: data.referrer,
     lpSourceId: data.lpSourceId,
     proId: data.proId,
     consent: !!(document.getElementById('consentCheckbox') && document.getElementById('consentCheckbox').checked),
@@ -2161,7 +2234,7 @@ function validateAndGoToStep2() {
     fbq('trackSingle', '926500861053624', 'Lead');
   }
   submitContact(false).then(function() {
-    sendEvent('contact_created');
+    sendEvent('step1_complete');
     goToStep(2);
   }).catch(function(err) {
     console.error('Contact submit failed:', err);
@@ -2196,6 +2269,7 @@ function validateAndGoToStep4() {
     if (firstError) firstError.focus();
     return;
   }
+  sendEvent('step3_complete');
   // Consent was captured on Step 1. Re-upsert the contact with email attached,
   // then start server-side email verification. Step 4 is unreachable until the
   // server confirms the 6-digit code.
@@ -2410,7 +2484,7 @@ if (n === 4) {
       var contactId = window.ghlContactId || null;
       var data = gatherContactData();
       var contactName = (data.firstName + ' ' + data.lastName).trim();
-      sendEvent('estimate_viewed', { meta: { total: estimateTotal, window_count: windowCount } });
+      sendEvent('estimate_completed', { meta: { estimate_total: estimateTotal, window_count: windowCount } });
       // One server call replaces the contact update, estimate webhook, and
       // PDF chain. Requires the token issued by /api/verify/check.
       apiPost('/api/estimate', {
@@ -3161,21 +3235,26 @@ function hideKeepEstimateModal() {
   document.getElementById('keepEstimateModal').classList.remove('active');
 }
 function openMeasurementVerification() {
-  sendEvent('booking_cta_clicked');
+  sendEvent('verify_cta_clicked');
   if (typeof fbq === 'function') {
     fbq('trackSingleCustom', '926500861053624', 'CalcBookingIntent');
   }
   var data = gatherContactData();
-  var params = new URLSearchParams(window.location.search);
   var url = 'https://landing.reecewindows.com/confirm-your-pricing?' +
     'first_name=' + encodeURIComponent(data.firstName) +
     '&last_name=' + encodeURIComponent(data.lastName) +
     '&phone=' + encodeURIComponent(data.phone) +
     '&email=' + encodeURIComponent(data.email);
-  // Append UTM parameters
+  // Forward the RESOLVED attribution, not the raw query string. Reading params
+  // here would hand the landing page nothing for an untagged organic arrival —
+  // the same blank-source defect this branch fixes, one hop later.
   ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'].forEach(function(key) {
-    var val = params.get(key);
+    var val = ATTRIBUTION[key];
     if (val) url += '&' + key + '=' + encodeURIComponent(val);
+  });
+  // Click IDs travel with the lead so offline conversion matching survives the hop.
+  ['gclid', 'fbclid', 'msclkid'].forEach(function(key) {
+    if (ATTRIBUTION[key]) url += '&' + key + '=' + encodeURIComponent(ATTRIBUTION[key]);
   });
   // Append pro_id and lp_source_id
   if (data.proId) url += '&pro_id=' + encodeURIComponent(data.proId);
