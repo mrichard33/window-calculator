@@ -1238,22 +1238,10 @@ header .header-intro {
 }
 </style>
 <!-- Facebook Pixel Code -->
-<script>
-!function(f,b,e,v,n,t,s)
-{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-n.queue=[];t=b.createElement(e);t.async=!0;
-t.src=v;s=b.getElementsByTagName(e)[0];
-s.parentNode.insertBefore(t,s)}(window, document,'script',
-'https://connect.facebook.net/en_US/fbevents.js');
-fbq('init', '926500861053624');
-fbq('track', 'PageView');
-</script>
-<noscript><img height="1" width="1" style="display:none"
-src="https://www.facebook.com/tr?id=926500861053624&ev=PageView&noscript=1"
-/></noscript>
-<!-- End Facebook Pixel Code -->
+<!-- Facebook Pixel intentionally NOT initialised here.
+     reecewindows.com loads pixel 926500861053624 sitewide. Initialising it
+     again double-counts PageView and Lead. Calculator events below target
+     that pixel explicitly via trackSingle. -->
 <script
   src="https://link.reecewindows.com/js/external-tracking.js"
   data-tracking-id="tk_e546f581cf8f430dad0ec8f0838d01d3"
@@ -1724,8 +1712,12 @@ var CALC_SESSION_ID = (window.crypto && crypto.randomUUID)
   ? crypto.randomUUID()
   : String(Date.now()) + '-' + Math.random().toString(16).slice(2);
 
+// Absolute base so the page works when served from reecewindows.com.
+// Same-origin deploys are unaffected — the origin resolves to itself.
+var API_BASE = 'https://estimate.getreecewindows.com';
+
 function apiPost(path, payload) {
-  return fetch(path, {
+  return fetch(API_BASE + path, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload || {})
@@ -1768,12 +1760,15 @@ function sendEvent(eventName, extra) {
       if (extra.meta && typeof extra.meta === 'object') payload.meta = extra.meta;
     }
     var body = JSON.stringify(payload);
+    // text/plain keeps this a CORS-simple request. application/json forces a
+    // preflight, and sendBeacon cannot perform one — cross-origin the event
+    // would be dropped silently. server.js parses text/plain on /api/events.
     if (navigator.sendBeacon) {
-      navigator.sendBeacon('/api/events', new Blob([body], { type: 'application/json' }));
+      navigator.sendBeacon(API_BASE + '/api/events', new Blob([body], { type: 'text/plain' }));
     } else {
-      fetch('/api/events', {
+      fetch(API_BASE + '/api/events', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'text/plain' },
         body: body,
         keepalive: true
       }).catch(function() {});
@@ -2278,7 +2273,7 @@ function verifyEnteredCode() {
     successMsg.textContent = 'Verified! Loading your estimate...';
     successMsg.classList.add('visible');
     sendEvent('verify_success');
-    if (typeof fbq === 'function') { fbq('trackCustom', 'CalcVerified'); }
+    if (typeof fbq === 'function') { fbq('trackSingleCustom', '926500861053624', 'CalcVerified'); }
     setTimeout(function() {
       hideVerificationModal();
       goToStep(4);
@@ -2374,7 +2369,7 @@ function setupPhoneFormatter() {
 // ============================================================
 function goToStep(n) {
   if (n === 1) { sendStep1View(); } else { sendEvent('step_view', { step: n }); }
-  if (typeof fbq === 'function' && n >= 2) { fbq('trackCustom', 'CalcStep' + n); }
+  if (typeof fbq === 'function' && n >= 2) { fbq('trackSingleCustom', '926500861053624', 'CalcStep' + n); }
   document.querySelectorAll('.section').forEach(s => s.classList.remove('visible'));
   document.getElementById('section-' + n).classList.add('visible');
   document.querySelectorAll('.stepper .step').forEach(s => {
@@ -2407,7 +2402,7 @@ if (n === 4) {
       window._estimateSent = true;
       // Fire Facebook Lead event (once per session)
       if (typeof fbq === 'function') {
-        fbq('track', 'Lead');
+        fbq('trackSingle', '926500861053624', 'CompleteRegistration');
       }
       // Update contact with estimate data immediately (independent of PDF generation)
       var estimateTotal = window.latestEstimateTotal || "";
@@ -3253,7 +3248,7 @@ function openMeasurementVerification() {
 
     <!-- LOGO -->
     <div class="hrir-logo">
-      <img src="https://storage.googleapis.com/msgsndr/SsBG7j5KQAIP1SFP2Sca/media/68c8417fa500176c396a096b.png" alt="{{location.name}}">
+      <img src="https://storage.googleapis.com/msgsndr/SsBG7j5KQAIP1SFP2Sca/media/68c8417fa500176c396a096b.png" alt="Reece Windows &amp; Doors">
     </div>
 
     <!-- POLICY LINKS -->
@@ -3265,12 +3260,12 @@ function openMeasurementVerification() {
 
     <!-- COPYRIGHT -->
     <p class="hrir-copy">
-      © <span id="hrir-year"></span> <span id="hrir-company">{{location.name}}</span> All Rights Reserved
+      © <span id="hrir-year"></span> <span id="hrir-company">Reece Windows &amp; Doors</span> All Rights Reserved
     </p>
 
     <!-- DISCLAIMER -->
     <p class="hrir-disclaimer">
-      <span id="hrir-disclaimer-company">{{location.name}}</span> is an independent entity and is not affiliated with, endorsed by, or sponsored by Meta Platforms, Inc. or Google LLC.
+      <span id="hrir-disclaimer-company">Reece Windows &amp; Doors</span> is an independent entity and is not affiliated with, endorsed by, or sponsored by Meta Platforms, Inc. or Google LLC.
       The information provided is for informational purposes only. Client testimonials reflect individual experiences and do not guarantee future results.
       This content is not a substitute for professional legal, financial, or insurance advice.
     </p>
