@@ -45,6 +45,12 @@ const ESTIMATE_TOKEN_SECRET = process.env.ESTIMATE_TOKEN_SECRET || '';
 const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || '')
   .split(',').map(function (s) { return s.trim(); }).filter(Boolean);
 
+// 'serve' keeps hosting the calculator page (current behaviour, the default).
+// 'redirect' makes this service API-only once the page lives on the main
+// domain, so it stops serving a duplicate of the primary money page.
+const PUBLIC_PAGE_MODE = (process.env.PUBLIC_PAGE_MODE || 'serve').toLowerCase();
+const CALC_PUBLIC_URL = process.env.CALC_PUBLIC_URL || 'https://reecewindows.com/window-estimate';
+
 const VERIFY_TTL_MS = (parseInt(process.env.VERIFY_CODE_TTL_MINUTES, 10) || 10) * 60 * 1000;
 const VERIFY_MAX_ATTEMPTS = parseInt(process.env.VERIFY_MAX_ATTEMPTS, 10) || 5;
 const VERIFY_MAX_SENDS_PER_HOUR = parseInt(process.env.VERIFY_MAX_SENDS_PER_HOUR, 10) || 6;
@@ -67,6 +73,10 @@ const ESTIMATE_TOKEN_TTL_MS = 60 * 60 * 1000; // 1 hour to reach step 4
 app.disable('x-powered-by');
 app.set('trust proxy', true); // Railway sits behind a proxy
 app.use(express.json({ limit: '1mb' }));
+// sendBeacon cannot issue a preflight, so cross-origin it must post a
+// CORS-simple content type. /api/events accepts text/plain and parses it in
+// the handler; express.json still serves application/json callers unchanged.
+app.use(express.text({ type: 'text/plain', limit: '64kb' }));
 
 app.use(function (req, res, next) {
   res.set('X-Content-Type-Options', 'nosniff');
@@ -75,15 +85,34 @@ app.use(function (req, res, next) {
   next();
 });
 
-// Origin gate for the API. Same-origin requests are always fine; anything
-// cross-origin must be on the allow list. No CORS headers are emitted — the
-// page and API are same-origin by design.
+// Origin gate + CORS for the API. The page now ships from
+// reecewindows.com/window-estimate while this service stays on Railway, so
+// API calls are genuinely cross-origin and the browser requires real CORS
+// headers. The allow list is authoritative: an empty ALLOWED_ORIGINS now
+// DENIES every cross-origin caller rather than allowing all of them.
 app.use('/api', function (req, res, next) {
   const origin = req.get('origin');
-  if (!origin || ALLOWED_ORIGINS.length === 0 || ALLOWED_ORIGINS.indexOf(origin) !== -1) {
-    return next();
+
+  // Caches must never serve one origin's ACAO header to another.
+  res.set('Vary', 'Origin');
+
+  // No Origin header: server-to-server, curl, same-origin navigation.
+  if (!origin) return next();
+
+  if (ALLOWED_ORIGINS.indexOf(origin) === -1) {
+    return res.status(403).json({ error: 'ORIGIN_NOT_ALLOWED' });
   }
-  return res.status(403).json({ error: 'ORIGIN_NOT_ALLOWED' });
+
+  // Echo the specific origin, never '*' — these endpoints write to GHL.
+  // Credentials stay off: auth is a body token (estimateToken) and no
+  // endpoint issues Set-Cookie.
+  res.set('Access-Control-Allow-Origin', origin);
+  res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.set('Access-Control-Allow-Headers', 'Content-Type');
+  res.set('Access-Control-Max-Age', '86400');
+
+  if (req.method === 'OPTIONS') return res.status(204).end();
+  return next();
 });
 
 // Small in-memory per-IP rate limiter. Single replica; resets on deploy.
@@ -457,7 +486,14 @@ app.post('/api/estimate', rateLimit(10, 10 * 60 * 1000), async function (req, re
 // POST /api/events — first-party funnel analytics -> HL Supabase
 // ---------------------------------------------------------------------------
 app.post('/api/events', rateLimit(120, 60 * 1000), function (req, res) {
-  const p = req.body || {};
+  let p = req.body || {};
+  // text/plain bodies (sendBeacon) arrive as a raw string.
+  if (typeof p === 'string') {
+    try { p = JSON.parse(p); } catch (e) { return res.status(400).json({ error: 'BAD_EVENT' }); }
+  }
+  if (!p || typeof p !== 'object' || Array.isArray(p)) {
+    return res.status(400).json({ error: 'BAD_EVENT' });
+  }
   const row = {
     session_id: str(p.session_id, 64),
     ghl_contact_id: p.contact_id ? str(p.contact_id, 64) : null,
@@ -503,11 +539,29 @@ app.get('/healthz', function (req, res) {
   });
 });
 
+// This service is infrastructure. The indexable page is CALC_PUBLIC_URL on
+// the main domain; anything served here is a duplicate on a second domain.
+app.get('/robots.txt', function (req, res) {
+  res.type('text/plain').send('User-agent: *\nDisallow: /\n');
+});
+
+// API-only mode. Covers /index.html as well as / — express.static resolves
+// both to the same file, so a redirect on / alone would leave the duplicate
+// reachable. Ships as 'serve'; flipped after the main-domain page is live.
+if (PUBLIC_PAGE_MODE === 'redirect') {
+  app.get(['/', '/index.html'], function (req, res) {
+    return res.redirect(301, CALC_PUBLIC_URL);
+  });
+}
+
 app.use(express.static(path.join(__dirname, 'public'), {
   index: 'index.html',
   setHeaders: function (res, filePath) {
     if (filePath.endsWith('.html')) {
       res.set('Cache-Control', 'no-cache'); // always revalidate the page itself
+      // Authoritative in a way robots.txt is not: a disallowed URL can still
+      // be indexed if linked, but a noindex header cannot.
+      res.set('X-Robots-Tag', 'noindex, nofollow');
     } else {
       res.set('Cache-Control', 'public, max-age=300');
     }
