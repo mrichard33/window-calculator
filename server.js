@@ -232,6 +232,15 @@ app.post('/api/contact', rateLimit(20, 10 * 60 * 1000), async function (req, res
     if (utm.medium) customFields.push({ key: 'utm_medium', field_value: str(utm.medium) });
     if (utm.campaign) customFields.push({ key: 'utm_campaign', field_value: str(utm.campaign) });
     if (utm.content) customFields.push({ key: 'utm_content', field_value: str(utm.content) });
+    if (utm.term) customFields.push({ key: 'utm_term', field_value: str(utm.term) });
+    // Click IDs and referrer — without these, Google Ads and Meta offline
+    // conversion matching is impossible. Keys match the existing GHL click-ID
+    // field family (fbclid, msclkid, ttclid, last_referrer).
+    const clickIds = p.clickIds || {};
+    if (clickIds.gclid) customFields.push({ key: 'gclid', field_value: str(clickIds.gclid, 400) });
+    if (clickIds.fbclid) customFields.push({ key: 'fbclid', field_value: str(clickIds.fbclid, 400) });
+    if (clickIds.msclkid) customFields.push({ key: 'msclkid', field_value: str(clickIds.msclkid, 400) });
+    if (p.referrer) customFields.push({ key: 'last_referrer', field_value: str(p.referrer, 400) });
     if (p.lpSourceId) customFields.push({ key: 'lp_source_id', field_value: str(p.lpSourceId) });
     if (p.proId) customFields.push({ key: 'pro_id', field_value: str(p.proId) });
     // Consent audit trail — timestamps are UTC ISO 8601 by design.
@@ -494,18 +503,29 @@ app.post('/api/events', rateLimit(120, 60 * 1000), function (req, res) {
   if (!p || typeof p !== 'object' || Array.isArray(p)) {
     return res.status(400).json({ error: 'BAD_EVENT' });
   }
+  // estimator_events is the table estimator_funnel_daily reads. Its column
+  // names differ from the old calculator_events shape (contact_id not
+  // ghl_contact_id, event_type not event, payload not meta) and it has no
+  // client_ts column — an unknown column makes PostgREST reject the whole row.
+  // page_variant, event_type and payload are NOT NULL; the defaults satisfy all three.
   const row = {
     session_id: str(p.session_id, 64),
-    ghl_contact_id: p.contact_id ? str(p.contact_id, 64) : null,
-    event: str(p.event, 64),
+    contact_id: p.contact_id ? str(p.contact_id, 64) : null,
+    page_variant: str(p.page_variant, 40) || 'unknown',
+    event_type: str(p.event, 64),
     step: Number.isInteger(p.step) ? p.step : null,
-    meta: (p.meta && typeof p.meta === 'object' && !Array.isArray(p.meta)) ? p.meta : {},
-    client_ts: p.client_ts ? str(p.client_ts, 40) : null
+    payload: (p.meta && typeof p.meta === 'object' && !Array.isArray(p.meta)) ? p.meta : {},
+    utm_source: p.utm_source ? str(p.utm_source, 120) : null,
+    utm_medium: p.utm_medium ? str(p.utm_medium, 120) : null,
+    utm_campaign: p.utm_campaign ? str(p.utm_campaign, 200) : null,
+    utm_content: p.utm_content ? str(p.utm_content, 200) : null,
+    utm_term: p.utm_term ? str(p.utm_term, 200) : null,
+    user_agent: str(req.get('user-agent') || '', 400) || null
   };
-  if (!row.session_id || !row.event) return res.status(400).json({ error: 'BAD_EVENT' });
+  if (!row.session_id || !row.event_type) return res.status(400).json({ error: 'BAD_EVENT' });
 
   if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
-    fetch(SUPABASE_URL + '/rest/v1/calculator_events', {
+    fetch(SUPABASE_URL + '/rest/v1/estimator_events', {
       method: 'POST',
       headers: {
         'apikey': SUPABASE_SERVICE_ROLE_KEY,
