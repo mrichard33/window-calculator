@@ -1746,6 +1746,17 @@ function apiPost(path, payload) {
 // First-party funnel events. Analytics must never break the funnel.
 function sendEvent(eventName, extra) {
   try {
+    // Mirror to GTM so GA4 sees the funnel. Never let this throw.
+    try {
+      window.dataLayer = window.dataLayer || [];
+      var dl = { event: 'calc_' + eventName };
+      if (extra && typeof extra.step === 'number') dl.calc_step = extra.step;
+      if (extra && extra.meta && typeof extra.meta === 'object') {
+        if (extra.meta.total) dl.calc_estimate_total = extra.meta.total;
+        if (extra.meta.window_count) dl.calc_window_count = extra.meta.window_count;
+      }
+      window.dataLayer.push(dl);
+    } catch (e) {}
     var payload = {
       session_id: CALC_SESSION_ID,
       contact_id: window.ghlContactId || null,
@@ -1768,6 +1779,18 @@ function sendEvent(eventName, extra) {
       }).catch(function() {});
     }
   } catch (e) { /* never throw from analytics */ }
+}
+
+// Step 1 is visible from markup (section-1 carries "visible"), so goToStep(1)
+// never runs on load and no step_view was ever emitted for it — the funnel had
+// no denominator. Emit it once at init instead. The flag is shared with
+// goToStep() so the Back buttons, which DO call goToStep(1), cannot fire a
+// second one and inflate the denominator.
+var _step1ViewSent = false;
+function sendStep1View() {
+  if (_step1ViewSent) return;
+  _step1ViewSent = true;
+  sendEvent('step_view', { step: 1 });
 }
 // ============================================================
 //  GATHER CONTACT DATA FROM FORM FIELDS
@@ -2138,10 +2161,16 @@ function validateAndGoToStep2() {
     return;
   }
   sendEvent('consent_checked');
+  // The GHL contact is created here — this is the lead, not Step 4.
+  if (typeof fbq === 'function') {
+    fbq('trackSingle', '926500861053624', 'Lead');
+  }
   submitContact(false).then(function() {
+    sendEvent('contact_created');
     goToStep(2);
   }).catch(function(err) {
     console.error('Contact submit failed:', err);
+    sendEvent('contact_failed', { meta: { reason: String((err && err.status) || 'network') } });
     // The funnel continues; the Step 3 re-submit retries the upsert.
     goToStep(2);
   });
@@ -2344,7 +2373,7 @@ function setupPhoneFormatter() {
 //  STEP NAVIGATION — 4 STEPS
 // ============================================================
 function goToStep(n) {
-  sendEvent('step_view', { step: n });
+  if (n === 1) { sendStep1View(); } else { sendEvent('step_view', { step: n }); }
   if (typeof fbq === 'function' && n >= 2) { fbq('trackCustom', 'CalcStep' + n); }
   document.querySelectorAll('.section').forEach(s => s.classList.remove('visible'));
   document.getElementById('section-' + n).classList.add('visible');
@@ -3121,17 +3150,26 @@ function getInstallLabel(type) {
   })();
 
   updateRunningTotal();
+
+  // Step 1 is already on screen by the time init() runs — this is the moment it
+  // first becomes visible to the lead, so this is where its step_view belongs.
+  sendStep1View();
 })();
 // ============================================================
 //  KEEP ESTIMATE MODAL
 // ============================================================
 function showKeepEstimateModal() {
+  sendEvent('keep_estimate_shown');
   document.getElementById('keepEstimateModal').classList.add('active');
 }
 function hideKeepEstimateModal() {
   document.getElementById('keepEstimateModal').classList.remove('active');
 }
 function openMeasurementVerification() {
+  sendEvent('booking_cta_clicked');
+  if (typeof fbq === 'function') {
+    fbq('trackSingleCustom', '926500861053624', 'CalcBookingIntent');
+  }
   var data = gatherContactData();
   var params = new URLSearchParams(window.location.search);
   var url = 'https://landing.reecewindows.com/confirm-your-pricing?' +
@@ -3161,7 +3199,7 @@ function openMeasurementVerification() {
       <h3>Leave Estimate Unverified?</h3>
       <p>Your estimate will remain available, but final pricing and scheduling priority are confirmed during verification.</p>
       <button class="btn btn-primary" onclick="openMeasurementVerification()">Secure My Exact Price &rarr;</button>
-      <button class="btn-link" onclick="window.location.href='https://reecewindows.com/';">Leave Unverified</button>
+      <button class="btn-link" onclick="sendEvent('left_unverified'); window.location.href='https://reecewindows.com/';">Leave Unverified</button>
     </div>
   </div>
   <!-- Email Verification Modal -->
