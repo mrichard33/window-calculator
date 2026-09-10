@@ -194,6 +194,14 @@ fbq('track', 'PageView');
   </script>
   <noscript><img height="1" width="1" style="display:none"
     src="https://www.facebook.com/tr?id=926500861053624&amp;ev=PageView&amp;noscript=1" alt=""></noscript>
+  <!-- Reece's own visitor tracker, served by its own Railway service. Loaded by
+       the HOST page, never by /embed/calculator.js: on WordPress, Socius installs
+       this same line site-wide, so an embed that injected it would run two
+       trackers on one page. The collector URL is the script's built-in default,
+       which is why there is no data-collector attribute.
+       data-sister-domains lets one visitor id follow the lead across
+       reecewindows.com and getreecewindows.com. -->
+  <script src="https://track.getreecewindows.com/reece-tracker.js" data-reece-tracker data-sister-domains="reecewindows.com,getreecewindows.com" defer></script>
   <!-- GHL external tracking. Loaded by the host page on both domains; the
        embed never loads it, so it cannot double-fire. -->
   <script
