@@ -1729,6 +1729,173 @@
     });
   }
 
+  // ============================================================
+  //  REECE TRACKER BRIDGE
+  //  Mirrors this calculator's funnel into Reece's own visitor tracker, so a
+  //  calculator session shows up in LP Supabase site_events under the same
+  //  visitor id as the rest of the visitor's browsing — that is what lets
+  //  I.STITCH tie the visit to a GHL contact.
+  //
+  //  The host page loads the tracker, and it loads with `defer`, so this file
+  //  can and does run first. Everything below therefore assumes ReeceTrack may
+  //  be missing, may never arrive, and may throw. Analytics must never break
+  //  the funnel: nothing in here is allowed to escape as an exception.
+  // ============================================================
+  var TRACKER_QUEUE_MAX = 50;      // events held while the tracker loads
+  var TRACKER_WAIT_MS   = 10000;   // give up on a tracker that never arrives
+  var TRACKER_POLL_MS   = 500;     // how often to look for it
+
+  // Keys and values that must never leave this page as tracker props. The
+  // tracker's identify() carries the lead's details deliberately; a funnel
+  // event never should.
+  var TRACKER_PII_KEY = /email|phone|name|address|street|zip/i;
+
+  var trackerQueue    = [];
+  var trackerTimer    = null;
+  var trackerDeadline = 0;
+  var trackerGaveUp   = false;
+
+  function trackerReady() {
+    return typeof window.ReeceTrack === 'object' && window.ReeceTrack !== null;
+  }
+
+  // Returns true when the tracker was present, whether or not the call itself
+  // worked. A tracker that is loaded but throwing must not requeue forever.
+  // One call handles both kinds so a track and an identify cannot be reordered
+  // relative to each other.
+  function trackerDeliver(entry) {
+    if (!trackerReady()) return false;
+    try {
+      if (entry.kind === 'identify') {
+        if (typeof window.ReeceTrack.identify === 'function') {
+          window.ReeceTrack.identify(entry.traits);
+        }
+      } else if (typeof window.ReeceTrack.track === 'function') {
+        window.ReeceTrack.track(entry.name, entry.props);
+      }
+    } catch (e) { /* never throw from analytics */ }
+    return true;
+  }
+
+  function trackerFlush() {
+    if (!trackerReady()) return false;
+    var pending = trackerQueue;
+    trackerQueue = [];
+    for (var i = 0; i < pending.length; i++) trackerDeliver(pending[i]);
+    return true;
+  }
+
+  function trackerWatch() {
+    if (trackerTimer || trackerGaveUp) return;
+    // The 10s budget starts at the FIRST queued event, not at each one, so a
+    // late funnel step cannot keep extending a tracker that is never coming.
+    trackerDeadline = Date.now() + TRACKER_WAIT_MS;
+    trackerTimer = setInterval(function () {
+      try {
+        if (trackerFlush()) {
+          clearInterval(trackerTimer);
+          trackerTimer = null;
+          return;
+        }
+        if (Date.now() >= trackerDeadline) {
+          clearInterval(trackerTimer);
+          trackerTimer = null;
+          trackerGaveUp = true;
+          trackerQueue  = [];   // drop it; the /api/events beacon still has these
+        }
+      } catch (e) {
+        clearInterval(trackerTimer);
+        trackerTimer = null;
+      }
+    }, TRACKER_POLL_MS);
+  }
+
+  function trackerEnqueue(entry) {
+    if (trackerGaveUp) return;
+    // Keep the FIRST 50. Dropping the tail preserves the order of what does
+    // send, and the head of a funnel is the part worth having.
+    if (trackerQueue.length >= TRACKER_QUEUE_MAX) return;
+    trackerQueue.push(entry);
+    trackerWatch();
+  }
+
+  // Deliver now if the tracker is up, otherwise queue. Anything already waiting
+  // wins: this joins the back of the queue rather than overtaking it, so a call
+  // made between the tracker arriving and the next poll tick cannot land first.
+  function trackerSend(entry) {
+    if (trackerQueue.length) {
+      trackerEnqueue(entry);
+      trackerFlush();
+      return;
+    }
+    if (!trackerDeliver(entry)) trackerEnqueue(entry);
+  }
+
+  // Copy of extra.meta minus anything that identifies the lead.
+  function trackerProps(extra) {
+    var props = {
+      page_variant:    PAGE_VARIANT,
+      calc_session_id: CALC_SESSION_ID
+    };
+    if (extra && typeof extra.step === 'number') props.step = extra.step;
+    var meta = extra && extra.meta;
+    if (meta && typeof meta === 'object') {
+      Object.keys(meta).forEach(function (key) {
+        if (TRACKER_PII_KEY.test(key)) return;
+        var value = meta[key];
+        var asText = '';
+        try { asText = value == null ? '' : String(value); } catch (e) { return; }
+        if (asText.indexOf('@') !== -1) return;   // an address that slipped a key check
+        props[key] = value;
+      });
+    }
+    return props;
+  }
+
+  function trackerMirror(eventName, extra) {
+    try {
+      trackerSend({ kind: 'track', name: 'calc_' + eventName, props: trackerProps(extra) });
+    } catch (e) { /* never throw from analytics */ }
+  }
+
+  // The visitor id the tracker assigned this browser. Sent alongside the lead
+  // so the two systems can be joined server-side later; '' whenever the tracker
+  // is absent, which is always a normal outcome, never an error.
+  function trackerVisitorId() {
+    try {
+      if (trackerReady() && typeof window.ReeceTrack.getVisitorId === 'function') {
+        var id = window.ReeceTrack.getVisitorId();
+        if (typeof id === 'string' && id) return id;
+      }
+    } catch (e) { /* never throw from analytics */ }
+    return '';
+  }
+
+  // Last identify payload sent, so the same details are not re-sent. Step 1 and
+  // Step 3 both upsert the contact and verification can follow, but only a
+  // CHANGED set of details is worth another identify row for I.STITCH to match.
+  var lastIdentity = '';
+
+  // Ties this browser's visitor id to the person. Queued like the funnel events
+  // when the tracker has not loaded yet: a lead who fills Step 1 faster than a
+  // slow network delivers the script is exactly the lead worth identifying.
+  function trackerIdentify() {
+    try {
+      var data = gatherContactData();
+      var traits = {};
+      if (data.email) traits.email = data.email;
+      if (data.phone) traits.phone = data.phone;
+      var fullName = (data.firstName + ' ' + data.lastName).trim();
+      if (fullName) traits.name = fullName;
+      // Nothing to match on — I.STITCH keys on cid, then email, then phone.
+      if (!traits.email && !traits.phone) return;
+      var signature = JSON.stringify(traits);
+      if (signature === lastIdentity) return;
+      lastIdentity = signature;
+      trackerSend({ kind: 'identify', traits: traits });
+    } catch (e) { /* never throw from analytics */ }
+  }
+
   // First-party funnel events. Analytics must never break the funnel.
   function sendEvent(eventName, extra) {
     try {
@@ -1776,6 +1943,10 @@
           keepalive: true
         }).catch(function() {});
       }
+      // Mirror the same event into Reece's visitor tracker. This is additive:
+      // the beacon above remains the calculator's own funnel table, and the
+      // mirror is what puts the funnel next to the visitor's wider session.
+      trackerMirror(eventName, extra);
     } catch (e) { /* never throw from analytics */ }
   }
 
@@ -1867,11 +2038,19 @@
       consentVersion: CONSENT_VERSION
     };
     if (includeEmail && data.email) payload.email = data.email;
+    // Server-side this is logged only. It exists so the visitor's browsing and
+    // their GHL contact can be joined without waiting on a GHL custom field.
+    var visitorId = trackerVisitorId();
+    if (visitorId) payload.visitor_id = visitorId;
     return apiPost('/api/contact', payload).then(function(result) {
       if (result && result.contactId) {
         state.contactId = result.contactId;
         console.log('Contact upserted via server:', result.contactId);
       }
+      // Only once the upsert succeeded: I.STITCH matches identify rows against
+      // GHL contacts, so identifying before the contact exists gives it nothing
+      // to find on the next 5-minute pass.
+      trackerIdentify();
       return result;
     });
   }
@@ -2298,6 +2477,9 @@
       successMsg.textContent = 'Verified! Loading your estimate...';
       successMsg.classList.add('rc-visible');
       sendEvent('verify_success');
+      // Re-identify: the phone can be corrected during verification, and the
+      // email is confirmed real only now. Skipped internally if nothing changed.
+      trackerIdentify();
       if (typeof fbq === 'function') { fbq('trackSingleCustom', META_PIXEL_ID, 'CalcVerified'); }
       setTimeout(function() {
         hideVerificationModal();
@@ -2439,7 +2621,7 @@
         sendEvent('estimate_completed', { meta: { estimate_total: estimateTotal, window_count: windowCount } });
         // One server call replaces the contact update, estimate webhook, and
         // PDF chain. Requires the token issued by /api/verify/check.
-        apiPost('/api/estimate', {
+        var estimatePayload = {
           estimateToken: state.estimateToken || '',
           contactId: contactId || '',
           contactName: contactName,
@@ -2449,7 +2631,11 @@
           windowCount: windowCount,
           pageVariant: PAGE_VARIANT,
           estimate: buildEstimatePayload()
-        }).catch(function(err) {
+        };
+        // Logged server-side only, same as on /api/contact.
+        var estimateVisitorId = trackerVisitorId();
+        if (estimateVisitorId) estimatePayload.visitor_id = estimateVisitorId;
+        apiPost('/api/estimate', estimatePayload).catch(function(err) {
           console.error('[Estimate] server submit failed, enabling retry:', err);
           state.estimateSent = false;
         });
