@@ -3448,6 +3448,11 @@
     el.setAttribute('data-rc-mounted', '1');
     mountEl = el;
     injectStyles();
+    // Assigning innerHTML REPLACES whatever the host put in the mount. The
+    // standalone page relies on that to clear its loading placeholder; the
+    // WordPress snippet is an empty div and is unaffected. Never switch this
+    // to appendChild/insertAdjacentHTML — the placeholder would survive and
+    // sit above the calculator.
     el.innerHTML = HTML;
     init();
     loadGoogleMaps();

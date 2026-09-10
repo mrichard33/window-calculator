@@ -648,6 +648,17 @@ app.get(LEGACY_PAGE_PATHS, function (req, res) {
   return redirectKeepQuery(req, res, '/');
 });
 
+// Fingerprint-by-filename assets: a change means a new filename, so these can
+// be cached for a year and never revalidated. Mounted before the general
+// static handler, which only grants 5 minutes.
+app.use('/static', express.static(path.join(__dirname, 'public/static'), {
+  immutable: true,
+  maxAge: '365d',
+  setHeaders: function (res) {
+    res.set('Cache-Control', 'public, max-age=31536000, immutable');
+  }
+}));
+
 app.use(express.static(path.join(__dirname, 'public'), {
   index: 'index.html',
   setHeaders: function (res, filePath) {
