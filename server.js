@@ -204,6 +204,13 @@ function redirectKeepQuery(req, res, target) {
   return res.redirect(301, qs === -1 ? target : target + req.originalUrl.slice(qs));
 }
 
+// Which page produced this lead. Only these two values are ever accepted —
+// anything else is a client that got creative, and gets ignored.
+const PAGE_VARIANTS = ['standalone', 'main-domain'];
+function pageVariant(p) {
+  const v = str(p.pageVariant || p.page_variant, 40);
+  return PAGE_VARIANTS.indexOf(v) === -1 ? null : v;
+}
 
 // ---------------------------------------------------------------------------
 // POST /api/contact — consent-gated GHL upsert
@@ -278,6 +285,14 @@ app.post('/api/contact', rateLimit(20, 10 * 60 * 1000), async function (req, res
     customFields.push({ key: 'calc_consent_at', field_value: new Date().toISOString() });
     customFields.push({ key: 'calc_consent_version', field_value: str(p.consentVersion || 'unknown', 64) });
 
+    // Which of the two pages produced this lead. It is appended to the tag list
+    // this endpoint already sent, so nothing that was being kept is dropped.
+    // LP source, sub-source, pro_id and srs_id are untouched — page comparison
+    // happens in GHL, not by minting a second Lead Perfection source.
+    const variant = pageVariant(p);
+    const tags = ['window-estimator'];
+    if (variant) tags.push('calc-page:' + variant);
+
     const body = {
       locationId: GHL_LOCATION_ID,
       firstName: firstName,
@@ -288,7 +303,7 @@ app.post('/api/contact', rateLimit(20, 10 * 60 * 1000), async function (req, res
       state: str(p.state, 50),
       postalCode: str(p.postalCode, 20),
       source: 'Window Estimator',
-      tags: ['window-estimator'],
+      tags: tags,
       customFields: customFields
     };
     const email = str(p.email, 200);
@@ -453,15 +468,20 @@ app.post('/api/estimate', rateLimit(10, 10 * 60 * 1000), async function (req, re
   const windowCount = parseInt(p.windowCount, 10) || 0;
 
   // 1) Contact estimate update (mirrors the old client-side PUT)
+  const variant = pageVariant(p);
   if (contactId) {
     try {
       const customFields = [];
       if (estimateTotal) customFields.push({ key: 'estimate_total', field_value: estimateTotal });
       if (windowCount) customFields.push({ key: 'window_count', field_value: String(windowCount) });
+      // Carry calc-page through this update too. Whether GHL merges or replaces
+      // the tag list here, the contact ends up with the page it came from.
+      const tags = ['window-estimator', 'estimator-completed'];
+      if (variant) tags.push('calc-page:' + variant);
       await ghl('/contacts/' + contactId, {
         method: 'PUT',
         body: {
-          tags: ['window-estimator', 'estimator-completed'],
+          tags: tags,
           customFields: customFields
         }
       });
@@ -482,6 +502,7 @@ app.post('/api/estimate', rateLimit(10, 10 * 60 * 1000), async function (req, re
         event: 'estimate_completed',
         estimate_total: estimateTotal,
         window_count: windowCount,
+        page_variant: variant || '',
         ghl_location_id: GHL_LOCATION_ID
       })
     }).then(function (resp) {
