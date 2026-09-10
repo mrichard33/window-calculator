@@ -7,8 +7,14 @@
  * credential: the GHL Private Integration Token lives in GHL_API_KEY (Railway
  * env var) and every GHL call happens here.
  *
+ * It serves two things: the standalone landing page at / (the destination for
+ * paid, SMS, email, QR and vendor traffic) and /embed/calculator.js, the single
+ * copy of the calculator that both that page and the WordPress SEO page at
+ * reecewindows.com/window-estimate load.
+ *
  * Endpoints:
- *   GET  /healthz            — liveness (also proves the PORT fix)
+ *   GET  /health, /healthz   — liveness (also proves the PORT fix)
+ *   GET  /embed/calculator.js — the calculator, for any allowed host page
  *   POST /api/contact        — GHL upsert; refuses without consent:true;
  *                              stamps calc_consent_at + calc_consent_version
  *   POST /api/verify/start   — issues a 6-digit code server-side, delivers it
@@ -42,14 +48,30 @@ const PDF_SERVICE_URL = process.env.PDF_SERVICE_URL || '';
 const SUPABASE_URL = (process.env.SUPABASE_URL || '').replace(/\/$/, '');
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 const ESTIMATE_TOKEN_SECRET = process.env.ESTIMATE_TOKEN_SECRET || '';
+// The two host pages plus the Railway domain. Baked in as the default so the
+// WordPress page cannot be broken by an env var edit; ALLOWED_ORIGINS still
+// overrides it when a new origin needs adding.
+const DEFAULT_ALLOWED_ORIGINS = [
+  'https://reecewindows.com',
+  'https://www.reecewindows.com',
+  'https://estimate.getreecewindows.com'
+];
 const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || '')
-  .split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+  .split(',').map(function (s) { return s.trim(); }).filter(Boolean)
+  .concat(DEFAULT_ALLOWED_ORIGINS)
+  .filter(function (o, i, all) { return all.indexOf(o) === i; });
 
-// 'serve' keeps hosting the calculator page (current behaviour, the default).
-// 'redirect' makes this service API-only once the page lives on the main
-// domain, so it stops serving a duplicate of the primary money page.
-const PUBLIC_PAGE_MODE = (process.env.PUBLIC_PAGE_MODE || 'serve').toLowerCase();
-const CALC_PUBLIC_URL = process.env.CALC_PUBLIC_URL || 'https://reecewindows.com/window-estimate';
+// Paths a link in an old ad, text or printed QR code might still point at.
+// git history shows this service has only ever served the page at / and
+// /index.html, so these are insurance rather than a known break — but a lead
+// who lands on one must still reach the calculator, with their attribution
+// intact.
+const LEGACY_PAGE_PATHS = [
+  '/index.html',
+  '/window-estimate', '/window-estimate/',
+  '/estimate', '/estimate/',
+  '/calculator', '/calculator/'
+];
 
 const VERIFY_TTL_MS = (parseInt(process.env.VERIFY_CODE_TTL_MINUTES, 10) || 10) * 60 * 1000;
 const VERIFY_MAX_ATTEMPTS = parseInt(process.env.VERIFY_MAX_ATTEMPTS, 10) || 5;
@@ -174,6 +196,22 @@ function normalizePhone(raw) {
 
 function str(v, max) { return String(v == null ? '' : v).trim().slice(0, max || 200); }
 
+// Every redirect in this app goes through here. A plain res.redirect drops the
+// query string, and that query string is the whole attribution chain: utm_*,
+// fbclid, gclid. Losing it turns a paid click into an unattributed lead.
+function redirectKeepQuery(req, res, target) {
+  const qs = req.originalUrl.indexOf('?');
+  return res.redirect(301, qs === -1 ? target : target + req.originalUrl.slice(qs));
+}
+
+// Which page produced this lead. Only these two values are ever accepted —
+// anything else is a client that got creative, and gets ignored.
+const PAGE_VARIANTS = ['standalone', 'main-domain'];
+function pageVariant(p) {
+  const v = str(p.pageVariant || p.page_variant, 40);
+  return PAGE_VARIANTS.indexOf(v) === -1 ? null : v;
+}
+
 // ---------------------------------------------------------------------------
 // POST /api/contact — consent-gated GHL upsert
 // ---------------------------------------------------------------------------
@@ -247,6 +285,14 @@ app.post('/api/contact', rateLimit(20, 10 * 60 * 1000), async function (req, res
     customFields.push({ key: 'calc_consent_at', field_value: new Date().toISOString() });
     customFields.push({ key: 'calc_consent_version', field_value: str(p.consentVersion || 'unknown', 64) });
 
+    // Which of the two pages produced this lead. It is appended to the tag list
+    // this endpoint already sent, so nothing that was being kept is dropped.
+    // LP source, sub-source, pro_id and srs_id are untouched — page comparison
+    // happens in GHL, not by minting a second Lead Perfection source.
+    const variant = pageVariant(p);
+    const tags = ['window-estimator'];
+    if (variant) tags.push('calc-page:' + variant);
+
     const body = {
       locationId: GHL_LOCATION_ID,
       firstName: firstName,
@@ -257,7 +303,7 @@ app.post('/api/contact', rateLimit(20, 10 * 60 * 1000), async function (req, res
       state: str(p.state, 50),
       postalCode: str(p.postalCode, 20),
       source: 'Window Estimator',
-      tags: ['window-estimator'],
+      tags: tags,
       customFields: customFields
     };
     const email = str(p.email, 200);
@@ -422,15 +468,20 @@ app.post('/api/estimate', rateLimit(10, 10 * 60 * 1000), async function (req, re
   const windowCount = parseInt(p.windowCount, 10) || 0;
 
   // 1) Contact estimate update (mirrors the old client-side PUT)
+  const variant = pageVariant(p);
   if (contactId) {
     try {
       const customFields = [];
       if (estimateTotal) customFields.push({ key: 'estimate_total', field_value: estimateTotal });
       if (windowCount) customFields.push({ key: 'window_count', field_value: String(windowCount) });
+      // Carry calc-page through this update too. Whether GHL merges or replaces
+      // the tag list here, the contact ends up with the page it came from.
+      const tags = ['window-estimator', 'estimator-completed'];
+      if (variant) tags.push('calc-page:' + variant);
       await ghl('/contacts/' + contactId, {
         method: 'PUT',
         body: {
-          tags: ['window-estimator', 'estimator-completed'],
+          tags: tags,
           customFields: customFields
         }
       });
@@ -451,6 +502,7 @@ app.post('/api/estimate', rateLimit(10, 10 * 60 * 1000), async function (req, re
         event: 'estimate_completed',
         estimate_total: estimateTotal,
         window_count: windowCount,
+        page_variant: variant || '',
         ghl_location_id: GHL_LOCATION_ID
       })
     }).then(function (resp) {
@@ -551,7 +603,9 @@ app.post('/api/events', rateLimit(120, 60 * 1000), function (req, res) {
 // ---------------------------------------------------------------------------
 // Health + static
 // ---------------------------------------------------------------------------
-app.get('/healthz', function (req, res) {
+// /health is what uptime monitoring asks for; /healthz stays for anything
+// already pointed at it.
+app.get(['/health', '/healthz'], function (req, res) {
   res.json({
     ok: true,
     service: 'window-calculator',
@@ -559,20 +613,29 @@ app.get('/healthz', function (req, res) {
   });
 });
 
-// This service is infrastructure. The indexable page is CALC_PUBLIC_URL on
-// the main domain; anything served here is a duplicate on a second domain.
+// Google has to be allowed in to READ the noindex. Disallowing the page here
+// would hide the directive, and a disallowed URL can still be indexed if
+// something links to it — which is the opposite of what we want.
 app.get('/robots.txt', function (req, res) {
-  res.type('text/plain').send('User-agent: *\nDisallow: /\n');
+  res.type('text/plain').send('User-agent: *\nAllow: /\n');
 });
 
-// API-only mode. Covers /index.html as well as / — express.static resolves
-// both to the same file, so a redirect on / alone would leave the duplicate
-// reachable. Ships as 'serve'; flipped after the main-domain page is live.
-if (PUBLIC_PAGE_MODE === 'redirect') {
-  app.get(['/', '/index.html'], function (req, res) {
-    return res.redirect(301, CALC_PUBLIC_URL);
-  });
-}
+// The one copy of the calculator, served to both host pages. A fixed 5-minute
+// cache means an update reaches the WordPress page without Socius editing
+// anything, and the URL never changes so the snippet they paste is permanent.
+app.get('/embed/calculator.js', function (req, res) {
+  res.set('Content-Type', 'application/javascript; charset=utf-8');
+  res.set('Cache-Control', 'public, max-age=300');
+  res.set('Access-Control-Allow-Origin', '*'); // a script tag any allowed page may load
+  res.sendFile(path.join(__dirname, 'public/embed/calculator.js'));
+});
+
+// Old page paths keep working, and keep their query string. utm_*, fbclid and
+// gclid are the whole attribution chain; a redirect that strips them turns a
+// paid click into an unattributed lead.
+app.get(LEGACY_PAGE_PATHS, function (req, res) {
+  return redirectKeepQuery(req, res, '/');
+});
 
 app.use(express.static(path.join(__dirname, 'public'), {
   index: 'index.html',

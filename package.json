@@ -4,11 +4,17 @@
   "private": true,
   "description": "Reece Windows & Doors — Window Estimate Calculator (S/M/L) with server-side GHL proxy, email verification, and first-party funnel events",
   "main": "server.js",
-  "engines": { "node": ">=18" },
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "test": "node test/run.js"
   },
   "dependencies": {
     "express": "^4.19.2"
+  },
+  "devDependencies": {
+    "playwright-core": "^1.63.0"
   }
 }
