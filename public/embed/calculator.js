@@ -1729,6 +1729,130 @@
     });
   }
 
+  // ============================================================
+  //  REECE TRACKER BRIDGE
+  //  Mirrors this calculator's funnel into Reece's own visitor tracker, so a
+  //  calculator session shows up in LP Supabase site_events under the same
+  //  visitor id as the rest of the visitor's browsing — that is what lets
+  //  I.STITCH tie the visit to a GHL contact.
+  //
+  //  The host page loads the tracker, and it loads with `defer`, so this file
+  //  can and does run first. Everything below therefore assumes ReeceTrack may
+  //  be missing, may never arrive, and may throw. Analytics must never break
+  //  the funnel: nothing in here is allowed to escape as an exception.
+  // ============================================================
+  var TRACKER_QUEUE_MAX = 50;      // events held while the tracker loads
+  var TRACKER_WAIT_MS   = 10000;   // give up on a tracker that never arrives
+  var TRACKER_POLL_MS   = 500;     // how often to look for it
+
+  // Keys and values that must never leave this page as tracker props. The
+  // tracker's identify() carries the lead's details deliberately; a funnel
+  // event never should.
+  var TRACKER_PII_KEY = /email|phone|name|address|street|zip/i;
+
+  var trackerQueue    = [];
+  var trackerTimer    = null;
+  var trackerDeadline = 0;
+  var trackerGaveUp   = false;
+
+  function trackerReady() {
+    return typeof window.ReeceTrack === 'object' && window.ReeceTrack !== null;
+  }
+
+  // Returns true when the tracker was present, whether or not the call itself
+  // worked. A tracker that is loaded but throwing must not requeue forever.
+  function trackerDeliver(name, props) {
+    if (!trackerReady()) return false;
+    try {
+      if (typeof window.ReeceTrack.track === 'function') {
+        window.ReeceTrack.track(name, props);
+      }
+    } catch (e) { /* never throw from analytics */ }
+    return true;
+  }
+
+  function trackerFlush() {
+    if (!trackerReady()) return false;
+    var pending = trackerQueue;
+    trackerQueue = [];
+    for (var i = 0; i < pending.length; i++) {
+      trackerDeliver(pending[i].name, pending[i].props);
+    }
+    return true;
+  }
+
+  function trackerWatch() {
+    if (trackerTimer || trackerGaveUp) return;
+    // The 10s budget starts at the FIRST queued event, not at each one, so a
+    // late funnel step cannot keep extending a tracker that is never coming.
+    trackerDeadline = Date.now() + TRACKER_WAIT_MS;
+    trackerTimer = setInterval(function () {
+      try {
+        if (trackerFlush()) {
+          clearInterval(trackerTimer);
+          trackerTimer = null;
+          return;
+        }
+        if (Date.now() >= trackerDeadline) {
+          clearInterval(trackerTimer);
+          trackerTimer = null;
+          trackerGaveUp = true;
+          trackerQueue  = [];   // drop it; the /api/events beacon still has these
+        }
+      } catch (e) {
+        clearInterval(trackerTimer);
+        trackerTimer = null;
+      }
+    }, TRACKER_POLL_MS);
+  }
+
+  function trackerEnqueue(name, props) {
+    if (trackerGaveUp) return;
+    // Keep the FIRST 50. Dropping the tail preserves the order of what does
+    // send, and the head of a funnel is the part worth having.
+    if (trackerQueue.length >= TRACKER_QUEUE_MAX) return;
+    trackerQueue.push({ name: name, props: props });
+    trackerWatch();
+  }
+
+  // Copy of extra.meta minus anything that identifies the lead.
+  function trackerProps(extra) {
+    var props = {
+      page_variant:    PAGE_VARIANT,
+      calc_session_id: CALC_SESSION_ID
+    };
+    if (extra && typeof extra.step === 'number') props.step = extra.step;
+    var meta = extra && extra.meta;
+    if (meta && typeof meta === 'object') {
+      Object.keys(meta).forEach(function (key) {
+        if (TRACKER_PII_KEY.test(key)) return;
+        var value = meta[key];
+        var asText = '';
+        try { asText = value == null ? '' : String(value); } catch (e) { return; }
+        if (asText.indexOf('@') !== -1) return;   // an address that slipped a key check
+        props[key] = value;
+      });
+    }
+    return props;
+  }
+
+  function trackerMirror(eventName, extra) {
+    try {
+      var name  = 'calc_' + eventName;
+      var props = trackerProps(extra);
+      // Order matters more than latency. If anything is already waiting, this
+      // event joins the back of the queue rather than overtaking it — otherwise
+      // a live event fired between the tracker arriving and the next poll tick
+      // would land before the events that came first.
+      if (trackerQueue.length) {
+        trackerEnqueue(name, props);
+        trackerFlush();
+        return;
+      }
+      if (!trackerDeliver(name, props)) trackerEnqueue(name, props);
+    } catch (e) { /* never throw from analytics */ }
+  }
+
   // First-party funnel events. Analytics must never break the funnel.
   function sendEvent(eventName, extra) {
     try {
@@ -1776,6 +1900,10 @@
           keepalive: true
         }).catch(function() {});
       }
+      // Mirror the same event into Reece's visitor tracker. This is additive:
+      // the beacon above remains the calculator's own funnel table, and the
+      // mirror is what puts the funnel next to the visitor's wider session.
+      trackerMirror(eventName, extra);
     } catch (e) { /* never throw from analytics */ }
   }
 
