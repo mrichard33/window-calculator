@@ -164,6 +164,73 @@ async function httpChecks() {
       'tracker tag sets data-collector — the built-in default is the contract');
   });
 
+  await check('nothing in <head> blocks the first paint', async function () {
+    const r = await get(APP + '/');
+    const head = r.body.slice(0, r.body.indexOf('</head>'));
+    // Every external script in <head> must be async or defer, or the parser
+    // stops there and the visitor sees nothing.
+    const tags = head.match(/<script\b[^>]*\bsrc=[^>]*>/g) || [];
+    assert(tags.length > 0, 'no external scripts found in <head> at all');
+    tags.forEach(function (t) {
+      assert(/\basync\b/.test(t) || /\bdefer\b/.test(t),
+        'render-blocking script in <head>: ' + t);
+    });
+    // Named explicitly: this one is 82 KB over the wire and used to block.
+    const ghl = tags.find(function (t) { return t.indexOf('external-tracking.js') !== -1; });
+    assert(ghl, 'the GHL tracking script is gone from the page');
+    assert(/\basync\b/.test(ghl), 'the GHL tracking script lost its async');
+    assert(ghl.indexOf('tk_e546f581cf8f430dad0ec8f0838d01d3') !== -1,
+      'the GHL tracking id changed');
+  });
+
+  await check('the page shows a placeholder and preloads the embed', async function () {
+    const r = await get(APP + '/');
+    const mount = r.body.match(/<div id="reece-calculator">([\s\S]*?)<\/div>\s*<script/);
+    assert(mount, 'could not find the calculator mount');
+    assert(/data-rc-placeholder/.test(mount[1]), 'the mount has no loading placeholder');
+    assert(/Loading your estimate tool/.test(mount[1]), 'the placeholder has no message');
+    assert(/<link rel="preload" href="\/embed\/calculator\.js" as="script">/.test(r.body),
+      'the embed is not preloaded');
+  });
+
+  await check('fonts preconnect to gstatic and request the variable axis', async function () {
+    const r = await get(APP + '/');
+    assert(/<link rel="preconnect" href="https:\/\/fonts\.gstatic\.com" crossorigin>/.test(r.body),
+      'no crossorigin preconnect to fonts.gstatic.com — the font path pays a full handshake');
+    const css = r.body.match(/fonts\.googleapis\.com\/css2\?family=[^"]*/);
+    assert(css, 'the Google Fonts stylesheet is gone');
+    assert(/wght@\d+\.\.\d+/.test(css[0]),
+      'fonts are requested as discrete weights, not the variable axis: ' + css[0]);
+    assert(/display=swap/.test(css[0]), 'display=swap was dropped — text would be invisible while fonts load');
+  });
+
+  await check('footer images are sized, lazy, and served from this repo', async function () {
+    const r = await get(APP + '/');
+    const footer = r.body.slice(r.body.indexOf('<footer class="hrir-footer">'));
+    const imgs = footer.match(/<img\b[^>]*>/g) || [];
+    eq(imgs.length, 4, 'footer images (3 badges + logo)');
+    imgs.forEach(function (t) {
+      assert(/\bwidth="\d+"/.test(t) && /\bheight="\d+"/.test(t),
+        'footer image has no intrinsic size, so its box cannot be reserved: ' + t);
+      assert(/loading="lazy"/.test(t), 'below-the-fold image is not lazy: ' + t);
+      assert(/decoding="async"/.test(t), 'footer image is not decoding="async": ' + t);
+    });
+    assert(/<source srcset="\/static\/logo-footer\.webp" type="image\/webp">/.test(footer),
+      'the footer logo has no WebP source');
+    assert(footer.indexOf('68c8417fa500176c396a096b.png') === -1,
+      'the footer still points at the 445 KB logo on storage.googleapis.com');
+  });
+
+  for (const f of ['logo-footer.webp', 'logo-footer.png']) {
+    await check('/static/' + f + ' is small and cached for a year', async function () {
+      const r = await get(APP + '/static/' + f);
+      eq(r.status, 200, 'status');
+      eq(r.headers['cache-control'], 'public, max-age=31536000, immutable', 'cache-control');
+      const bytes = Number(r.headers['content-length']);
+      assert(bytes > 0 && bytes < 15360, f + ' is ' + bytes + ' bytes, over the 15 KB budget');
+    });
+  }
+
   await check('/health returns ok', async function () {
     const r = await get(APP + '/health');
     eq(JSON.parse(r.body).ok, true, 'ok');
@@ -422,6 +489,34 @@ async function browserChecks() {
       eq(await page.evaluate(function () { return window.ReeceCalculator.pageVariant; }),
         target.variant, 'pageVariant');
     });
+
+    if (target.variant === 'standalone') {
+      await check(target.name + ': the placeholder is replaced, not left behind', async function () {
+        const left = await page.evaluate(function () {
+          return document.querySelectorAll('#reece-calculator [data-rc-placeholder]').length;
+        });
+        eq(left, 0, 'placeholders still in the mount after the calculator rendered');
+      });
+
+      await check(target.name + ': both third-party scripts still load', async function () {
+        const srcs = await page.evaluate(function () {
+          return Array.prototype.slice.call(document.querySelectorAll('script[src]'))
+            .map(function (s) { return s.src; });
+        });
+        assert(srcs.some(function (s) { return s.indexOf('external-tracking.js') !== -1; }),
+          'the GHL tracking script is not on the page');
+        assert(srcs.some(function (s) { return s.indexOf('reece-tracker.js') !== -1; }),
+          'the Reece tracker script is not on the page');
+      });
+
+      await check(target.name + ': PageView fires exactly once', async function () {
+        const calls = await page.evaluate(function () { return window.fbqCalls || []; });
+        const views = calls.filter(function (c) {
+          return (c[0] === 'track' || c[0] === 'trackSingle') && c[c[0] === 'track' ? 1 : 2] === 'PageView';
+        });
+        eq(views.length, 1, 'PageView calls');
+      });
+    }
 
     await check(target.name + ': the embed injects no tracker script', async function () {
       // Only the standalone page's own <head> may load the tracker. The embed
