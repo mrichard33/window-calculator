@@ -203,10 +203,15 @@ fbq('track', 'PageView');
        reecewindows.com and getreecewindows.com. -->
   <script src="https://track.getreecewindows.com/reece-tracker.js" data-reece-tracker data-sister-domains="reecewindows.com,getreecewindows.com" defer></script>
   <!-- GHL external tracking. Loaded by the host page on both domains; the
-       embed never loads it, so it cannot double-fire. -->
+       embed never loads it, so it cannot double-fire.
+       async matters here: this is 267 KB (82 KB over the wire) and without it
+       the parser stops dead until the whole file has downloaded and run, on a
+       script that only records a visit. It has no ordering dependency on
+       anything else on the page, so nothing about its behaviour changes. -->
   <script
     src="https://link.reecewindows.com/js/external-tracking.js"
     data-tracking-id="tk_e546f581cf8f430dad0ec8f0838d01d3"
+    async
   ></script>
 </head>
 <body>
