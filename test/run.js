@@ -16,6 +16,10 @@
  *      foreign origin that mimics WordPress (three pixels, no calculator CSS)
  *   5. exactly one trackSingle Lead to Reece's pixel, zero plain track Leads
  *   6. no corrupted WordPress shortcode output, no pixel init inside the embed
+ *   7. the Reece tracker: loaded once by the standalone page and never by the
+ *      embed, every calc_* event mirrored in order, one identify after the
+ *      contact upsert, no lead details in any mirrored props, and a tracker
+ *      that arrives late or never arrives breaking nothing
  */
 const { execFileSync } = require('child_process');
 const http = require('http');
@@ -33,6 +37,21 @@ const HOST = 'http://127.0.0.1:' + HOST_PORT;
 // The embed calls the API at an absolute origin so it works from both host
 // pages. Tests intercept that origin rather than letting it reach production.
 const API_BASE = 'https://estimate.getreecewindows.com';
+// Reece's tracker is a separate service. Nothing in this run may reach it: the
+// real script is stubbed out and ReeceTrack is supplied by a local double, so
+// no visitor, pageview or identify is ever written to LP Supabase.
+const TRACKER_ORIGIN = 'https://track.getreecewindows.com';
+
+// The details the funnel is walked with. Every one of these is something the
+// mirrored props must never contain.
+const LEAD = {
+  name:   'Test Homeowner',
+  street: '100 Test St',
+  city:   'Tampa',
+  zip:    '33601',
+  phone:  '9545000000',
+  email:  'test@example.com'
+};
 
 let passed = 0;
 const failures = [];
@@ -129,6 +148,22 @@ async function httpChecks() {
     eq(r.headers['cache-control'], 'public, max-age=300', 'cache-control');
   });
 
+  await check('/ loads the Reece tracker exactly once', async function () {
+    const r = await get(APP + '/');
+    const tags = r.body.match(/<script[^>]*reece-tracker\.js[^>]*>/g) || [];
+    eq(tags.length, 1, 'tracker script tags on the served page');
+    const lines = r.body.split('\n').filter(function (l) { return l.indexOf('reece-tracker') !== -1; });
+    eq(lines.length, 1, 'lines mentioning reece-tracker');
+    assert(tags[0].indexOf('src="' + TRACKER_ORIGIN + '/reece-tracker.js"') !== -1,
+      'tracker src is not the tracker service: ' + tags[0]);
+    assert(/\bdefer\b/.test(tags[0]), 'tracker tag is missing defer');
+    assert(tags[0].indexOf('data-reece-tracker') !== -1, 'tracker tag is missing data-reece-tracker');
+    assert(tags[0].indexOf('data-sister-domains="reecewindows.com,getreecewindows.com"') !== -1,
+      'tracker tag is missing data-sister-domains');
+    assert(tags[0].indexOf('data-collector') === -1,
+      'tracker tag sets data-collector — the built-in default is the contract');
+  });
+
   await check('/health returns ok', async function () {
     const r = await get(APP + '/health');
     eq(JSON.parse(r.body).ok, true, 'ok');
@@ -181,6 +216,25 @@ async function grepChecks() {
     assert(page.indexOf('/embed/calculator.js') !== -1, 'the page does not load the embed');
   });
 
+  await check('the embed never loads the Reece tracker itself', function () {
+    // The host page owns the tag. On WordPress, Socius installs the same line
+    // site-wide, so an embed that injected it would run two trackers on a page.
+    assert(embed.indexOf('reece-tracker.js') === -1, 'embed references the tracker script file');
+    assert(embed.indexOf('track.getreecewindows.com') === -1, 'embed references the tracker origin');
+  });
+
+  await check('every tracker call in the embed is guarded', function () {
+    // A missing or broken tracker must never break the funnel.
+    assert(/typeof window\.ReeceTrack === 'object'/.test(embed),
+      'no typeof window.ReeceTrack === \'object\' guard found');
+    ['track', 'identify', 'getVisitorId'].forEach(function (fn) {
+      const calls = embed.match(new RegExp('window\\.ReeceTrack\\.' + fn + '\\(', 'g')) || [];
+      eq(calls.length, 1, 'window.ReeceTrack.' + fn + '() call sites (one guarded site each)');
+      assert(new RegExp("typeof window\\.ReeceTrack\\." + fn + " [!=]== 'function'").test(embed),
+        'window.ReeceTrack.' + fn + ' is called without a typeof check');
+    });
+  });
+
   await check('the embed defines one global', function () {
     const globals = embed.match(/^\s*window\.([A-Za-z_$][\w$]*)\s*=/gm) || [];
     const names = globals.map(function (g) { return g.replace(/.*window\./, '').replace(/\s*=.*/, ''); });
@@ -207,7 +261,8 @@ function chromiumPath() {
 }
 
 // A page that mimics the WordPress target: a foreign origin, three initialised
-// pixels, and none of the calculator's own CSS.
+// pixels, and none of the calculator's own CSS. No ReeceTrack — on this page the
+// calculator has to work with the tracker simply absent.
 const HOST_PAGE = `<!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8"><title>Window Estimate | Reece Windows</title>
 <style>.card{border:9px solid red}.btn{background:lime}.total{font-size:60px}.container{width:120px}</style>
@@ -225,6 +280,40 @@ fbq('track', 'PageView');
 <script src="${APP}/embed/calculator.js" defer></script>
 </body></html>`;
 
+// The tracker double. It never talks to the tracker service — it only records
+// what the embed asked it to do. Written as source text so it can be injected
+// either into a host page or, for the standalone page whose HTML the test does
+// not control, through addInitScript.
+const TRACKER_STUB = `
+window.__rtStart = Date.now();
+window.__rtCalls = [];
+window.__rtInstall = function () {
+  window.ReeceTrack = {
+    track: function (name, props) {
+      window.__rtCalls.push({ type: 'track', name: name, props: props,
+                              at: Date.now() - window.__rtStart });
+    },
+    identify: function (traits) {
+      window.__rtCalls.push({ type: 'identify', traits: traits,
+                              at: Date.now() - window.__rtStart });
+    },
+    getVisitorId: function () { return 'vis-test-0001'; }
+  };
+};`;
+
+// (b) The foreign-origin page from the handoff: the two-line embed and a stub
+// ReeceTrack, nothing else. If the embed injects a tracker script, it shows up
+// here with nothing to hide behind.
+const HOST_PAGE_EMBED_ONLY = `<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>Embed only</title>
+<script>${TRACKER_STUB}
+window.__rtInstall();
+</script>
+</head><body>
+<div id="reece-calculator"></div>
+<script src="${APP}/embed/calculator.js" defer></script>
+</body></html>`;
+
 async function browserChecks() {
   console.log('\nBrowser');
   const exe = chromiumPath();
@@ -236,13 +325,24 @@ async function browserChecks() {
   const browser = await chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
 
   for (const target of [
-    { name: 'standalone page', url: APP + '/?utm_source=test&utm_medium=paid', variant: 'standalone' },
-    { name: 'foreign origin (WordPress stand-in)', url: HOST + '/', variant: 'main-domain' }
+    // (a) the real standalone page, tracker present from the first line
+    { name: 'standalone page', url: APP + '/?utm_source=test&utm_medium=paid',
+      variant: 'standalone', tracker: 'ready', full: true },
+    // (c) the WordPress stand-in, tracker absent entirely
+    { name: 'foreign origin (WordPress stand-in)', url: HOST + '/',
+      variant: 'main-domain', tracker: 'none', full: true },
+    // (b) a foreign origin carrying only the embed and a stub tracker
+    { name: 'foreign origin, embed only', url: HOST + '/embed-only',
+      variant: 'main-domain', tracker: 'ready' },
+    // (d) the tracker turns up three seconds after the funnel starts
+    { name: 'standalone page, tracker 3s late', url: APP + '/',
+      variant: 'standalone', tracker: 'late' }
   ]) {
     const ctx = await browser.newContext();
     const page = await ctx.newPage();
     const consoleErrors = [];
     const events = [];
+    const trackerRequests = [];
     page.on('console', function (m) { if (m.type() === 'error') consoleErrors.push(m.text()); });
     page.on('pageerror', function (e) { consoleErrors.push(String(e)); });
 
@@ -258,6 +358,14 @@ async function browserChecks() {
       const req = route.request();
       const url = req.url();
       const isApi = url.indexOf(API_BASE + '/api/') === 0;
+
+      // The tracker service is stubbed dead. The real script never runs, so no
+      // visitor, pageview or identify can reach LP Supabase from this suite —
+      // ReeceTrack comes only from the double above.
+      if (url.indexOf(TRACKER_ORIGIN) === 0) {
+        trackerRequests.push(url);
+        return route.fulfill({ status: 200, body: '', contentType: 'application/javascript' });
+      }
 
       if (!isApi) {
         if (url.indexOf('://localhost:') !== -1 || url.indexOf('://127.0.0.1:') !== -1) return route.continue();
@@ -291,6 +399,17 @@ async function browserChecks() {
       };
     });
 
+    // The standalone page's HTML is production and not the test's to edit, so
+    // its tracker double is injected here instead. The host pages carry their
+    // own in markup. 'late' installs ReeceTrack 3s in, which is the case the
+    // queue exists for: the real tag is deferred, so the embed runs first.
+    if (target.url.indexOf(APP) === 0 && target.tracker !== 'none') {
+      const delay = target.tracker === 'late' ? 3000 : 0;
+      await page.addInitScript(TRACKER_STUB +
+        '\nif (' + delay + ') { setTimeout(window.__rtInstall, ' + delay + '); }' +
+        ' else { window.__rtInstall(); }');
+    }
+
     await page.goto(target.url, { waitUntil: 'domcontentloaded' });
     await page.waitForSelector('#rc-section-1.rc-visible', { timeout: 10000 });
 
@@ -304,13 +423,27 @@ async function browserChecks() {
         target.variant, 'pageVariant');
     });
 
+    await check(target.name + ': the embed injects no tracker script', async function () {
+      // Only the standalone page's own <head> may load the tracker. The embed
+      // must never inject one, on any origin.
+      const injected = await page.evaluate(function () {
+        return Array.prototype.slice
+          .call(document.querySelectorAll('script[src]'))
+          .filter(function (s) { return s.src.indexOf('reece-tracker') !== -1; })
+          .map(function (s) { return s.src + '|' + (s.parentNode === document.head ? 'head' : 'other'); });
+      });
+      const expected = target.variant === 'standalone' ? 1 : 0;
+      eq(injected.length, expected, 'tracker script tags in the DOM (' + injected.join(', ') + ')');
+      if (expected === 0) eq(trackerRequests.length, 0, 'requests to the tracker origin');
+    });
+
     // Walk the whole funnel.
-    await page.fill('#rc-full-name', 'Test Homeowner');
-    await page.fill('#rc-street-address', '100 Test St');
-    await page.fill('#rc-city', 'Tampa');
+    await page.fill('#rc-full-name', LEAD.name);
+    await page.fill('#rc-street-address', LEAD.street);
+    await page.fill('#rc-city', LEAD.city);
     await page.fill('#rc-state', 'FL');
-    await page.fill('#rc-postal-code', '33601');
-    await page.fill('#rc-phone', '9545000000');
+    await page.fill('#rc-postal-code', LEAD.zip);
+    await page.fill('#rc-phone', LEAD.phone);
     await page.check('#rc-consent-checkbox');
     await page.click('#rc-section-1 button.rc-btn-primary');
     await page.waitForSelector('#rc-section-2.rc-visible', { timeout: 10000 });
@@ -325,7 +458,7 @@ async function browserChecks() {
     await page.waitForSelector('#rc-window-list .rc-cart-item', { timeout: 10000 });
     await page.click('#rc-btn-to-step3');
     await page.waitForSelector('#rc-section-3.rc-visible', { timeout: 10000 });
-    await page.fill('#rc-email', 'test@example.com');
+    await page.fill('#rc-email', LEAD.email);
     await page.click('#rc-section-3 button.rc-btn-primary');
     await page.waitForSelector('#rc-verify-email-modal.rc-active', { timeout: 10000 });
     await page.fill('#rc-verify-code-input', '123456');
@@ -336,6 +469,125 @@ async function browserChecks() {
       const price = await page.locator('#rc-summary-content .rc-hero-price').textContent();
       assert(/^\$[\d,]+\.\d\d$/.test(price.trim()), 'hero price looks wrong: ' + price);
     });
+
+    // -----------------------------------------------------------------------
+    // The Reece tracker mirror
+    // -----------------------------------------------------------------------
+    if (target.tracker === 'none') {
+      await check(target.name + ': the funnel completes with no ReeceTrack at all', async function () {
+        const absent = await page.evaluate(function () { return typeof window.ReeceTrack; });
+        eq(absent, 'undefined', 'typeof window.ReeceTrack');
+        // The estimate rendered above with the tracker missing; the only thing
+        // left to prove is that nothing was smuggled into the API payloads.
+        const withVisitor = events.filter(function (e) { return e.body && e.body.visitor_id; });
+        eq(withVisitor.length, 0, 'payloads carrying visitor_id without a tracker');
+      });
+    } else {
+      // The queue only drains on a 500ms timer, so give the last events room to
+      // land before reading. 'late' also has to clear its 3s wait.
+      await page.waitForFunction(function () {
+        return (window.__rtCalls || []).some(function (c) { return c.name === 'calc_estimate_completed'; });
+      }, null, { timeout: 15000 }).catch(function () { /* asserted properly below */ });
+
+      const rt = await page.evaluate(function () { return window.__rtCalls || []; });
+      const tracks = rt.filter(function (c) { return c.type === 'track'; });
+      const names = tracks.map(function (c) { return c.name; });
+      const identifies = rt.filter(function (c) { return c.type === 'identify'; });
+
+      await check(target.name + ': calc_* events mirror to the tracker in order', async function () {
+        const pageView = names.indexOf('calc_page_view');
+        const stepView = names.indexOf('calc_step_view');
+        const completed = names.indexOf('calc_estimate_completed');
+        assert(pageView !== -1, 'calc_page_view was never mirrored (saw: ' + names.join(', ') + ')');
+        assert(stepView !== -1, 'calc_step_view was never mirrored (saw: ' + names.join(', ') + ')');
+        assert(completed !== -1, 'calc_estimate_completed was never mirrored (saw: ' + names.join(', ') + ')');
+        assert(pageView < stepView, 'calc_page_view came after calc_step_view');
+        assert(stepView < completed, 'calc_step_view came after calc_estimate_completed');
+        // Every event the walk passes through, none dropped.
+        ['calc_consent_checked', 'calc_step1_complete', 'calc_step3_complete',
+         'calc_verify_sent', 'calc_verify_success', 'calc_window_added'].forEach(function (n) {
+          assert(names.indexOf(n) !== -1, n + ' was never mirrored (saw: ' + names.join(', ') + ')');
+        });
+      });
+
+      await check(target.name + ': every mirrored event is a calc_ event carrying its session', async function () {
+        tracks.forEach(function (c) {
+          assert(/^calc_[a-z0-9_]+$/.test(c.name), 'unexpected mirrored event name: ' + c.name);
+          assert(c.props && c.props.calc_session_id, c.name + ' has no calc_session_id');
+          eq(c.props.page_variant, target.variant, c.name + ' page_variant');
+        });
+        const sessions = new Set(tracks.map(function (c) { return c.props.calc_session_id; }));
+        eq(sessions.size, 1, 'distinct calc_session_id values across one session');
+      });
+
+      await check(target.name + ': no mirrored props carry the lead\'s details', async function () {
+        const pii = /email|phone|name|address|street|zip/i;
+        tracks.forEach(function (c) {
+          Object.keys(c.props).forEach(function (key) {
+            assert(!pii.test(key), c.name + ' mirrors a lead key: ' + key);
+          });
+          const dump = JSON.stringify(c.props);
+          assert(dump.indexOf('@') === -1, c.name + ' props contain an @: ' + dump);
+          [LEAD.name, LEAD.street, LEAD.email, LEAD.phone, LEAD.zip,
+           '+1' + LEAD.phone, '(954) 500-0000'].forEach(function (secret) {
+            assert(dump.indexOf(secret) === -1, c.name + ' props leak "' + secret + '": ' + dump);
+          });
+        });
+      });
+
+      await check(target.name + ': one identify per change, first one after the contact upsert', async function () {
+        assert(identifies.length > 0, 'identify was never called');
+        // No identify may precede the contact upsert — I.STITCH matches
+        // identify rows against contacts that already exist in GHL. Step 1's
+        // consent_checked is the last event before submitContact() runs.
+        const consent = rt.findIndex(function (c) { return c.name === 'calc_consent_checked'; });
+        assert(consent !== -1, 'calc_consent_checked was never mirrored');
+        assert(rt.indexOf(identifies[0]) > consent,
+          'identify fired before the contact was submitted');
+        // Exactly one identify per distinct payload: Step 1 has phone + name,
+        // Step 3 adds the email. Verification repeats neither, so it is skipped.
+        const payloads = identifies.map(function (c) { return JSON.stringify(c.traits); });
+        eq(new Set(payloads).size, payloads.length, 'identify payloads (duplicates are noise for I.STITCH)');
+        const withEmail = identifies.filter(function (c) { return c.traits.email === LEAD.email; });
+        eq(withEmail.length, 1, 'identify calls carrying the verified email');
+        identifies.forEach(function (c) {
+          assert(c.traits.email || c.traits.phone, 'identify with nothing to match on');
+        });
+      });
+
+      // Only meaningful when the tracker existed at submit time. There is no id
+      // to read from a tracker that has not loaded, and the payload is not
+      // worth delaying for one — visitor_id is best-effort, the identify is not.
+      if (target.tracker === 'ready') {
+        await check(target.name + ': visitor_id reaches /api/contact and /api/estimate', async function () {
+          ['/api/contact', '/api/estimate'].forEach(function (p) {
+            const calls = events.filter(function (e) { return e.path.indexOf(p) === 0; });
+            assert(calls.length > 0, p + ' was never called');
+            assert(calls.some(function (e) { return e.body.visitor_id === 'vis-test-0001'; }),
+              p + ' never carried visitor_id');
+          });
+        });
+      }
+
+      if (target.tracker === 'late') {
+        await check(target.name + ': events queued before the tracker arrived still send', async function () {
+          const pageView = tracks.find(function (c) { return c.name === 'calc_page_view'; });
+          assert(pageView, 'calc_page_view was lost while the tracker was loading');
+          // It was emitted at load, so a delivery at ~3s proves it waited in the
+          // queue rather than being dropped or fired into a missing tracker.
+          assert(pageView.at >= 2900,
+            'calc_page_view was delivered at ' + pageView.at + 'ms — the tracker only existed from 3000ms');
+        });
+      }
+    }
+
+    if (!target.full) {
+      await check(target.name + ': zero console errors', function () {
+        eq(consoleErrors.join(' | '), '', 'console errors');
+      });
+      await ctx.close();
+      continue;
+    }
 
     await check(target.name + ': exactly one trackSingle Lead to Reece\'s pixel', async function () {
       const calls = await page.evaluate(function () { return window.fbqCalls; });
@@ -381,7 +633,7 @@ async function main() {
 
   const hostServer = http.createServer(function (req, res) {
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-    res.end(HOST_PAGE);
+    res.end(req.url.indexOf('/embed-only') === 0 ? HOST_PAGE_EMBED_ONLY : HOST_PAGE);
   }).listen(HOST_PORT);
 
   await new Promise(function (r) { setTimeout(r, 500); });

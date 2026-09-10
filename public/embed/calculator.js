@@ -1761,11 +1761,17 @@
 
   // Returns true when the tracker was present, whether or not the call itself
   // worked. A tracker that is loaded but throwing must not requeue forever.
-  function trackerDeliver(name, props) {
+  // One call handles both kinds so a track and an identify cannot be reordered
+  // relative to each other.
+  function trackerDeliver(entry) {
     if (!trackerReady()) return false;
     try {
-      if (typeof window.ReeceTrack.track === 'function') {
-        window.ReeceTrack.track(name, props);
+      if (entry.kind === 'identify') {
+        if (typeof window.ReeceTrack.identify === 'function') {
+          window.ReeceTrack.identify(entry.traits);
+        }
+      } else if (typeof window.ReeceTrack.track === 'function') {
+        window.ReeceTrack.track(entry.name, entry.props);
       }
     } catch (e) { /* never throw from analytics */ }
     return true;
@@ -1775,9 +1781,7 @@
     if (!trackerReady()) return false;
     var pending = trackerQueue;
     trackerQueue = [];
-    for (var i = 0; i < pending.length; i++) {
-      trackerDeliver(pending[i].name, pending[i].props);
-    }
+    for (var i = 0; i < pending.length; i++) trackerDeliver(pending[i]);
     return true;
   }
 
@@ -1806,13 +1810,25 @@
     }, TRACKER_POLL_MS);
   }
 
-  function trackerEnqueue(name, props) {
+  function trackerEnqueue(entry) {
     if (trackerGaveUp) return;
     // Keep the FIRST 50. Dropping the tail preserves the order of what does
     // send, and the head of a funnel is the part worth having.
     if (trackerQueue.length >= TRACKER_QUEUE_MAX) return;
-    trackerQueue.push({ name: name, props: props });
+    trackerQueue.push(entry);
     trackerWatch();
+  }
+
+  // Deliver now if the tracker is up, otherwise queue. Anything already waiting
+  // wins: this joins the back of the queue rather than overtaking it, so a call
+  // made between the tracker arriving and the next poll tick cannot land first.
+  function trackerSend(entry) {
+    if (trackerQueue.length) {
+      trackerEnqueue(entry);
+      trackerFlush();
+      return;
+    }
+    if (!trackerDeliver(entry)) trackerEnqueue(entry);
   }
 
   // Copy of extra.meta minus anything that identifies the lead.
@@ -1838,18 +1854,7 @@
 
   function trackerMirror(eventName, extra) {
     try {
-      var name  = 'calc_' + eventName;
-      var props = trackerProps(extra);
-      // Order matters more than latency. If anything is already waiting, this
-      // event joins the back of the queue rather than overtaking it — otherwise
-      // a live event fired between the tracker arriving and the next poll tick
-      // would land before the events that came first.
-      if (trackerQueue.length) {
-        trackerEnqueue(name, props);
-        trackerFlush();
-        return;
-      }
-      if (!trackerDeliver(name, props)) trackerEnqueue(name, props);
+      trackerSend({ kind: 'track', name: 'calc_' + eventName, props: trackerProps(extra) });
     } catch (e) { /* never throw from analytics */ }
   }
 
@@ -1871,12 +1876,11 @@
   // CHANGED set of details is worth another identify row for I.STITCH to match.
   var lastIdentity = '';
 
-  // Ties this browser's visitor id to the person. Deliberately NOT queued: an
-  // identify is only useful once the tracker exists, and by the time the lead
-  // has filled in Step 1 the deferred script has long since loaded.
+  // Ties this browser's visitor id to the person. Queued like the funnel events
+  // when the tracker has not loaded yet: a lead who fills Step 1 faster than a
+  // slow network delivers the script is exactly the lead worth identifying.
   function trackerIdentify() {
     try {
-      if (!trackerReady() || typeof window.ReeceTrack.identify !== 'function') return;
       var data = gatherContactData();
       var traits = {};
       if (data.email) traits.email = data.email;
@@ -1888,7 +1892,7 @@
       var signature = JSON.stringify(traits);
       if (signature === lastIdentity) return;
       lastIdentity = signature;
-      window.ReeceTrack.identify(traits);
+      trackerSend({ kind: 'identify', traits: traits });
     } catch (e) { /* never throw from analytics */ }
   }
 
