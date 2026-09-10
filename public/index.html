@@ -13,8 +13,22 @@
   <!-- The calculator is the page. Start fetching it here rather than letting
        the parser find the deferred tag at the bottom of <body>. -->
   <link rel="preload" href="/embed/calculator.js" as="script">
+  <!-- Fonts. gstatic is a SECOND origin: the stylesheet comes from
+       fonts.googleapis.com but the woff2 files come from fonts.gstatic.com,
+       and without this preconnect the browser only starts that DNS + TCP +
+       TLS handshake after it has parsed the CSS. crossorigin is required —
+       fonts are fetched in CORS mode, and a preconnect without it opens a
+       connection the font request cannot reuse.
+       wght@300..900 asks for the variable font's whole weight axis rather
+       than six discrete weights. Nunito Sans is served as one variable font
+       per unicode-range subset, so this is the SAME woff2 file either way
+       (~31 KB for latin) but the stylesheet drops from 13.8 KB to 2.3 KB and
+       from 30 @font-face rules to 5. It also restores weight 500, which the
+       calculator's CSS uses on the summary table but which was never in the
+       six-weight list, so it had been silently falling back to 400. -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300..900&display=swap" rel="stylesheet">
   <style>
 /* =============================================================
    Reece Windows & Doors — standalone page shell
