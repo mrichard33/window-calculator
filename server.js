@@ -229,6 +229,13 @@ app.post('/api/contact', rateLimit(20, 10 * 60 * 1000), async function (req, res
   const lastName = str(p.lastName, 100);
   if (!firstName && !lastName) return res.status(400).json({ error: 'NAME_REQUIRED' });
 
+  // Reece's first-party visitor id, when the tracker was loaded. Logged only
+  // for now — deliberately NOT written to a GHL custom field, because creating
+  // one is a separate decision. Logging it first proves the id actually
+  // arrives before anything is built on top of it.
+  const visitorId = str(p.visitor_id, 128);
+  if (visitorId) console.log('[contact] visitor_id', visitorId);
+
   try {
     // Preserve the legacy behavior: if the phone matches an existing contact
     // under a different name, save the old identity to notes before overwrite.
@@ -466,6 +473,10 @@ app.post('/api/estimate', rateLimit(10, 10 * 60 * 1000), async function (req, re
   const contactName = str(p.contactName, 200);
   const estimateTotal = p.estimateTotal != null ? String(p.estimateTotal) : '';
   const windowCount = parseInt(p.windowCount, 10) || 0;
+
+  // Same as /api/contact: logged only, no GHL custom field.
+  const estimateVisitorId = str(p.visitor_id, 128);
+  if (estimateVisitorId) console.log('[estimate] visitor_id', estimateVisitorId);
 
   // 1) Contact estimate update (mirrors the old client-side PUT)
   const variant = pageVariant(p);

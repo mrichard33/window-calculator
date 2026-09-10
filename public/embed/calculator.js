@@ -1853,6 +1853,45 @@
     } catch (e) { /* never throw from analytics */ }
   }
 
+  // The visitor id the tracker assigned this browser. Sent alongside the lead
+  // so the two systems can be joined server-side later; '' whenever the tracker
+  // is absent, which is always a normal outcome, never an error.
+  function trackerVisitorId() {
+    try {
+      if (trackerReady() && typeof window.ReeceTrack.getVisitorId === 'function') {
+        var id = window.ReeceTrack.getVisitorId();
+        if (typeof id === 'string' && id) return id;
+      }
+    } catch (e) { /* never throw from analytics */ }
+    return '';
+  }
+
+  // Last identify payload sent, so the same details are not re-sent. Step 1 and
+  // Step 3 both upsert the contact and verification can follow, but only a
+  // CHANGED set of details is worth another identify row for I.STITCH to match.
+  var lastIdentity = '';
+
+  // Ties this browser's visitor id to the person. Deliberately NOT queued: an
+  // identify is only useful once the tracker exists, and by the time the lead
+  // has filled in Step 1 the deferred script has long since loaded.
+  function trackerIdentify() {
+    try {
+      if (!trackerReady() || typeof window.ReeceTrack.identify !== 'function') return;
+      var data = gatherContactData();
+      var traits = {};
+      if (data.email) traits.email = data.email;
+      if (data.phone) traits.phone = data.phone;
+      var fullName = (data.firstName + ' ' + data.lastName).trim();
+      if (fullName) traits.name = fullName;
+      // Nothing to match on — I.STITCH keys on cid, then email, then phone.
+      if (!traits.email && !traits.phone) return;
+      var signature = JSON.stringify(traits);
+      if (signature === lastIdentity) return;
+      lastIdentity = signature;
+      window.ReeceTrack.identify(traits);
+    } catch (e) { /* never throw from analytics */ }
+  }
+
   // First-party funnel events. Analytics must never break the funnel.
   function sendEvent(eventName, extra) {
     try {
@@ -1995,11 +2034,19 @@
       consentVersion: CONSENT_VERSION
     };
     if (includeEmail && data.email) payload.email = data.email;
+    // Server-side this is logged only. It exists so the visitor's browsing and
+    // their GHL contact can be joined without waiting on a GHL custom field.
+    var visitorId = trackerVisitorId();
+    if (visitorId) payload.visitor_id = visitorId;
     return apiPost('/api/contact', payload).then(function(result) {
       if (result && result.contactId) {
         state.contactId = result.contactId;
         console.log('Contact upserted via server:', result.contactId);
       }
+      // Only once the upsert succeeded: I.STITCH matches identify rows against
+      // GHL contacts, so identifying before the contact exists gives it nothing
+      // to find on the next 5-minute pass.
+      trackerIdentify();
       return result;
     });
   }
@@ -2426,6 +2473,9 @@
       successMsg.textContent = 'Verified! Loading your estimate...';
       successMsg.classList.add('rc-visible');
       sendEvent('verify_success');
+      // Re-identify: the phone can be corrected during verification, and the
+      // email is confirmed real only now. Skipped internally if nothing changed.
+      trackerIdentify();
       if (typeof fbq === 'function') { fbq('trackSingleCustom', META_PIXEL_ID, 'CalcVerified'); }
       setTimeout(function() {
         hideVerificationModal();
@@ -2567,7 +2617,7 @@
         sendEvent('estimate_completed', { meta: { estimate_total: estimateTotal, window_count: windowCount } });
         // One server call replaces the contact update, estimate webhook, and
         // PDF chain. Requires the token issued by /api/verify/check.
-        apiPost('/api/estimate', {
+        var estimatePayload = {
           estimateToken: state.estimateToken || '',
           contactId: contactId || '',
           contactName: contactName,
@@ -2577,7 +2627,11 @@
           windowCount: windowCount,
           pageVariant: PAGE_VARIANT,
           estimate: buildEstimatePayload()
-        }).catch(function(err) {
+        };
+        // Logged server-side only, same as on /api/contact.
+        var estimateVisitorId = trackerVisitorId();
+        if (estimateVisitorId) estimatePayload.visitor_id = estimateVisitorId;
+        apiPost('/api/estimate', estimatePayload).catch(function(err) {
           console.error('[Estimate] server submit failed, enabling retry:', err);
           state.estimateSent = false;
         });
