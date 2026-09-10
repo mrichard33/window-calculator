@@ -293,11 +293,15 @@ fbq('track', 'PageView');
 <footer class="hrir-footer">
   <div class="hrir-footer__inner">
 
-    <!-- TRUST BADGES -->
+    <!-- TRUST BADGES
+         Intrinsic width/height let the browser reserve the right box before
+         the bytes arrive, so the footer stops reflowing as they land. The CSS
+         still sizes them (height 38px, width auto) — these are the aspect
+         ratio, not the display size. All three are below the fold. -->
     <div class="hrir-trust" aria-label="Trust badges">
-      <img src="https://storage.googleapis.com/msgsndr/SsBG7j5KQAIP1SFP2Sca/media/68cd79e3fb98c8859da49752.png" alt="Trusted 50 plus years">
-      <img src="https://storage.googleapis.com/msgsndr/SsBG7j5KQAIP1SFP2Sca/media/68cd7dc3e8e00983775f45ab.webp" alt="BBB A plus rating">
-      <img src="https://storage.googleapis.com/msgsndr/SsBG7j5KQAIP1SFP2Sca/media/68cd79e327afc809f37b5868.png" alt="Double lifetime warranty">
+      <img src="https://storage.googleapis.com/msgsndr/SsBG7j5KQAIP1SFP2Sca/media/68cd79e3fb98c8859da49752.png" alt="Trusted 50 plus years" width="600" height="266" loading="lazy" decoding="async">
+      <img src="https://storage.googleapis.com/msgsndr/SsBG7j5KQAIP1SFP2Sca/media/68cd7dc3e8e00983775f45ab.webp" alt="BBB A plus rating" width="326" height="323" loading="lazy" decoding="async">
+      <img src="https://storage.googleapis.com/msgsndr/SsBG7j5KQAIP1SFP2Sca/media/68cd79e327afc809f37b5868.png" alt="Double lifetime warranty" width="492" height="200" loading="lazy" decoding="async">
     </div>
 
     <!-- SERVICE LOCATIONS -->
@@ -312,9 +316,16 @@ fbq('track', 'PageView');
       <a href="#">St. Petersburg</a>
     </nav>
 
-    <!-- LOGO -->
+    <!-- LOGO
+         Served from this repo at 160px so it is not a 1167x1167 PNG shown at
+         64px. WebP first, PNG-8 fallback; both are around 8-9 KB, down from
+         445 KB. Cached for a year and immutable — the filename is the
+         version, so a new logo means a new filename. -->
     <div class="hrir-logo">
-      <img src="https://storage.googleapis.com/msgsndr/SsBG7j5KQAIP1SFP2Sca/media/68c8417fa500176c396a096b.png" alt="Reece Windows &amp; Doors">
+      <picture>
+        <source srcset="/static/logo-footer.webp" type="image/webp">
+        <img src="/static/logo-footer.png" alt="Reece Windows &amp; Doors" width="160" height="160" loading="lazy" decoding="async">
+      </picture>
     </div>
 
     <!-- POLICY LINKS -->
