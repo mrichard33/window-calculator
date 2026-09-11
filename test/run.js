@@ -302,6 +302,15 @@ async function grepChecks() {
     });
   });
 
+  await check('the embed never sizes anything in rem', function () {
+    // rem resolves against the HOST page's <html> font-size. reecewindows.com
+    // sets html{font-size:10px}, so a single rem left in here renders that
+    // length at 62.5% on the main domain. Use calc(N * var(--rc-rem)) instead.
+    const bare = embed.match(/(?<![A-Za-z0-9_$])-?(?:[0-9]*\.)?[0-9]+rem\b/g) || [];
+    eq(bare.join(' '), '', 'rem lengths in the embed');
+    assert(/"\s*--rc-rem: 16px;\s*"/.test(embed), '--rc-rem is not defined on the mount');
+  });
+
   await check('the embed defines one global', function () {
     const globals = embed.match(/^\s*window\.([A-Za-z_$][\w$]*)\s*=/gm) || [];
     const names = globals.map(function (g) { return g.replace(/.*window\./, '').replace(/\s*=.*/, ''); });
@@ -332,7 +341,15 @@ function chromiumPath() {
 // calculator has to work with the tracker simply absent.
 const HOST_PAGE = `<!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8"><title>Window Estimate | Reece Windows</title>
-<style>.card{border:9px solid red}.btn{background:lime}.total{font-size:60px}.container{width:120px}</style>
+<style>
+/* The one theme rule that matters: reecewindows.com's style.min.css sets this,
+   and it is what used to shrink every rem in the calculator to 62.5%. */
+html{font-size:10px}
+body{margin:0;background:#fff}
+/* The column the mount actually sits in: .col-10 > .entry-content. */
+.col-10{width:81.25%;margin:0 auto}
+.card{border:9px solid red}.btn{background:lime}.total{font-size:60px}.container{width:120px}
+</style>
 <script>
 window.fbqCalls = [];
 window.fbq = function () { window.fbqCalls.push(Array.prototype.slice.call(arguments)); };
@@ -343,8 +360,10 @@ fbq('track', 'PageView');
 </script>
 </head><body>
 <header><h1>Theme header</h1></header>
+<div class="col-10"><div class="entry-content">
 <div id="reece-calculator"></div>
 <script src="${APP}/embed/calculator.js" defer></script>
+</div></div>
 </body></html>`;
 
 // The tracker double. It never talks to the tracker service — it only records
@@ -488,6 +507,86 @@ async function browserChecks() {
     await check(target.name + ': PAGE_VARIANT is ' + target.variant, async function () {
       eq(await page.evaluate(function () { return window.ReeceCalculator.pageVariant; }),
         target.variant, 'pageVariant');
+    });
+
+    // The stand-in host sets html{font-size:10px} exactly as the WordPress theme
+    // does. Both pages must still size the calculator identically, because every
+    // length is calc(N * var(--rc-rem)) and --rc-rem is fixed at 16px.
+    await check(target.name + ': the host page\'s root font-size cannot shrink the calculator', async function () {
+      const m = await page.evaluate(function () {
+        return {
+          root: getComputedStyle(document.documentElement).fontSize,
+          body: getComputedStyle(document.getElementById('reece-calculator')).fontSize,
+          step: getComputedStyle(document.querySelector('#reece-calculator .rc-stepper .rc-step')).fontSize,
+          h2: getComputedStyle(document.querySelector('#rc-section-1 .rc-card h2')).fontSize
+        };
+      });
+      if (/WordPress/.test(target.name)) {
+        // Guards the stand-in itself: without the theme's 10px root this check
+        // would pass on a page that no longer reproduces the bug.
+        eq(m.root, '10px', "the WordPress stand-in's root font-size");
+      }
+      eq(m.body, '17px', 'calculator body text at root ' + m.root);
+      eq(m.step, '13.12px', 'stepper label');   // 0.82 x 16
+      eq(m.h2, '19.2px', 'card heading');       // 1.20 x 16
+    });
+
+    await check(target.name + ': no bare rem survives in the injected CSS', async function () {
+      const css = await page.evaluate(function () {
+        var s = document.getElementById('rc-calculator-styles');
+        return s ? s.textContent : '';
+      });
+      assert(css.length > 0, 'the calculator stylesheet was never injected');
+      const bare = css.match(/(?<![A-Za-z0-9_$])-?(?:[0-9]*\.)?[0-9]+rem\b/g) || [];
+      eq(bare.join(' '), '', 'rem lengths left in the stylesheet');
+    });
+
+    await check(target.name + ': the embed treatment is applied only off the standalone page', async function () {
+      const m = await page.evaluate(function () {
+        var mount = document.getElementById('reece-calculator');
+        var card = document.querySelector('#rc-section-1 .rc-card');
+        return {
+          embed: mount.classList.contains('rc-embed'),
+          bg: getComputedStyle(mount).backgroundColor,
+          border: getComputedStyle(card).borderTopWidth,
+          radius: getComputedStyle(card).borderTopLeftRadius,
+          shadow: getComputedStyle(card).boxShadow
+        };
+      });
+      if (target.variant === 'standalone') {
+        eq(m.embed, false, 'rc-embed on the standalone page');
+        eq(m.bg, 'rgb(242, 243, 247)', 'standalone page background');
+        eq(m.border, '0px', 'standalone card border');
+        eq(m.radius, '0px', 'standalone card radius');
+      } else {
+        eq(m.embed, true, 'rc-embed on the host page');
+        eq(m.bg, 'rgba(0, 0, 0, 0)', 'grey box behind the embed');
+        eq(m.border, '1px', 'embedded card border');
+        eq(m.radius, '12px', 'embedded card radius');
+        assert(/rgba\(11, 31, 58, 0\.06\)/.test(m.shadow), 'embedded card shadow: ' + m.shadow);
+      }
+    });
+
+    await check(target.name + ': the calculator is as wide as its column allows, up to the cap', async function () {
+      const m = await page.evaluate(function () {
+        var container = document.querySelector('#reece-calculator .rc-container');
+        var card = document.querySelector('#rc-section-1 .rc-card');
+        var column = document.getElementById('reece-calculator').parentElement;
+        return {
+          column: Math.round(column.getBoundingClientRect().width),
+          container: Math.round(container.getBoundingClientRect().width),
+          card: Math.round(card.getBoundingClientRect().width)
+        };
+      });
+      if (target.variant === 'standalone') {
+        eq(m.container, 960, 'standalone container width');
+        eq(m.card, 930, 'standalone card width');   // 960 less the 15px gutters
+      } else {
+        // Embedded, the container drops its gutters and takes the 880px cap, so
+        // the card is the full container rather than 30px narrower than it.
+        eq(m.container, Math.min(880, m.column), 'embedded container width');
+        eq(m.card, m.container, 'embedded card width');
+      }
     });
 
     if (target.variant === 'standalone') {
