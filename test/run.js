@@ -816,6 +816,86 @@ async function browserChecks() {
 
     await ctx.close();
   }
+
+  // -------------------------------------------------------------------------
+  // Phones, on the WordPress stand-in.
+  //
+  // Everything above runs at Playwright's default 1280x720, which is why a
+  // calculator that scrolled sideways by 119px on an iPhone shipped green. The
+  // standalone page hides overflow with body{overflow-x:hidden}; the WordPress
+  // page has no such guard, so anything too wide becomes real sideways scroll
+  // there and only there. Assert the page cannot scroll sideways at all.
+  // -------------------------------------------------------------------------
+  for (const width of [320, 390]) {
+    const ctx = await browser.newContext({ viewport: { width: width, height: 780 } });
+    const page = await ctx.newPage();
+    await page.goto(HOST + '/', { waitUntil: 'networkidle' });
+    await page.waitForSelector('#rc-section-1 .rc-card');
+
+    await check('WordPress stand-in at ' + width + 'px: the page does not scroll sideways', async function () {
+      const m = await page.evaluate(function () {
+        return { scrollWidth: document.body.scrollWidth, viewport: window.innerWidth };
+      });
+      eq(m.scrollWidth, m.viewport, 'body scrollWidth at ' + width + 'px');
+    });
+
+    await check('WordPress stand-in at ' + width + 'px: nothing reaches past the screen edge', async function () {
+      const past = await page.evaluate(function () {
+        const out = [];
+        document.querySelectorAll('#reece-calculator, #reece-calculator *').forEach(function (el) {
+          const b = el.getBoundingClientRect();
+          if (b.width === 0 && b.height === 0) return;
+          if (b.right > window.innerWidth + 1 || b.left < -1) {
+            out.push((el.id || el.tagName) + '@' + Math.round(b.left) + '+' + Math.round(b.width));
+          }
+        });
+        return out;
+      });
+      eq(past.join(', '), '', 'elements past the viewport at ' + width + 'px');
+    });
+
+    await check('WordPress stand-in at ' + width + 'px: fields fill the column and do not zoom iOS', async function () {
+      const m = await page.evaluate(function () {
+        const city = document.getElementById('rc-city');
+        const field = document.getElementById('rc-field-city');
+        return {
+          input: Math.round(city.getBoundingClientRect().width),
+          field: Math.round(field.getBoundingClientRect().width),
+          fontSize: parseFloat(getComputedStyle(city).fontSize),
+          checkbox: Math.round(document.getElementById('rc-consent-checkbox').getBoundingClientRect().width)
+        };
+      });
+      eq(m.input, m.field, 'city input width matches its field at ' + width + 'px');
+      // Under 16px, Safari zooms on focus and never zooms back out.
+      assert(m.fontSize >= 16, 'input font-size at ' + width + 'px is ' + m.fontSize + 'px, under the 16px iOS floor');
+      // The width rule must not reach the consent checkbox: it is flex-shrink:0,
+      // so width:100% would stretch it to the whole field and crush the text.
+      assert(m.checkbox < 40, 'consent checkbox stretched to ' + m.checkbox + 'px at ' + width + 'px');
+    });
+
+    await check('WordPress stand-in at ' + width + 'px: the consent text is fine print, not a form label', async function () {
+      const m = await page.evaluate(function () {
+        const cs = getComputedStyle(document.querySelector('#reece-calculator .rc-consent-label'));
+        return { fontSize: parseFloat(cs.fontSize), fontWeight: String(cs.fontWeight) };
+      });
+      eq(m.fontSize, 12, 'consent font-size at ' + width + 'px');
+      eq(m.fontWeight, '400', 'consent font-weight at ' + width + 'px');
+    });
+
+    await check('WordPress stand-in at ' + width + 'px: the calculator uses the whole screen', async function () {
+      const m = await page.evaluate(function () {
+        const mount = document.getElementById('reece-calculator').getBoundingClientRect();
+        const column = document.getElementById('reece-calculator').parentElement.getBoundingClientRect();
+        return { mount: Math.round(mount.width), column: Math.round(column.width), viewport: window.innerWidth };
+      });
+      // The theme column is only 81.25% wide; the embed breaks out of it on phones.
+      assert(m.column < m.viewport, 'the stand-in column should be narrower than the screen, got ' + m.column);
+      eq(m.mount, m.viewport, 'mount width at ' + width + 'px');
+    });
+
+    await ctx.close();
+  }
+
   await browser.close();
 }
 
