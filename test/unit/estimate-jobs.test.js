@@ -103,7 +103,7 @@ test('limit is a ceiling — the pass stops once it is reached', () => {
 
 // --- claim ------------------------------------------------------------------
 
-test('claim is one atomic PATCH that leases the row it takes', async () => {
+test('claim goes through the SKIP LOCKED function, not a filtered PATCH', async () => {
   let seen;
   const fakeFetch = async (url, opts) => {
     seen = { url, opts };
@@ -116,17 +116,14 @@ test('claim is one atomic PATCH that leases the row it takes', async () => {
   );
 
   assert.equal(row.id, 'row-1');
-  assert.equal(seen.opts.method, 'PATCH', 'a SELECT-then-UPDATE would race two sweeps');
-  assert.ok(seen.url.includes('status=eq.pending'));
-  assert.ok(seen.url.includes('next_attempt_at=lte.'));
-  assert.ok(seen.url.includes('limit=1'), 'one row at a time, so an outage cannot strand a batch');
-  assert.ok(seen.url.includes('order=created_at.asc'), 'oldest first');
-  assert.equal(seen.opts.headers.Prefer, 'return=representation');
+  // A filtered PATCH with order+limit depends on a PostgREST version we cannot
+  // check from the app, and fails with a 400 rather than degrading.
+  assert.ok(seen.url.endsWith('/rest/v1/rpc/claim_estimate_job'), 'got ' + seen.url);
+  assert.equal(seen.opts.method, 'POST');
 
   // The lease must outlast the worst-case pass, or a second sweep re-claims a
   // row that is still being replayed.
-  const leased = Date.parse(JSON.parse(seen.opts.body).next_attempt_at);
-  assert.equal(leased, T0 + jobs.LEASE_MS);
+  assert.equal(JSON.parse(seen.opts.body).lease_seconds, jobs.LEASE_MS / 1000);
   assert.ok(jobs.LEASE_MS > jobs.HARD_CAP_MS, 'lease must exceed the hard cap');
 });
 

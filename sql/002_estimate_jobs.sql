@@ -71,3 +71,44 @@ ALTER TABLE estimate_jobs ENABLE ROW LEVEL SECURITY;
 -- ESTIMATE_JOB_RETENTION_DAYS (default 30) on every pass, so PII stays
 -- bounded without a second moving part. Rows in 'dead' are kept: somebody
 -- needs to look at those.
+
+-- ============================================================
+-- claim_estimate_job(lease_seconds)
+--
+-- The sweep's claim primitive. FOR UPDATE SKIP LOCKED is the standard queue
+-- claim: two overlapping sweeps can never take the same row, which matters
+-- because the root server has no SIGTERM handler — a Railway redeploy kills an
+-- in-flight sweep with no drain and the next tick starts while the old one may
+-- still be running.
+--
+-- Why a function and not a filtered PATCH with order+limit: PostgREST supports
+-- that only on recent versions and fails with a 400 rather than degrading,
+-- which would take the whole retry mechanism out silently.
+--
+-- Pushing next_attempt_at forward IS the lease, so a sweep that dies mid-replay
+-- releases the row automatically when it expires. Must exceed the sweep's hard
+-- cap (ESTIMATE_JOB_LEASE_MS vs SWEEP_HARD_CAP_MS).
+--
+-- SECURITY INVOKER (the default) on purpose: RLS is enabled with no policies,
+-- so even if the function were reachable by anon it would update nothing. The
+-- REVOKE below makes that explicit rather than relying on it.
+-- ============================================================
+
+CREATE OR REPLACE FUNCTION claim_estimate_job(lease_seconds INT DEFAULT 600)
+RETURNS SETOF estimate_jobs
+LANGUAGE sql
+AS $$
+  UPDATE estimate_jobs
+     SET next_attempt_at = now() + make_interval(secs => lease_seconds)
+   WHERE id = (
+     SELECT id FROM estimate_jobs
+      WHERE status = 'pending' AND next_attempt_at <= now()
+      ORDER BY created_at ASC
+      FOR UPDATE SKIP LOCKED
+      LIMIT 1
+   )
+  RETURNING *;
+$$;
+
+REVOKE ALL ON FUNCTION claim_estimate_job(INT) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION claim_estimate_job(INT) TO service_role;
