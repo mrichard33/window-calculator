@@ -42,6 +42,10 @@ const API_BASE = 'https://estimate.getreecewindows.com';
 // no visitor, pageview or identify is ever written to LP Supabase.
 const TRACKER_ORIGIN = 'https://track.getreecewindows.com';
 
+// The two non-calc_ events the embed is allowed to mirror: consent-document
+// views, named by LP-MCP's visitor tracking contract rather than by this funnel.
+const POLICY_EVENTS = ['privacy_policy_viewed', 'terms_viewed'];
+
 // The details the funnel is walked with. Every one of these is something the
 // mirrored props must never contain.
 const LEAD = {
@@ -302,6 +306,73 @@ async function grepChecks() {
     });
   });
 
+  await check('the consent block is the v2 wording, and only v2 ships', function () {
+    // The version string is the audit record on every contact. A wording change
+    // that forgets the bump makes v1 contacts and v2 contacts indistinguishable.
+    assert(embed.indexOf("'calc-consent-2026-09-17-v2'") !== -1,
+      'CONSENT_VERSION is not calc-consent-2026-09-17-v2');
+    const stale = embed.match(/calc-consent-2026-08-13-v1/g) || [];
+    eq(stale.length, 0, 'references to the superseded consent version');
+
+    // The 10DLC SMS elements. Carriers reject a campaign missing any of these.
+    ['I agree to receive SMS messages from Reece Windows &amp; Doors',
+     'at the number I entered above',
+     'Msg frequency varies',
+     'Msg &amp; data rates may apply',
+     'Reply HELP for help, STOP to opt out'].forEach(function (phrase) {
+      assert(embed.indexOf(phrase) !== -1, 'consent text is missing: ' + phrase);
+    });
+
+    // CONSENT_A also collects calling and email consent. Reece dials these leads
+    // through Five9, so dropping any of this is a compliance change, not a copy
+    // tweak — it fails here rather than being noticed after the first dial.
+    ['live agent', 'AI generative voice', 'artificial or prerecorded voice',
+     'calls dialed manually or by auto dialer', 'and by email',
+     'not required to sign or agree to this as a condition of purchase'].forEach(function (phrase) {
+      assert(embed.indexOf(phrase) !== -1, 'calling/email consent is missing: ' + phrase);
+    });
+  });
+
+  await check('the policy links point at the GHL redirects and open safely', function () {
+    [['rc-link-privacy', 'https://landing.reecewindows.com/privacy'],
+     ['rc-link-terms',   'https://landing.reecewindows.com/terms']].forEach(function (pair) {
+      const tag = (embed.match(new RegExp('<a [^>]*id=\\\\"' + pair[0] + '\\\\"[^>]*>')) || [])[0];
+      assert(tag, 'no anchor with id ' + pair[0]);
+      // The href must stay on landing.reecewindows.com: that is the GHL URL
+      // redirect, which is what puts the click in trigger-link reporting and
+      // lets the destination change without a deploy.
+      assert(tag.indexOf('href=\\"' + pair[1] + '\\"') !== -1, pair[0] + ' href: ' + tag);
+      assert(tag.indexOf('target=\\"_blank\\"') !== -1, pair[0] + ' does not open in a new tab');
+      // rel=noopener: without it the opened page gets window.opener on this one.
+      assert(tag.indexOf('rel=\\"noopener\\"') !== -1, pair[0] + ' is missing rel=noopener');
+    });
+  });
+
+  await check('the policy links sit outside the consent <label>', function () {
+    // Inside the label that wraps the checkbox, clicking a link also toggles
+    // that checkbox — a lead reading the policy would flip their own consent.
+    const block = (embed.match(/id=\\"rc-field-consent\\"[\s\S]*?rc-consent-footer[\s\S]*?<\/p>/) || [''])[0];
+    assert(block, 'the consent field block was not found');
+    const labelEnd = block.indexOf('</label>');
+    assert(labelEnd !== -1, 'the consent <label> never closes');
+    ['rc-link-privacy', 'rc-link-terms'].forEach(function (id) {
+      const at = block.indexOf(id);
+      assert(at !== -1, id + ' is not in the consent block');
+      assert(at > labelEnd, id + ' sits inside .rc-consent-label');
+    });
+  });
+
+  await check('policy-link tracking cannot block the navigation', function () {
+    const handler = (embed.match(/function watchPolicyLinks[\s\S]*?\n  }\n/) || [''])[0];
+    assert(handler, 'watchPolicyLinks is gone');
+    assert(handler.indexOf('preventDefault') === -1, 'the policy-link handler calls preventDefault');
+    assert(/catch \(err\)/.test(handler), 'the policy-link handler has no catch');
+    // Routed through trackerSend, not a second raw ReeceTrack call site — that
+    // is what keeps the queue, the PII filter and the one-guarded-site rule
+    // above applying to these two events as well.
+    assert(handler.indexOf('trackerSend(') !== -1, 'the policy-link handler bypasses trackerSend');
+  });
+
   await check('the embed never sizes anything in rem', function () {
     // rem resolves against the HOST page's <html> font-size. reecewindows.com
     // sets html{font-size:10px}, so a single rem left in here renders that
@@ -429,6 +500,19 @@ async function browserChecks() {
     const consoleErrors = [];
     const events = [];
     const trackerRequests = [];
+    const policyRequests = [];
+
+    // The policy links open a NEW page, and page.route() below only covers the
+    // page it is registered on. Stub the GHL redirect host at the CONTEXT so the
+    // suite stays offline — a real landing.reecewindows.com fetch here would
+    // both leave the sandbox and log a live pageview against Reece's tracking.
+    await ctx.route('https://landing.reecewindows.com/**', function (route) {
+      policyRequests.push(route.request().url());
+      return route.fulfill({
+        status: 200, contentType: 'text/html',
+        body: '<!doctype html><title>policy stub</title>'
+      });
+    });
     page.on('console', function (m) { if (m.type() === 'error') consoleErrors.push(m.text()); });
     page.on('pageerror', function (e) { consoleErrors.push(String(e)); });
 
@@ -631,6 +715,63 @@ async function browserChecks() {
       if (expected === 0) eq(trackerRequests.length, 0, 'requests to the tracker origin');
     });
 
+    // -----------------------------------------------------------------------
+    // Policy links, clicked BEFORE the form is submitted — which is when a real
+    // lead reads them, and why the visitor id is the only thing tying the click
+    // to a person until I.STITCH runs.
+    // -----------------------------------------------------------------------
+    await check(target.name + ': both policy links open the GHL redirect in a new tab', async function () {
+      for (const pair of [['#rc-link-privacy', 'https://landing.reecewindows.com/privacy'],
+                          ['#rc-link-terms',   'https://landing.reecewindows.com/terms']]) {
+        eq(await page.locator(pair[0]).isVisible(), true, pair[0] + ' is not visible');
+        // A new page at all proves target=_blank; the recorded request proves it
+        // went to the GHL redirect host and not to a policy page directly.
+        const before = policyRequests.length;
+        const [opened] = await Promise.all([
+          ctx.waitForEvent('page', { timeout: 10000 }),
+          page.click(pair[0])
+        ]);
+        await opened.waitForLoadState('domcontentloaded').catch(function () {});
+        const fetched = policyRequests.slice(before);
+        assert(fetched.some(function (u) { return u.indexOf(pair[1]) === 0; }),
+          pair[0] + ' requested ' + (fetched.join(', ') || 'nothing') + ', expected ' + pair[1]);
+        await opened.close();
+      }
+      // The form must be exactly as the lead left it: the links live outside
+      // the <label>, so reading a policy cannot toggle consent.
+      eq(await page.locator('#rc-consent-checkbox').isChecked(), false,
+        'reading a policy toggled the consent checkbox');
+    });
+
+    if (target.tracker === 'none') {
+      await check(target.name + ': policy links still work with no tracker at all', async function () {
+        // Asserted by the zero-console-errors check at the end of this target:
+        // the two clicks above ran with window.ReeceTrack undefined and the
+        // navigations happened anyway.
+        eq(await page.evaluate(function () { return typeof window.ReeceTrack; }),
+          'undefined', 'typeof window.ReeceTrack');
+        eq(consoleErrors.join(' | '), '', 'console errors after clicking the policy links');
+      });
+    } else {
+      await check(target.name + ': each policy link mirrors its own event once', async function () {
+        await page.waitForFunction(function (names) {
+          const seen = (window.__rtCalls || []).map(function (c) { return c.name; });
+          return names.every(function (n) { return seen.indexOf(n) !== -1; });
+        }, POLICY_EVENTS, { timeout: 15000 });
+
+        const rt = await page.evaluate(function () { return window.__rtCalls || []; });
+        POLICY_EVENTS.forEach(function (name) {
+          const hits = rt.filter(function (c) { return c.type === 'track' && c.name === name; });
+          eq(hits.length, 1, name + ' mirror count');
+          // Without calc_session_id the click cannot be joined to the session
+          // that produced it, which is the whole point of recording it.
+          assert(hits[0].props && hits[0].props.calc_session_id, name + ' has no calc_session_id');
+          eq(hits[0].props.page, 'estimate-calculator', name + ' page prop');
+          eq(hits[0].props.page_variant, target.variant, name + ' page_variant');
+        });
+      });
+    }
+
     // Walk the whole funnel.
     await page.fill('#rc-full-name', LEAD.name);
     await page.fill('#rc-street-address', LEAD.street);
@@ -706,7 +847,11 @@ async function browserChecks() {
 
       await check(target.name + ': every mirrored event is a calc_ event carrying its session', async function () {
         tracks.forEach(function (c) {
-          assert(/^calc_[a-z0-9_]+$/.test(c.name), 'unexpected mirrored event name: ' + c.name);
+          // Funnel steps are calc_*. The only exceptions are the two policy-link
+          // signals, which are named by LP-MCP's visitor tracking contract and
+          // are not steps in estimator_funnel_daily. Anything else is a typo.
+          assert(/^calc_[a-z0-9_]+$/.test(c.name) || POLICY_EVENTS.indexOf(c.name) !== -1,
+            'unexpected mirrored event name: ' + c.name);
           assert(c.props && c.props.calc_session_id, c.name + ' has no calc_session_id');
           eq(c.props.page_variant, target.variant, c.name + ' page_variant');
         });
@@ -826,7 +971,9 @@ async function browserChecks() {
   // page has no such guard, so anything too wide becomes real sideways scroll
   // there and only there. Assert the page cannot scroll sideways at all.
   // -------------------------------------------------------------------------
-  for (const width of [320, 390]) {
+  // 360 is the common Android width and the one the v2 consent block — roughly
+  // twice the length of v1 — has to stay legible at.
+  for (const width of [320, 360, 390]) {
     const ctx = await browser.newContext({ viewport: { width: width, height: 780 } });
     const page = await ctx.newPage();
     await page.goto(HOST + '/', { waitUntil: 'networkidle' });
@@ -880,6 +1027,30 @@ async function browserChecks() {
       });
       eq(m.fontSize, 12, 'consent font-size at ' + width + 'px');
       eq(m.fontWeight, '400', 'consent font-weight at ' + width + 'px');
+    });
+
+    await check('WordPress stand-in at ' + width + 'px: the policy links stay legible and tappable', async function () {
+      const m = await page.evaluate(function () {
+        const p = document.querySelector('#reece-calculator .rc-consent-footer');
+        const a = document.getElementById('rc-link-privacy');
+        const cs = getComputedStyle(a);
+        const box = a.getBoundingClientRect();
+        return {
+          footer:   p ? Math.round(p.getBoundingClientRect().width) : -1,
+          field:    Math.round(document.getElementById('rc-field-consent').getBoundingClientRect().width),
+          fontSize: parseFloat(cs.fontSize),
+          colour:   cs.color,
+          height:   Math.round(box.height),
+          width:    Math.round(box.width)
+        };
+      });
+      assert(m.footer > 0, 'the policy-link footer did not render');
+      eq(m.footer, m.field, 'footer width matches its field at ' + width + 'px');
+      // Fine print, but not unreadable fine print.
+      assert(m.fontSize >= 11, 'policy links render at ' + m.fontSize + 'px at ' + width + 'px');
+      // Never purple: a visited link left to the browser default is off-brand.
+      eq(m.colour, 'rgb(135, 137, 139)', 'policy link colour at ' + width + 'px');
+      assert(m.height > 0 && m.width > 0, 'the privacy link has no tappable box at ' + width + 'px');
     });
 
     await check('WordPress stand-in at ' + width + 'px: the calculator uses the whole screen', async function () {
