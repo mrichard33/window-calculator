@@ -5,12 +5,15 @@
  *
  * Endpoints:
  *   POST /api/generate-estimate-pdf - render estimate as PDF, upload to GHL
- *   GET  /health                    - liveness probe (verifies Puppeteer)
+ *   GET  /health                    - deep probe (launches a Puppeteer page)
+ *   GET  /healthz                   - cheap liveness probe (no I/O)
  *
  * Browser lifecycle:
  *   - One Chromium launched at startup and shared across requests.
  *   - Each request creates a fresh page and closes it in a finally block.
  *   - If the browser disconnects (crash, OOM), we relaunch on the next request.
+ *   - `withPage` is handed to pdf-generator, which scopes it to PDF generation
+ *     only so no page is held open while we talk to GHL.
  */
 
 const express = require('express');
@@ -141,7 +144,6 @@ app.get('/health', async (req, res) => {
 });
 
 app.post('/api/generate-estimate-pdf', async (req, res) => {
-  const started = Date.now();
   const body = req.body || {};
 
   // 1. Validate
@@ -151,31 +153,54 @@ app.post('/api/generate-estimate-pdf', async (req, res) => {
     return res.status(400).json({ success: false, errors });
   }
 
-  console.log(`[PDF] Request received: contact_id=${body.contact_id || 'none'}, windows=${(body.estimate.project && body.estimate.project.totalWindows) || 0}`);
+  const contactId = body.contact_id || 'none';
+  console.log(`[PDF] Request received: contact_id=${contactId}, windows=${(body.estimate.project && body.estimate.project.totalWindows) || 0}`);
 
-  // 2. Render and generate, wrapped in a hard timeout so a hung Chromium
-  // doesn't block the response indefinitely.
+  // 2. Generate and deliver.
+  //
+  // There is deliberately NO request-wide watchdog here any more. The old one
+  // raced the whole handler against 30s; on 2026-09-17 it fired while a healthy
+  // 245KB PDF waited on a Cloudflare 524 from GHL, threw the PDF away, and
+  // reported it as "PDF generation timed out". Each stage now carries its own
+  // budget (generation 20s, each GHL attempt 25s) and pdf-generator scopes the
+  // Chromium page to generation alone.
   try {
-    const result = await Promise.race([
-      withPage((page) => pdfGenerator.generate({ page, body })),
-      new Promise((_, reject) =>
-        setTimeout(
-          () => reject(new Error(`PDF generation timed out after ${pdfGenerator.PDF_TIMEOUT_MS}ms`)),
-          pdfGenerator.PDF_TIMEOUT_MS
-        )
-      ),
-    ]);
+    const { response, metrics } = await pdfGenerator.generate({ withPage, body });
 
-    const elapsed = Date.now() - started;
-    console.log(`[PDF] Complete: contact_id=${body.contact_id || 'none'}, pdfUrl=${result.pdfUrl || 'none'}, ${elapsed}ms`);
-    return res.json(result);
+    console.log(
+      `[PDF] Complete: contact_id=${contactId}, generate_ms=${metrics.generateMs}, `
+      + `upload_ms=${metrics.uploadMs}, attempts=${metrics.uploadAttempts}`
+    );
+    return res.json(response);
   } catch (err) {
+    if (err && err.code === 'ghl_upload_failed') {
+      // 502, not 500: this was upstream, not our bug. The distinction is what
+      // makes a log read six weeks from now interpretable.
+      console.error(
+        `[PDF] ${err.stage} failed: contact_id=${err.contactId || contactId}, `
+        + `attempts=${err.attempts}, status=${err.status != null ? err.status : 'none'}, `
+        + `pdf_bytes=${err.pdfBytes}, body=${err.bodySnippet || ''}`
+      );
+      return res.status(502).json({
+        error: 'ghl_upload_failed',
+        stage: err.stage,
+        attempts: err.attempts,
+        contact_id: body.contact_id || null,
+      });
+    }
+
     console.error('[PDF] Generation failed:', err);
     return res.status(500).json({
       success: false,
       error: err.message || 'PDF generation failed',
     });
   }
+});
+
+// Cheap liveness probe: no Puppeteer, no I/O. GET / used to 404, so there was
+// no way to check the service was up without submitting a real estimate.
+app.get('/healthz', (req, res) => {
+  res.status(200).json({ ok: true, service: 'pdf-service' });
 });
 
 // 404 fallback for unknown routes
