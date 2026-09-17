@@ -749,6 +749,20 @@
     "  outline: 2px solid var(--cta-red);",
     "  outline-offset: 1px;",
     "}",
+    "/* ===== POLICY LINKS UNDER THE CONSENT BOX ===== */",
+    "#reece-calculator .rc-consent-footer {",
+    "  font-size: calc(0.72 * var(--rc-rem));",
+    "  color: var(--text-gray);",
+    "  line-height: 1.4;",
+    "  margin: calc(0.5 * var(--rc-rem)) 0 0;",
+    "}",
+    "/* Colour both states explicitly. Left to the browser, a visited policy link",
+    "   renders in the default purple, which is off-brand for Reece. */",
+    "#reece-calculator .rc-consent-footer a,",
+    "#reece-calculator .rc-consent-footer a:visited {",
+    "  color: var(--text-gray);",
+    "  text-decoration: underline;",
+    "}",
     "/* ===== PRICING STABILITY NOTE ===== */",
     "#reece-calculator .rc-pricing-stability-note {",
     "  background: var(--light-bg);",
@@ -1330,9 +1344,18 @@
     "          <div class=\"rc-field\" id=\"rc-field-consent\">",
     "            <label class=\"rc-consent-label\">",
     "              <input type=\"checkbox\" id=\"rc-consent-checkbox\">",
-    "              <span>By checking this box and clicking Start My Estimate, I agree by electronic signature to be contacted by Reece Windows &amp; Doors through a live agent, AI generative voice, artificial or prerecorded voice, and automated SMS text at the number I entered above with reminders, offers and other info, including calls dialed manually or by auto dialer, text and recorded messages, and by email. I understand I am not required to sign/agree to this as a condition to purchase. Standard rates apply</span>",
+    "              <span>By checking this box, I agree to receive SMS messages from Reece Windows &amp; Doors at the number I entered above, including appointment reminders, account notifications, and promotional offers. Msg frequency varies. Msg &amp; data rates may apply. Reply HELP for help, STOP to opt out.<br><br>I also agree by electronic signature to be contacted by Reece Windows &amp; Doors at that number through a live agent, AI generative voice, artificial or prerecorded voice, and automated technology, including calls dialed manually or by auto dialer, and by email. I understand I am not required to sign or agree to this as a condition of purchase.</span>",
     "            </label>",
     "            <div class=\"rc-field-error-msg\">You must agree to the consent terms to continue.</div>",
+    // The policy links sit OUTSIDE .rc-consent-label deliberately: a link inside
+    // the <label> that wraps the checkbox toggles that checkbox on click, so a
+    // lead reading the policy would silently flip their own consent.
+    //
+    // Both hrefs are GHL URL redirects, not the policy pages themselves. They
+    // resolve to link.reecewindows.com/r/2/<token>, which is what puts the click
+    // in GHL trigger-link reporting and lets the destination move without a
+    // deploy. Never "simplify" these to the direct policy URLs.
+    "            <p class=\"rc-consent-footer\">By submitting this form you agree to our <a href=\"https://landing.reecewindows.com/privacy\" id=\"rc-link-privacy\" target=\"_blank\" rel=\"noopener\">Privacy Policy</a> &amp; <a href=\"https://landing.reecewindows.com/terms\" id=\"rc-link-terms\" target=\"_blank\" rel=\"noopener\">Terms &amp; Conditions</a>.</p>",
     "          </div>",
     "        </div>",
     "      </div>",
@@ -1737,7 +1760,12 @@
   //  All GHL, PDF, and verification traffic goes through the
   //  same-origin Express server. No tokens ever ship to the browser.
   // ============================================================
-  var CONSENT_VERSION = 'calc-consent-2026-08-13-v1';
+  // Stamped onto the contact as calc_consent_version (GHL field
+  // H2NXVp74G1kf6gHjiUvN) by POST /api/contact. Bump this whenever the wording
+  // of the consent block changes, and NEVER backfill contacts carrying an older
+  // value — that value is the record of what those leads actually agreed to.
+  // v2 (2026-09-17): 10DLC SMS block split out, calling and email consent kept.
+  var CONSENT_VERSION = 'calc-consent-2026-09-17-v2';
   var CALC_SESSION_ID = (window.crypto && crypto.randomUUID)
     ? crypto.randomUUID()
     : String(Date.now()) + '-' + Math.random().toString(16).slice(2);
@@ -1946,6 +1974,51 @@
     try {
       trackerSend({ kind: 'track', name: 'calc_' + eventName, props: trackerProps(extra) });
     } catch (e) { /* never throw from analytics */ }
+  }
+
+  // Policy-link clicks, mirrored as site-wide consent signals.
+  //
+  // Unprefixed on purpose. Every funnel step goes out as calc_*, because those
+  // are steps in estimator_funnel_daily; these two are not funnel steps, they
+  // are the named events LP-MCP's visitor tracking contract already reports on
+  // (docs/visitor_tracking_install.md). Renaming them breaks that reporting.
+  //
+  // The click almost always lands BEFORE the form is submitted, so no GHL
+  // contact exists yet. The value carried here is the visitor id the tracker
+  // attaches; I.STITCH resolves it to a contact on its next pass once the lead
+  // identifies. That is why the GHL trigger link alone is not enough — it can
+  // count the click but cannot name the person.
+  var POLICY_LINK_EVENTS = {
+    'rc-link-privacy': 'privacy_policy_viewed',
+    'rc-link-terms':   'terms_viewed'
+  };
+
+  // Delegated from the mount rather than from document, so a host page that
+  // happens to carry its own policy links cannot fire these, and so the handler
+  // survives the innerHTML render that builds the form.
+  //
+  // This never calls preventDefault and never throws: the link opens whether or
+  // not anything was recorded. Analytics must never block a navigation.
+  function watchPolicyLinks(root) {
+    if (!root) return;
+    root.addEventListener('click', function (e) {
+      try {
+        var el = e.target;
+        if (!el || typeof el.closest !== 'function') return;
+        var link = el.closest('#rc-link-privacy, #rc-link-terms');
+        if (!link) return;
+        var name = POLICY_LINK_EVENTS[link.id];
+        if (!name) return;
+        trackerSend({
+          kind:  'track',
+          name:  name,
+          props: trackerProps({ meta: {
+            page:    'estimate-calculator',
+            surface: window.location.hostname
+          } })
+        });
+      } catch (err) { /* never block the navigation */ }
+    });
   }
 
   // The visitor id the tracker assigned this browser. Sent alongside the lead
@@ -3453,6 +3526,9 @@
     })();
 
     updateRunningTotal();
+
+    // Registered once per mount, after innerHTML has built the form.
+    watchPolicyLinks(mountEl);
 
     // Step 1 is already on screen by the time init() runs — this is the moment it
     // first becomes visible to the lead, so this is where its step_view belongs.
