@@ -30,6 +30,25 @@ const intEnv = retry.intEnv;
 const PDF_GENERATE_TIMEOUT_MS = intEnv('PDF_GENERATE_TIMEOUT_MS', 20000);
 const GHL_UPLOAD_TIMEOUT_MS = intEnv('GHL_UPLOAD_TIMEOUT_MS', 25000);
 const GHL_CONTACT_TIMEOUT_MS = intEnv('GHL_CONTACT_TIMEOUT_MS', 25000);
+const GHL_UPLOAD_MAX_ATTEMPTS = intEnv('GHL_UPLOAD_MAX_ATTEMPTS', 3);
+
+/**
+ * Per-request cap on retry attempts, clamped to 1..GHL_UPLOAD_MAX_ATTEMPTS.
+ *
+ * The estimate outbox sweep is itself a retry mechanism, so it sends
+ * max_attempts: 1 — nesting our ladder inside its ladder makes one replay
+ * outlive the sweep's own budget, and the sweep then looks permanently broken
+ * while burning attempts invisibly. Absent or invalid means the normal path,
+ * which is unchanged.
+ *
+ * Clamped rather than trusted: this endpoint accepts requests with no Origin
+ * header, so the value is not from a source we control.
+ */
+function clampMaxAttempts(raw) {
+  const n = parseInt(raw, 10);
+  if (!Number.isFinite(n)) return GHL_UPLOAD_MAX_ATTEMPTS;
+  return Math.min(Math.max(n, 1), GHL_UPLOAD_MAX_ATTEMPTS);
+}
 
 /**
  * Bound a promise that has no timeout option of its own.
@@ -119,6 +138,7 @@ async function generate({ withPage, body }, deps) {
   const estimate = body.estimate;
   const contactId = body.contact_id;
   const ghlApiKey = body.ghl_api_key;
+  const maxAttempts = clampMaxAttempts(body.max_attempts);
 
   const totalWindows = (estimate.project && estimate.project.totalWindows) || 0;
   logger.log(`[PDF] Generating PDF: contact_id=${contactId || 'none'}, windows=${totalWindows}, grandTotal=${estimate.costs && estimate.costs.grandTotal}`);
@@ -170,7 +190,7 @@ async function generate({ withPage, body }, deps) {
   try {
     upload = await doUpload(
       pdfBuffer,
-      { contactId, fileName, ghlApiKey, timeoutMs: GHL_UPLOAD_TIMEOUT_MS },
+      { contactId, fileName, ghlApiKey, timeoutMs: GHL_UPLOAD_TIMEOUT_MS, maxAttempts },
       deps,
     );
   } catch (err) {
@@ -188,7 +208,7 @@ async function generate({ withPage, body }, deps) {
     contactUpdate = await doUpdateContact(
       contactId,
       pdfUrl,
-      { ghlApiKey, timeoutMs: GHL_CONTACT_TIMEOUT_MS, pdfBytes: pdfBuffer.length },
+      { ghlApiKey, timeoutMs: GHL_CONTACT_TIMEOUT_MS, maxAttempts, pdfBytes: pdfBuffer.length },
       deps,
     );
   } catch (err) {
@@ -218,6 +238,7 @@ async function generate({ withPage, body }, deps) {
 module.exports = {
   generate,
   withTimeout,
+  clampMaxAttempts,
   PDF_GENERATE_TIMEOUT_MS,
   GHL_UPLOAD_TIMEOUT_MS,
   GHL_CONTACT_TIMEOUT_MS,
