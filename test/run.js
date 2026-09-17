@@ -306,13 +306,22 @@ async function grepChecks() {
     });
   });
 
-  await check('the consent block is the v2 wording, and only v2 ships', function () {
+  await check('the consent block is the v3 wording, and only v3 ships', function () {
     // The version string is the audit record on every contact. A wording change
-    // that forgets the bump makes v1 contacts and v2 contacts indistinguishable.
-    assert(embed.indexOf("'calc-consent-2026-09-17-v2'") !== -1,
-      'CONSENT_VERSION is not calc-consent-2026-09-17-v2');
-    const stale = embed.match(/calc-consent-2026-08-13-v1/g) || [];
-    eq(stale.length, 0, 'references to the superseded consent version');
+    // that forgets the bump makes contacts under two different agreements
+    // indistinguishable — that is the whole job of this field.
+    assert(embed.indexOf("'calc-consent-2026-09-17-v3'") !== -1,
+      'CONSENT_VERSION is not calc-consent-2026-09-17-v3');
+    ['calc-consent-2026-08-13-v1', 'calc-consent-2026-09-17-v2'].forEach(function (old) {
+      const stale = embed.match(new RegExp("'" + old + "'", 'g')) || [];
+      eq(stale.length, 0, 'CONSENT_VERSION references the superseded ' + old);
+    });
+
+    // Scoped to the rendered consent text, not the whole file: the source
+    // comments around this block necessarily quote the wording that was
+    // removed, and a file-wide grep would read those as the live copy.
+    const consent = (embed.match(/<span>By checking this box[\s\S]*?<\/span>/) || [''])[0];
+    assert(consent, 'the consent <span> was not found');
 
     // The 10DLC SMS elements. Carriers reject a campaign missing any of these.
     ['I agree to receive SMS messages from Reece Windows &amp; Doors',
@@ -320,16 +329,17 @@ async function grepChecks() {
      'Msg frequency varies',
      'Msg &amp; data rates may apply',
      'Reply HELP for help, STOP to opt out'].forEach(function (phrase) {
-      assert(embed.indexOf(phrase) !== -1, 'consent text is missing: ' + phrase);
+      assert(consent.indexOf(phrase) !== -1, 'consent text is missing: ' + phrase);
     });
 
-    // CONSENT_A also collects calling and email consent. Reece dials these leads
-    // through Five9, so dropping any of this is a compliance change, not a copy
-    // tweak — it fails here rather than being noticed after the first dial.
+    // v3 is SMS ONLY. The calling and email consent was removed at Mark's
+    // direction, so nothing on this page collects it any more. Putting any of
+    // it back is a compliance change in the other direction and must come with
+    // a version bump — this fails first so the bump cannot be forgotten.
     ['live agent', 'AI generative voice', 'artificial or prerecorded voice',
-     'calls dialed manually or by auto dialer', 'and by email',
-     'not required to sign or agree to this as a condition of purchase'].forEach(function (phrase) {
-      assert(embed.indexOf(phrase) !== -1, 'calling/email consent is missing: ' + phrase);
+     'auto dialer', 'by email', 'condition of purchase'].forEach(function (phrase) {
+      assert(consent.indexOf(phrase) === -1,
+        'calling/email consent is back in the consent text without a version bump: ' + phrase);
     });
   });
 
