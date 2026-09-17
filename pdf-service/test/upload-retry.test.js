@@ -305,3 +305,59 @@ test('a successful run reports real timings and keeps the response shape', async
   assert.equal(metrics.uploadMs, 42);
   assert.equal(metrics.pdfBytes, pdf.length);
 });
+
+// --- per-request attempt cap (used by the estimate outbox sweep) ------------
+
+test('max_attempts: 1 makes exactly one upload attempt, not three', async () => {
+  const pdf = Buffer.from('%PDF-1.4\nF');
+  let calls = 0;
+  const sleep = recordingSleep();
+
+  await assert.rejects(
+    () => uploadWithRetry(pdf, Object.assign({}, OPTS, { maxAttempts: 1 }), {
+      uploadFn: async () => { calls++; throw timeoutErr(); },
+      sleep,
+      logger: QUIET,
+    }),
+    (err) => { assert.equal(err.attempts, 1); return true; },
+  );
+
+  // The sweep is itself the retry mechanism. Nesting this ladder inside its
+  // ladder makes one replay outlive the sweep's budget.
+  assert.equal(calls, 1, 'a retryable timeout must NOT be retried when capped at 1');
+  assert.equal(sleep.slept.length, 0, 'no backoff when there is no next attempt');
+});
+
+test('clampMaxAttempts bounds an untrusted value to 1..3', () => {
+  const clamp = pdfGenerator.clampMaxAttempts;
+  assert.equal(clamp(1), 1);
+  assert.equal(clamp(2), 2);
+  assert.equal(clamp(3), 3);
+  assert.equal(clamp(99), 3, 'cannot exceed the configured ceiling');
+  assert.equal(clamp(0), 1, 'zero would mean never try');
+  assert.equal(clamp(-5), 1);
+  assert.equal(clamp(undefined), 3, 'absent means the normal path, unchanged');
+  assert.equal(clamp('abc'), 3, 'NaN must not poison the loop bound');
+  assert.equal(clamp('1'), 1, 'JSON bodies can carry it as a string');
+});
+
+test('generate() passes max_attempts through to both GHL stages', async () => {
+  const pdf = Buffer.from('%PDF-1.4\nG');
+  const seen = {};
+
+  await pdfGenerator.generate({ withPage: fakeWithPage(pdf, []), body: Object.assign({}, BODY, { max_attempts: 1 }) }, {
+    renderHtml: () => '<html></html>',
+    uploadWithRetry: async (buf, opts) => {
+      seen.upload = opts.maxAttempts;
+      return { value: 'https://storage/x.pdf', attempts: 1, elapsedMs: 3 };
+    },
+    updateContactWithRetry: async (id, url, opts) => {
+      seen.contact = opts.maxAttempts;
+      return { value: true, attempts: 1, elapsedMs: 2 };
+    },
+    logger: QUIET,
+  });
+
+  assert.equal(seen.upload, 1);
+  assert.equal(seen.contact, 1, 'the contact PUT must be capped too, or the ladder is still nested');
+});

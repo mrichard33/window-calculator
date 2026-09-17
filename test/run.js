@@ -84,6 +84,30 @@ function get(url, opts) {
   });
 }
 
+// http.get cannot issue a POST, and every POST in the browser phases is stubbed
+// by Playwright before it reaches the server — so without this nothing ever
+// exercised a POST handler server-side.
+function post(url, body, opts) {
+  opts = opts || {};
+  const payload = body == null ? '' : JSON.stringify(body);
+  const u = new URL(url);
+  return new Promise(function (resolve, reject) {
+    const req = http.request({
+      hostname: u.hostname, port: u.port, path: u.pathname + u.search, method: 'POST',
+      headers: Object.assign({
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(payload)
+      }, opts.headers || {})
+    }, function (res) {
+      let out = '';
+      res.on('data', function (c) { out += c; });
+      res.on('end', function () { resolve({ status: res.statusCode, headers: res.headers, body: out }); });
+    });
+    req.on('error', reject);
+    req.end(payload);
+  });
+}
+
 // ---------------------------------------------------------------------------
 // 1. Syntax
 // ---------------------------------------------------------------------------
@@ -249,6 +273,40 @@ async function httpChecks() {
     }
     const bad = await get(APP + '/api/events', { headers: { origin: 'https://not-reece.example' } });
     eq(bad.status, 403, 'unknown origin status');
+  });
+
+  // The /api origin gate waves through anything with no Origin header (the
+  // server-to-server case), so the sweep endpoint's own bearer check is the
+  // only thing standing between a curl and a replay of every pending estimate.
+  await check('/api/estimate/sweep refuses a request with no token', async function () {
+    const r = await post(APP + '/api/estimate/sweep', { limit: 1 });
+    eq(r.status, 401, 'no-token status');
+  });
+
+  await check('/api/estimate/sweep refuses a wrong token', async function () {
+    const r = await post(APP + '/api/estimate/sweep', { limit: 1 },
+      { headers: { authorization: 'Bearer ' + 'b'.repeat(64) } });
+    eq(r.status, 401, 'wrong-token status');
+  });
+
+  await check('/api/estimate/sweep returns 401 (not 500) for a wrong-LENGTH token', async function () {
+    // crypto.timingSafeEqual throws on a length mismatch, which would surface
+    // as a 500 and leak the secret's length. Hashing both sides first is what
+    // keeps this a 401.
+    for (const bad of ['x', 'Bearer', 'a'.repeat(500), '']) {
+      const r = await post(APP + '/api/estimate/sweep', { limit: 1 },
+        { headers: { authorization: 'Bearer ' + bad } });
+      assert(r.status === 401, 'token ' + JSON.stringify(bad.slice(0, 12)) + ' gave ' + r.status + ', expected 401');
+    }
+  });
+
+  await check('/api/estimate/sweep accepts the configured token', async function () {
+    const r = await post(APP + '/api/estimate/sweep', { limit: 1 },
+      { headers: { authorization: 'Bearer ' + process.env.SWEEP_TOKEN } });
+    // Supabase is not configured in the test env, so the auth gate passing is
+    // proved by getting past 401 to the dependency check.
+    assert(r.status !== 401, 'the right token was refused');
+    assert(r.status === 503 || r.status === 200, 'unexpected status ' + r.status + ': ' + r.body.slice(0, 200));
   });
 }
 
@@ -1073,6 +1131,8 @@ async function browserChecks() {
 // ---------------------------------------------------------------------------
 async function main() {
   process.env.PORT = String(APP_PORT);
+  // server.js reads every env var at module load, so this must precede require.
+  process.env.SWEEP_TOKEN = process.env.SWEEP_TOKEN || 'test-sweep-token-' + 'c'.repeat(32);
   process.env.GHL_API_KEY = process.env.GHL_API_KEY || '';
   require(path.join(ROOT, 'server.js'));
 

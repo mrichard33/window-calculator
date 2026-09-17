@@ -24,6 +24,8 @@
  *   POST /api/estimate       — token-gated; contact estimate update +
  *                              estimate webhook + pdf-service, all server-side
  *   POST /api/events         — first-party funnel events -> HL Supabase
+ *   POST /api/estimate/sweep — bearer-auth; retries estimates whose PDF never
+ *                              reached GHL (called on a schedule by n8n)
  *
  * Node 18+ (global fetch). Only dependency: express.
  */
@@ -31,6 +33,8 @@
 const express = require('express');
 const crypto = require('crypto');
 const path = require('path');
+
+const jobs = require('./lib/estimate-jobs');
 
 const app = express();
 const PORT = parseInt(process.env.PORT, 10) || 8080;
@@ -48,6 +52,13 @@ const PDF_SERVICE_URL = process.env.PDF_SERVICE_URL || '';
 const SUPABASE_URL = (process.env.SUPABASE_URL || '').replace(/\/$/, '');
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 const ESTIMATE_TOKEN_SECRET = process.env.ESTIMATE_TOKEN_SECRET || '';
+// Shared secret for POST /api/estimate/sweep. The /api origin gate below lets
+// through anything with no Origin header (server-to-server), so without this
+// the sweep endpoint would be fully public to curl.
+const SWEEP_TOKEN = process.env.SWEEP_TOKEN || '';
+// "Estimate PDF URL" — the field E.2 Calculator Bridge v2 reads to decide
+// whether the homeowner finished the calculator. Same id pdf-service writes.
+const PDF_URL_FIELD_ID = 'WwmVP3sAjdqYQbZyITZT';
 // The two host pages plus the Railway domain. Baked in as the default so the
 // WordPress page cannot be broken by an env var edit; ALLOWED_ORIGINS still
 // overrides it when a new origin needs adding.
@@ -84,7 +95,8 @@ const ESTIMATE_TOKEN_TTL_MS = 60 * 60 * 1000; // 1 hour to reach step 4
  ['GHL_VERIFY_WEBHOOK_URL', GHL_VERIFY_WEBHOOK_URL],
  ['PDF_SERVICE_URL', PDF_SERVICE_URL], ['SUPABASE_URL', SUPABASE_URL],
  ['SUPABASE_SERVICE_ROLE_KEY', SUPABASE_SERVICE_ROLE_KEY],
- ['ESTIMATE_TOKEN_SECRET', ESTIMATE_TOKEN_SECRET]
+ ['ESTIMATE_TOKEN_SECRET', ESTIMATE_TOKEN_SECRET],
+ ['SWEEP_TOKEN', SWEEP_TOKEN]
 ].forEach(function (pair) {
   if (!pair[1]) console.warn('[boot] WARNING: env var ' + pair[0] + ' is not set');
 });
@@ -174,7 +186,10 @@ async function ghl(pathname, options) {
       'Version': GHL_API_VERSION,
       'Content-Type': 'application/json'
     },
-    body: options.body ? JSON.stringify(options.body) : undefined
+    body: options.body ? JSON.stringify(options.body) : undefined,
+    // Opt-in only: existing callers keep their current behaviour. The sweep
+    // sets it because an unbounded lookup would blow its time budget.
+    signal: options.timeoutMs ? AbortSignal.timeout(options.timeoutMs) : undefined
   });
   const text = await resp.text();
   let json = null;
@@ -462,6 +477,68 @@ function readToken(token) {
 }
 
 // ---------------------------------------------------------------------------
+// Estimate outbox helpers — shared by /api/estimate and /api/estimate/sweep
+// ---------------------------------------------------------------------------
+
+function supabaseCfg() {
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) return null;
+  return { url: SUPABASE_URL, key: SUPABASE_SERVICE_ROLE_KEY };
+}
+
+/**
+ * The pdf-service request body. One definition, so a replay is byte-identical
+ * to the original call — if these drift, the sweep stops reproducing the thing
+ * it is meant to retry.
+ *
+ * maxAttempts is the load-bearing argument: the sweep passes 1 because IT is
+ * the retry mechanism. pdf-service's own ladder is ~218s worst case, and
+ * nesting that inside a swept pass makes a single row outlive the caller's
+ * timeout. Omitted on the live path, where the full ladder is what we want.
+ */
+function pdfServiceBody(o) {
+  const body = {
+    contact_id: o.contactId || '',
+    contact_name: o.contactName || '',
+    contact_phone: o.contactPhone || '',
+    contact_email: o.contactEmail || '',
+    ghl_api_key: GHL_API_KEY,
+    ghl_location_id: GHL_LOCATION_ID,
+    estimate: o.estimate
+  };
+  if (o.maxAttempts) body.max_attempts = o.maxAttempts;
+  return body;
+}
+
+/** Pull pdfUrl out of a pdf-service success body without throwing on junk. */
+function pdfUrlOf(text) {
+  try { return (JSON.parse(text) || {}).pdfUrl || null; } catch (e) { return null; }
+}
+
+/** Apply the outcome of one attempt to an outbox row. Never throws. */
+async function settleJob(sb, id, row, outcome) {
+  if (!sb) return;
+  try {
+    await jobs.patchJob(sb, id, jobs.nextState(row, outcome));
+  } catch (err) {
+    // The row stays claimed and the sweep picks it up when the lease expires.
+    console.warn('[estimate] outbox settle failed for ' + id + ':', err.message);
+  }
+}
+
+/**
+ * Constant-time bearer check.
+ *
+ * crypto.timingSafeEqual THROWS on a length mismatch, which would turn a
+ * wrong-length token into a 500 instead of a 401 and leak length through the
+ * throw. Hashing both sides first makes the operands always 32 bytes.
+ */
+function sweepAuthorized(req) {
+  if (!SWEEP_TOKEN) return false;
+  const got = String(req.get('authorization') || '').replace(/^Bearer\s+/i, '');
+  return crypto.timingSafeEqual(sha256(got), sha256(SWEEP_TOKEN));
+}
+
+// ---------------------------------------------------------------------------
 // POST /api/estimate — the step-4 pipeline, server-side
 // ---------------------------------------------------------------------------
 app.post('/api/estimate', rateLimit(10, 10 * 60 * 1000), async function (req, res) {
@@ -523,29 +600,64 @@ app.post('/api/estimate', rateLimit(10, 10 * 60 * 1000), async function (req, re
     });
   }
 
-  // 3) PDF microservice — server-to-server; key from env, never from a client
+  // 3) PDF microservice — server-to-server; key from env, never from a client.
+  //
+  // The outbox: the payload is written to estimate_jobs BEFORE we call
+  // pdf-service, so a failure anywhere downstream is recoverable. Until
+  // 2026-09-17 this was three un-awaited fetches and nothing else, so if
+  // pdf-service was down or the process restarted mid-flight the estimate was
+  // gone with no record it existed — and an empty `Estimate PDF URL` makes
+  // "E.2 Calculator Bridge v2" classify a completed lead as abandoned.
   if (PDF_SERVICE_URL && p.estimate) {
+    const jobId = crypto.randomUUID();
+    const sb = supabaseCfg();
+
+    // Awaited, because a row written after the reply is a row that may never
+    // be written at all. Bounded at 5s, because an unbounded await on a
+    // hanging dependency inside a handler that owes the browser a 202 is the
+    // exact failure class the 2026-09-17 incident was. If it times out we log
+    // and carry on: a Supabase blip costs this lead its safety net, never its
+    // estimate.
+    let outboxed = false;
+    if (sb) {
+      try {
+        await jobs.insertJob(sb, {
+          id: jobId,
+          contact_id: contactId || null,
+          contact_name: contactName || null,
+          contact_phone: str(p.contactPhone, 30) || null,
+          contact_email: str(p.contactEmail, 200) || null,
+          estimate: p.estimate,
+          status: 'pending'
+        });
+        outboxed = true;
+      } catch (err) {
+        console.error('[estimate] outbox insert failed (continuing):', err.message);
+      }
+    }
+
     fetch(PDF_SERVICE_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contact_id: contactId,
-        contact_name: contactName,
-        contact_phone: str(p.contactPhone, 30),
-        contact_email: str(p.contactEmail, 200),
-        ghl_api_key: GHL_API_KEY,
-        ghl_location_id: GHL_LOCATION_ID,
+      body: JSON.stringify(pdfServiceBody({
+        contactId: contactId,
+        contactName: contactName,
+        contactPhone: str(p.contactPhone, 30),
+        contactEmail: str(p.contactEmail, 200),
         estimate: p.estimate
-      })
+      }))
     }).then(async function (resp) {
+      const body = await resp.text();
       if (!resp.ok) {
-        const body = await resp.text();
         console.error('[estimate] pdf-service HTTP ' + resp.status + ': ' + body.slice(0, 300));
-      } else {
-        console.log('[estimate] pdf-service accepted for contact', contactId || '(none)');
+        if (outboxed) await settleJob(sb, jobId, { attempts: 0 }, { ok: false, error: 'HTTP ' + resp.status + ': ' + body.slice(0, 200) });
+        return;
       }
-    }).catch(function (err) {
+      console.log('[estimate] pdf-service accepted for contact', contactId || '(none)');
+      if (outboxed) await settleJob(sb, jobId, { attempts: 0 }, { ok: true, pdfUrl: pdfUrlOf(body) });
+    }).catch(async function (err) {
       console.error('[estimate] pdf-service failed:', err.message);
+      if (outboxed) await settleJob(sb, jobId, { attempts: 0 }, { ok: false, error: err.message });
     });
   }
 
@@ -609,6 +721,127 @@ app.post('/api/events', rateLimit(120, 60 * 1000), function (req, res) {
   }
   // Analytics is fire-and-forget for the client either way.
   return res.status(204).end();
+});
+
+// ---------------------------------------------------------------------------
+// POST /api/estimate/sweep — retry estimates whose PDF never reached GHL
+// ---------------------------------------------------------------------------
+// Called on a schedule by n8n ("E.CALC — Estimate Retry Sweep"). This IS the
+// retry mechanism, so every replay asks pdf-service for exactly one attempt
+// and the whole pass is time-boxed to finish inside n8n's timeout. See
+// lib/estimate-jobs.js for why nesting the two ladders is the bug to avoid.
+//
+// Rate limit deliberately unlike /api/estimate's 10-per-10-min: a 5-minute
+// cron with retries would 429 itself. Buckets are keyed on path+ip, so this
+// one cannot interact with browser traffic.
+app.post('/api/estimate/sweep', rateLimit(30, 60 * 1000), async function (req, res) {
+  // An unconfigured secret must not leave the door open — same doctrine as
+  // ESTIMATE_TOKEN_SECRET. 503, never 200.
+  if (!SWEEP_TOKEN) {
+    console.warn('[sweep] refused: SWEEP_TOKEN is not configured');
+    return res.status(503).json({ error: 'SWEEP_NOT_CONFIGURED' });
+  }
+  if (!sweepAuthorized(req)) return res.status(401).json({ error: 'UNAUTHORIZED' });
+
+  const sb = supabaseCfg();
+  if (!sb) return res.status(503).json({ error: 'SUPABASE_NOT_CONFIGURED' });
+  if (!PDF_SERVICE_URL) return res.status(503).json({ error: 'PDF_SERVICE_NOT_CONFIGURED' });
+
+  const started = Date.now();
+  const limit = Math.min(Math.max(parseInt((req.body || {}).limit, 10) || 25, 1), 100);
+
+  let checked = 0, succeeded = 0, failed = 0, dead = 0, skipped = 0;
+
+  while (jobs.shouldKeepGoing(started, checked, limit)) {
+    let row;
+    try {
+      row = await jobs.claimOne(sb);
+    } catch (err) {
+      console.error('[sweep] claim failed:', err.message);
+      break;
+    }
+    if (!row) break;                      // queue drained
+    checked++;
+
+    // Skip-if-already-done: if the field the workflow reads is already
+    // populated, the upload worked and we only lost the acknowledgement.
+    // Re-uploading would change `Estimate PDF URL` again and can re-trigger
+    // "U.E-WE Send Estimate", so a second estimate email. If this lookup
+    // itself fails, fall through and retry — failing toward a retry is the
+    // safe direction, and a duplicate costs a stray media file.
+    if (row.contact_id) {
+      try {
+        const existing = await ghl('/contacts/' + row.contact_id, {
+          method: 'GET', timeoutMs: jobs.PRECHECK_TIMEOUT_MS
+        });
+        const fields = (existing && existing.contact && existing.contact.customFields) || [];
+        const hit = fields.find(function (f) { return f && f.id === PDF_URL_FIELD_ID; });
+        if (hit && hit.value) {
+          await jobs.patchJob(sb, row.id, jobs.nextState(row, { ok: true, pdfUrl: hit.value }));
+          skipped++; succeeded++;
+          continue;
+        }
+      } catch (err) {
+        console.warn('[sweep] pre-check failed for ' + row.id + ' (replaying anyway):', err.message);
+      }
+    }
+
+    let outcome;
+    try {
+      const resp = await fetch(PDF_SERVICE_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(pdfServiceBody({
+          contactId: row.contact_id,
+          contactName: row.contact_name,
+          contactPhone: row.contact_phone,
+          contactEmail: row.contact_email,
+          estimate: row.estimate,
+          maxAttempts: 1
+        })),
+        signal: AbortSignal.timeout(jobs.REPLAY_TIMEOUT_MS)
+      });
+      const text = await resp.text();
+      outcome = resp.ok
+        ? { ok: true, pdfUrl: pdfUrlOf(text) }
+        : { ok: false, error: 'HTTP ' + resp.status + ': ' + text.slice(0, 200) };
+    } catch (err) {
+      outcome = { ok: false, error: err.name + ': ' + err.message };
+    }
+
+    const patch = jobs.nextState(row, outcome);
+    try {
+      await jobs.patchJob(sb, row.id, patch);
+    } catch (err) {
+      console.error('[sweep] settle failed for ' + row.id + ':', err.message);
+    }
+
+    if (outcome.ok) succeeded++;
+    else if (patch.status === 'dead') { failed++; dead++; }
+    else failed++;
+  }
+
+  const purged = await jobs.purgeCompleted(sb).catch(function () { return 0; });
+  const elapsed = Date.now() - started;
+  // budget_exhausted distinguishes "queue is empty" from "ran out of time" —
+  // without it a backlog during an outage looks exactly like a quiet night.
+  const budgetExhausted = !jobs.shouldKeepGoing(started, checked, limit) && checked > 0;
+
+  console.log('[sweep] checked=' + checked + ', succeeded=' + succeeded
+    + ' (skipped=' + skipped + '), failed=' + failed + ', dead=' + dead
+    + ', purged=' + purged + ', ms=' + elapsed);
+
+  return res.json({
+    success: true,
+    checked: checked,
+    succeeded: succeeded,
+    skipped: skipped,
+    failed: failed,
+    dead: dead,
+    purged: purged,
+    budget_exhausted: budgetExhausted,
+    elapsed_ms: elapsed
+  });
 });
 
 // ---------------------------------------------------------------------------
