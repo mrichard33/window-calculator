@@ -75,6 +75,53 @@ it is a one-minute rollback. Delete it after a week of clean submissions.
 
 ---
 
+## Step 3 — Keep the funnel out of Google
+
+This funnel runs the **same calculator content** as
+`reecewindows.com/window-estimate/`. Two indexed copies split the ranking signal
+instead of concentrating it, and the funnel sits on a subdomain, which Google
+treats as a separate site — so indexing it builds nothing for the main domain.
+Every step here is a paid-traffic destination with no organic job to do.
+
+Noindex has **no effect on Google Ads or Meta Ads.** Paid traffic reaches a
+noindexed page normally, so the Lead Gurus campaigns are unaffected.
+
+The funnel-level Head tracking code applies to every step, so this is one edit
+for the whole funnel. In **Sites → Funnels → Estimate Calculator → Settings →
+Tracking & scripts → Head tracking code**, alongside whatever is already there,
+add:
+
+```html
+<meta name="robots" content="noindex, nofollow">
+```
+
+Then **republish the funnel** — GHL serves a cached build, and an unpublished
+change never reaches the live page.
+
+GHL also has a per-step SEO panel (the gear icon beside a step's Edit button),
+which is where `/confirm-your-pricing` got its own noindex. Either works; the
+funnel-level box covers every step in one go. A page carrying both directives is
+harmless — Google honours the most restrictive.
+
+**Two things not to do:**
+
+- **Never add `Disallow` to robots.txt to achieve this.** Blocking the crawler
+  HIDES the noindex: Google can still index a blocked URL if something links to
+  it, and it can never read the directive telling it not to. The standalone page
+  serves a deliberately permissive robots.txt for exactly this reason — see the
+  comment in `server.js`, and the test in `test/run.js` that stops anyone
+  "helpfully" adding a Disallow.
+- **Do not repoint the canonical at the WordPress page.** `noindex` plus a
+  canonical to a *different* URL is a conflicting signal. Set the noindex and
+  leave GHL's self-canonical alone.
+
+A page already in the index drops out on the next crawl, which can take weeks.
+`site:landing.reecewindows.com` shows what is indexed today; Search Console's
+**URL Inspection → Request Indexing** forces the recrawl that makes Google see
+the noindex, and **Removals** hides it within about a day if it is urgent.
+
+---
+
 ## Why it cannot break the funnel page's design
 
 In full mode the calculator draws itself inside a **shadow root** — a sealed
@@ -103,11 +150,20 @@ pages keep working exactly as they do today.
    (`79cc44ee-e7bd-4bbf-a2da-2bc3d3024143`).
 5. Confirm a `site.identity_stitched` event shows up for that visitor in
    `site_events` (LP Supabase) within about five minutes.
-6. Confirm the Meta Pixel fires (Meta Pixel Helper) and GHL external tracking
-   records the visit.
+6. Confirm the Meta Pixel fires, with Meta Pixel Helper — **PageView on load
+   AND a Lead event after the estimate renders.** If the helper shows no pixel
+   at all, pixel `926500861053624` is missing from the page: Lead Gurus loses
+   attribution, and the calculator's own `trackSingle` Lead call silently does
+   nothing, because it is guarded on `fbq` existing. This is the step that got
+   skipped the first time round. Also confirm GHL external tracking records the
+   visit.
 7. Click one of the 14 trigger links that carry prefill details and confirm the
    name, address and phone fields fill in on the funnel page.
-8. Re-check `estimate.getreecewindows.com` and
+8. View source on each funnel step and confirm
+   `<meta name="robots" content="noindex, nofollow">` is present (Step 3). Then
+   confirm `reecewindows.com/window-estimate/` still has **no** robots meta —
+   that is the one page that must stay indexed.
+9. Re-check `estimate.getreecewindows.com` and
    `reecewindows.com/window-estimate/` in production. Both must look and behave
    exactly as before.
 
@@ -138,6 +194,13 @@ pages keep working exactly as they do today.
   min-content width — the stepper's is 385px, which made the whole page scroll
   sideways at 360px. Size containment lets the column shrink to the screen. Do
   not remove it without re-running the phone checks in `test/run.js`.
+- **Exactly one of the three pages is indexable, and it is the WordPress one.**
+  `reecewindows.com/window-estimate/` is the SEO copy;
+  `estimate.getreecewindows.com` carries a noindex meta AND an `X-Robots-Tag`
+  header (both asserted by `test/run.js`), and this funnel carries a noindex per
+  Step 3. That policy used to live only in a comment in `public/index.html`,
+  which is how the funnel shipped without one. If a fourth surface ever runs
+  this calculator, it is noindex unless someone decides otherwise on purpose.
 - **`page_variant` is still resolved from the hostname**, so the funnel page
   reports as `main-domain`, the same value the WordPress page reports. If
   funnel traffic ever needs its own bucket in reporting, that is a deliberate
