@@ -12,6 +12,20 @@
 # If the suite goes red, fix the code or the test. Never skip it, never
 # quarantine it, and never add continue-on-error — a suppressed test is worse
 # than an ungated one, because it reads as green.
+#
+# Action versions (2026-09-18). The v4 line runs on Node 20, which GitHub is
+# retiring: every run logged "Node.js 20 is deprecated" and was force-run on
+# Node 24 anyway. Pinned to the first major of each action that actually
+# declares runs.using: node24 — which is NOT the same number for all of them:
+#
+#   checkout        v5  node24
+#   setup-node      v5  node24
+#   cache           v5  node24
+#   upload-artifact v6  node24   <- v5 is still node20, so v5 would not have
+#                                   cleared the warning for this one
+#
+# Check runs.using in the action's own action.yml before bumping; the major
+# number is not a reliable proxy for the runtime.
 name: CI
 
 on:
@@ -34,9 +48,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: '22'
 
@@ -64,9 +78,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: '22'
           cache: npm
@@ -94,7 +108,7 @@ jobs:
 
       - name: Cache Chromium
         id: pw-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ${{ env.PLAYWRIGHT_BROWSERS_PATH }}
           key: pw-chromium-${{ runner.os }}-${{ steps.pw.outputs.version }}
@@ -142,7 +156,7 @@ jobs:
 
       - name: Upload the test log on failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: test-output
           path: test-output.txt
