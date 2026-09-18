@@ -553,6 +553,720 @@ window.__rtInstall();
 <script src="${APP}/embed/calculator.js" defer></script>
 </body></html>`;
 
+// ---------------------------------------------------------------------------
+// The GHL funnel page, landing.reecewindows.com/instant-window-pricing.
+//
+// What makes it different from the WordPress stand-in, and why full mode
+// exists: it ships its own utility classes over the SAME generic names the
+// calculator uses — .card, .btn, .field, .container, .tile, .section — plus
+// GHL's .c-section / .c-row / .c-column system. Every one of the rules below
+// is hostile on purpose. In the light DOM they would wreck the calculator;
+// inside a shadow root they must not reach it.
+//
+// `mode` is interpolated so one fixture covers "full", "embed", "garbage" and
+// the no-attribute case.
+function funnelPage(mode, opts) {
+  opts = opts || {};
+  const attr = mode === null ? '' : ` data-mode="${mode}"`;
+  // Tasks 5.10 and 5.11: a page where neither tracker nor pixel exists. The
+  // calculator must load and submit normally and log nothing to the console.
+  const thirdParty = opts.bare ? '' : `${TRACKER_STUB}
+window.__rtInstall();
+window.fbqCalls = [];
+window.fbq = function () { window.fbqCalls.push(Array.prototype.slice.call(arguments)); };
+fbq('init', '926500861053624');
+fbq('track', 'PageView');`;
+  return `<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>Instant Window Pricing</title>
+<style>
+html{font-size:10px}
+body{margin:0;background:#fff}
+/* GHL's funnel builder markup */
+.c-section{width:100%}.c-row{display:flex}.c-column{flex:1}
+/* The collisions. A calculator in the light DOM would inherit every one. */
+.card{display:none}
+.btn{background:magenta!important;color:magenta!important;font-size:80px!important}
+.field{display:none}
+.container{width:90px!important}
+.tile{display:none}
+.section{display:none}
+input,select{border:12px dashed magenta!important}
+h1,h2,h3{font-size:4px!important;color:magenta!important}
+</style>
+<script>${thirdParty}</script>
+</head><body>
+<div class="c-section"><div class="c-row"><div class="c-column">
+  <h1>Funnel headline</h1>
+  <!-- The funnel page's own elements, carrying the calculator's class names.
+       Task 5.9: calculator CSS must not style these. -->
+  <div class="card" id="host-card">host card</div>
+  <button class="btn" id="host-btn">host button</button>
+  <div id="reece-calculator"></div>
+  <script src="${APP}/embed/calculator.js"${attr} defer></script>
+</div></div></div>
+</body></html>`;
+}
+
+// Task 5.7: no mount at all. The calculator must warn and exit — never fall
+// back to injecting itself into <body>, which on a funnel page would drop the
+// whole estimator at the bottom of someone else's layout.
+const NO_MOUNT_PAGE = `<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>No mount</title></head><body>
+<p id="only-child">nothing to mount into</p>
+<script src="${APP}/embed/calculator.js" data-mode="full" defer></script>
+</body></html>`;
+
+// ---------------------------------------------------------------------------
+// Full mode (data-mode="full") and the regression guards that keep it from
+// reaching the two pages it must not touch.
+//
+// Playwright's CSS engine pierces OPEN shadow roots, so the same '#rc-…'
+// selectors drive the funnel page and the WordPress stand-in. That is a
+// convenience for the suite and nothing more — the assertions below reach for
+// ReeceCalculator.shadowRoot explicitly wherever the tree matters.
+// ---------------------------------------------------------------------------
+
+// The stub for Google Places. The real Maps script is routed to an empty body
+// (the whole suite is offline), so this stands in for it: it records the input
+// Autocomplete was attached to, and fires one place_changed on demand.
+const PLACES_STUB = `
+window.__placesInput = null;
+window.__firePlace = null;
+window.google = { maps: { places: { Autocomplete: function (input) {
+  window.__placesInput = input;
+  var listener = null;
+  var place = {
+    formatted_address: '742 Evergreen Terrace, Springfield, FL 32701, USA',
+    address_components: [
+      { long_name: '742',              short_name: '742',  types: ['street_number'] },
+      { long_name: 'Evergreen Terrace', short_name: 'Evergreen Terrace', types: ['route'] },
+      { long_name: 'Springfield',      short_name: 'Springfield', types: ['locality'] },
+      { long_name: 'Florida',          short_name: 'FL',   types: ['administrative_area_level_1'] },
+      { long_name: '32701',            short_name: '32701', types: ['postal_code'] }
+    ]
+  };
+  this.setFields = function () {};
+  this.getPlace = function () { return place; };
+  this.addListener = function (name, fn) { if (name === 'place_changed') listener = fn; };
+  window.__firePlace = function () { if (listener) listener(); };
+  // The real Places library appends its dropdown to document.body, OUTSIDE the
+  // shadow root. Reproduce that so the z-index guard is exercised.
+  var pac = document.createElement('div');
+  pac.className = 'pac-container';
+  pac.textContent = '742 Evergreen Terrace';
+  document.body.appendChild(pac);
+} } } };`;
+
+// Offline routing, identical in shape to the main browser phase: /api/* answered
+// by a local double, the tracker service dead, every other third party empty.
+async function routeOffline(page, sink) {
+  await page.route('**/*', async function (route) {
+    const req = route.request();
+    const url = req.url();
+    const isApi = url.indexOf(API_BASE + '/api/') === 0;
+    if (url.indexOf(TRACKER_ORIGIN) === 0) {
+      return route.fulfill({ status: 200, body: '', contentType: 'application/javascript' });
+    }
+    if (!isApi) {
+      if (url.indexOf('://localhost:') !== -1 || url.indexOf('://127.0.0.1:') !== -1) return route.continue();
+      return route.fulfill({ status: 200, body: '', contentType: 'text/plain' });
+    }
+    let body = {};
+    try { body = JSON.parse(req.postData() || '{}'); } catch (e) { body = {}; }
+    if (sink) sink.push({ path: url.slice(API_BASE.length), body: body });
+    if (url.indexOf('/api/events') !== -1) {
+      return route.fulfill({ status: 204, body: '', headers: { 'access-control-allow-origin': '*' } });
+    }
+    const json =
+      url.indexOf('/api/contact') !== -1 ? { contactId: 'test-contact' } :
+      url.indexOf('/api/verify/start') !== -1 ? { verifyId: 'test-verify' } :
+      url.indexOf('/api/verify/check') !== -1 ? { verified: true, estimateToken: 'test-token' } :
+      { ok: true };
+    return route.fulfill({
+      status: 200, contentType: 'application/json', body: JSON.stringify(json),
+      headers: { 'access-control-allow-origin': '*' }
+    });
+  });
+}
+
+// Step 1 through the estimate. Mode-agnostic: Playwright pierces the shadow
+// root, so one walk covers both.
+async function walkFunnel(page) {
+  await page.fill('#rc-full-name', LEAD.name);
+  await page.fill('#rc-street-address', LEAD.street);
+  await page.fill('#rc-city', LEAD.city);
+  await page.fill('#rc-state', 'FL');
+  await page.fill('#rc-postal-code', LEAD.zip);
+  await page.fill('#rc-phone', LEAD.phone);
+  await page.check('#rc-consent-checkbox');
+  await page.click('#rc-section-1 button.rc-btn-primary');
+  await page.waitForSelector('#rc-section-2.rc-visible', { timeout: 10000 });
+  await page.click('#rc-window-style .rc-tile[data-value="single_hung"]');
+  await page.click('#rc-window-size .rc-tile[data-value="medium"]');
+  await page.click('#rc-section-2 button.rc-btn-accent');
+  await page.waitForSelector('#rc-window-list .rc-cart-item', { timeout: 10000 });
+  await page.click('#rc-btn-to-step3');
+  await page.waitForSelector('#rc-section-3.rc-visible', { timeout: 10000 });
+  await page.fill('#rc-email', LEAD.email);
+  await page.click('#rc-section-3 button.rc-btn-primary');
+  await page.waitForSelector('#rc-verify-email-modal.rc-active', { timeout: 10000 });
+  await page.fill('#rc-verify-code-input', '123456');
+  await page.click('#rc-verify-submit-btn');
+  await page.waitForSelector('#rc-section-4.rc-visible', { timeout: 10000 });
+}
+
+async function fullModeChecks(browser) {
+  console.log('\nFull mode (data-mode="full")');
+
+  // -------------------------------------------------------------------------
+  // Tasks 5.1-5.3: the two modes that must stay in the light DOM.
+  //
+  // The pixel-level proof that they are unchanged is test/baseline.js, diffed
+  // against a capture from main. These assert the structural property that
+  // would have to break first: no shadow root, styles in document.head, markup
+  // written straight into the mount.
+  // -------------------------------------------------------------------------
+  for (const variant of [
+    { name: 'attribute absent', path: '/funnel-default' },
+    { name: 'data-mode="embed"', path: '/funnel-embed' },
+    { name: 'data-mode="garbage"', path: '/funnel-garbage' }
+  ]) {
+    const ctx = await browser.newContext();
+    const page = await ctx.newPage();
+    const warnings = [];
+    const consoleErrors = [];
+    page.on('console', function (m) {
+      if (m.type() === 'warning') warnings.push(m.text());
+      if (m.type() === 'error') consoleErrors.push(m.text());
+    });
+    page.on('pageerror', function (e) { consoleErrors.push(String(e)); });
+    await routeOffline(page, null);
+    await page.goto(HOST + variant.path, { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('#rc-section-1.rc-visible', { timeout: 10000 });
+
+    await check(variant.name + ': renders into the LIGHT dom, no shadow root', async function () {
+      const m = await page.evaluate(function () {
+        var host = document.getElementById('reece-calculator');
+        return {
+          shadow: host.shadowRoot,
+          exported: window.ReeceCalculator.shadowRoot,
+          mode: window.ReeceCalculator.renderMode,
+          // In the light DOM the section is a real descendant of the mount.
+          inMount: !!host.querySelector('#rc-section-1'),
+          styleInHead: !!document.getElementById('rc-calculator-styles')
+        };
+      });
+      eq(m.shadow, null, 'host.shadowRoot');
+      eq(m.exported, null, 'ReeceCalculator.shadowRoot');
+      eq(m.mode, 'embed', 'renderMode');
+      eq(m.inMount, true, 'the calculator is a light-DOM descendant of the mount');
+      eq(m.styleInHead, true, 'the stylesheet is in document.head');
+    });
+
+    if (variant.name === 'data-mode="garbage"') {
+      // Task 5.6. A typo on someone else's page is not a reason to take the
+      // calculator down — it warns, falls back, and carries on.
+      await check('data-mode="garbage": warns once and does not throw', async function () {
+        const hit = warnings.filter(function (w) { return /Unknown data-mode="garbage"/.test(w); });
+        eq(hit.length, 1, 'warnings naming the bad mode (saw: ' + warnings.join(' | ') + ')');
+        eq(consoleErrors.join(' | '), '', 'console errors');
+        eq(await page.locator('#rc-section-1').isVisible(), true, 'step 1 still renders');
+      });
+    }
+    await ctx.close();
+  }
+
+  // -------------------------------------------------------------------------
+  // Task 5.7: no mount element.
+  // -------------------------------------------------------------------------
+  {
+    const ctx = await browser.newContext();
+    const page = await ctx.newPage();
+    const warnings = [];
+    const consoleErrors = [];
+    page.on('console', function (m) {
+      if (m.type() === 'warning') warnings.push(m.text());
+      if (m.type() === 'error') consoleErrors.push(m.text());
+    });
+    page.on('pageerror', function (e) { consoleErrors.push(String(e)); });
+    await routeOffline(page, null);
+    await page.goto(HOST + '/no-mount', { waitUntil: 'load' });
+    await page.waitForTimeout(500);
+
+    await check('no #reece-calculator: warns, exits, never injects into body', async function () {
+      const m = await page.evaluate(function () {
+        return {
+          sections: document.querySelectorAll('.rc-section, #rc-section-1').length,
+          bodyChildren: Array.prototype.slice.call(document.body.children)
+            .map(function (e) { return e.tagName + (e.id ? '#' + e.id : ''); }).join(','),
+          mounted: window.ReeceCalculator.mounted
+        };
+      });
+      eq(m.sections, 0, 'calculator sections anywhere in the document');
+      eq(m.mounted, false, 'ReeceCalculator.mounted');
+      assert(m.bodyChildren.indexOf('rc-') === -1,
+        'something was injected into <body>: ' + m.bodyChildren);
+      assert(warnings.some(function (w) { return /No <div id="reece-calculator">/.test(w); }),
+        'no warning about the missing mount (saw: ' + warnings.join(' | ') + ')');
+      eq(consoleErrors.join(' | '), '', 'console errors');
+    });
+    await ctx.close();
+  }
+
+  // -------------------------------------------------------------------------
+  // Tasks 5.5, 5.8, 5.9, 5.12, 5.13, 5.14 — the full-mode funnel page.
+  // -------------------------------------------------------------------------
+  {
+    const ctx = await browser.newContext();
+    const page = await ctx.newPage();
+    const consoleErrors = [];
+    const events = [];
+    page.on('console', function (m) { if (m.type() === 'error') consoleErrors.push(m.text()); });
+    page.on('pageerror', function (e) { consoleErrors.push(String(e)); });
+    await routeOffline(page, events);
+    await page.addInitScript(PLACES_STUB);
+
+    // Task 5.12/5.13: every prefill param the 14 live trigger links send, plus
+    // the attribution the funnel page has to carry through from the ad click.
+    const query = '?fullName=Prefill%20Person&streetAddress=12%20Prefill%20Ave' +
+      '&city=Sarasota&state=FL&postalCode=34236&phone=9545551234' +
+      '&pro_id=9111&lp_source_id=9222' +
+      '&utm_source=facebook&utm_medium=cpc&utm_campaign=lg-sept' +
+      '&utm_content=ad7&utm_term=windows&fbclid=ABC123';
+    await page.goto(HOST + '/funnel-full' + query, { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('#rc-section-1.rc-visible', { timeout: 10000 });
+
+    // Task 5.5
+    await check('full mode: header, calculator and footer all render INSIDE the shadow root',
+      async function () {
+        const m = await page.evaluate(function () {
+          var host = document.getElementById('reece-calculator');
+          var root = host.shadowRoot;
+          if (!root) return { noShadow: true };
+          return {
+            mode: window.ReeceCalculator.renderMode,
+            exported: root === window.ReeceCalculator.shadowRoot,
+            header: !!root.querySelector('.rc-page-header h1'),
+            headerText: (root.querySelector('.rc-page-brand') || {}).textContent || '',
+            calculator: !!root.getElementById('rc-section-1'),
+            siteline: !!root.querySelector('.rc-page-siteline'),
+            footer: !!root.querySelector('.rc-page-footer'),
+            total: !!root.getElementById('rc-running-total'),
+            year: (root.getElementById('rc-page-year') || {}).textContent || '',
+            // Nothing the calculator draws may also exist in the document.
+            leakedToDocument: document.querySelectorAll('#rc-section-1, .rc-page-header').length,
+            styleInHead: !!document.getElementById('rc-calculator-styles'),
+            styleInShadow: !!root.getElementById('rc-calculator-styles')
+          };
+        });
+        assert(!m.noShadow, 'full mode did not attach a shadow root');
+        eq(m.mode, 'full', 'renderMode');
+        eq(m.exported, true, 'ReeceCalculator.shadowRoot is the mount\'s shadow root');
+        eq(m.header, true, 'the page header rendered');
+        assert(/Reece Windows & Doors . Est. 1972/.test(m.headerText),
+          'header brand line: ' + m.headerText);
+        eq(m.calculator, true, 'the calculator rendered');
+        eq(m.siteline, true, 'the site footer line rendered');
+        eq(m.footer, true, 'the brand footer rendered');
+        eq(m.total, true, 'the running-total bar rendered');
+        eq(m.year, String(new Date().getFullYear()), 'the copyright year');
+        eq(m.leakedToDocument, 0, 'calculator nodes found in the document');
+        eq(m.styleInHead, false, 'full mode must not inject the calculator CSS into document.head');
+        eq(m.styleInShadow, true, 'the stylesheet is inside the shadow root');
+      });
+
+    await check('full mode: the webfont is loaded from the LIGHT dom', async function () {
+      // @font-face declared only inside a shadow root does not resolve.
+      const m = await page.evaluate(function () {
+        return {
+          font: Array.prototype.slice.call(document.querySelectorAll('link[rel="stylesheet"]'))
+            .some(function (l) { return /fonts\.googleapis\.com.*Nunito\+Sans/.test(l.href); }),
+          pac: !!document.getElementById('rc-full-light-support')
+        };
+      });
+      eq(m.font, true, 'the Nunito Sans stylesheet is in document.head');
+      eq(m.pac, true, 'the .pac-container z-index guard is in document.head');
+    });
+
+    // Task 5.8 — the host page hides .card, .field, .tile, .section outright.
+    await check('full mode: host CSS hiding .card/.field/.tile cannot reach the calculator',
+      async function () {
+        const m = await page.evaluate(function () {
+          var root = document.getElementById('reece-calculator').shadowRoot;
+          function box(sel) {
+            var el = root.querySelector(sel);
+            if (!el) return null;
+            var r = el.getBoundingClientRect();
+            return { display: getComputedStyle(el).display, w: Math.round(r.width), h: Math.round(r.height) };
+          }
+          return {
+            hostCardHidden: getComputedStyle(document.getElementById('host-card')).display,
+            card: box('#rc-section-1 .rc-card'),
+            field: box('#rc-field-city'),
+            tile: box('#rc-window-style .rc-tile'),
+            section: box('#rc-section-1'),
+            container: box('.rc-container')
+          };
+        });
+        // The host rules really are in force on the host's own elements.
+        eq(m.hostCardHidden, 'none', 'the funnel page\'s own .card is hidden');
+        ['card', 'field', 'section', 'container'].forEach(function (k) {
+          assert(m[k], k + ' did not render at all');
+          assert(m[k].display !== 'none', k + ' was hidden by the host page');
+          assert(m[k].w > 100, k + ' collapsed to ' + m[k].w + 'px');
+        });
+        // .container is capped at 90px by the host page; the calculator's own
+        // .rc-container must be wide.
+        assert(m.container.w > 300, 'the calculator container collapsed to ' + m.container.w + 'px');
+      });
+
+    // Task 5.9 — and the other direction.
+    await check('full mode: calculator CSS does not leak onto the host page', async function () {
+      const m = await page.evaluate(function () {
+        var btn = getComputedStyle(document.getElementById('host-btn'));
+        var h1 = getComputedStyle(document.querySelector('.c-column > h1'));
+        return {
+          btnBg: btn.backgroundColor,
+          btnSize: btn.fontSize,
+          h1Size: h1.fontSize,
+          h1Colour: h1.color
+        };
+      });
+      // The host's own hostile rules are still exactly what the host set. If
+      // any calculator rule had leaked it would have overridden one of these.
+      eq(m.btnBg, 'rgb(255, 0, 255)', 'host .btn background');
+      eq(m.btnSize, '80px', 'host .btn font-size');
+      eq(m.h1Size, '4px', 'host h1 font-size');
+      eq(m.h1Colour, 'rgb(255, 0, 255)', 'host h1 colour');
+    });
+
+    await check('full mode: the funnel page\'s 10px root font-size cannot shrink the chrome',
+      async function () {
+        const m = await page.evaluate(function () {
+          var root = document.getElementById('reece-calculator').shadowRoot;
+          return {
+            documentRoot: getComputedStyle(document.documentElement).fontSize,
+            h1: getComputedStyle(root.querySelector('.rc-page-header h1')).fontSize,
+            brand: getComputedStyle(root.querySelector('.rc-page-brand')).fontSize,
+            calc: getComputedStyle(root.getElementById('reece-calculator')).fontSize
+          };
+        });
+        eq(m.documentRoot, '10px', 'the funnel stand-in\'s root font-size');
+        eq(m.h1, '32px', 'chrome h1 (2 x 16)');
+        eq(m.brand, '16px', 'chrome brand line (1 x 16)');
+        eq(m.calc, '17px', 'calculator body text');
+      });
+
+    // Task 5.12
+    await check('full mode: every prefill param populates its field', async function () {
+      const m = await page.evaluate(function () {
+        var root = document.getElementById('reece-calculator').shadowRoot;
+        function v(id) { var el = root.getElementById(id); return el ? el.value : null; }
+        return {
+          fullName: v('rc-full-name'),
+          street: v('rc-street-address'),
+          city: v('rc-city'),
+          state: v('rc-state'),
+          zip: v('rc-postal-code'),
+          phone: v('rc-phone')
+        };
+      });
+      eq(m.fullName, 'Prefill Person', 'fullName');
+      eq(m.street, '12 Prefill Ave', 'streetAddress');
+      eq(m.city, 'Sarasota', 'city');
+      eq(m.state, 'FL', 'state');
+      eq(m.zip, '34236', 'postalCode');
+      // The formatter runs on the prefilled value, exactly as on the other pages.
+      eq(m.phone, '(954) 555-1234', 'phone, formatted');
+    });
+
+    // Task 5.14 — the address field is required for the LP push, and the
+    // dropdown lives outside the shadow root.
+    await check('full mode: Places autocomplete fills city, state and zip', async function () {
+      const attached = await page.evaluate(function () {
+        // Maps calls this by name once it loads; the suite is offline, so
+        // invoke the documented callback the same way the real script does.
+        window.ReeceCalculator.initializeAddressForm();
+        var root = document.getElementById('reece-calculator').shadowRoot;
+        return window.__placesInput === root.getElementById('rc-street-address');
+      });
+      assert(attached, 'Autocomplete was attached to the wrong input, or to none');
+
+      const m = await page.evaluate(function () {
+        window.__firePlace();
+        var root = document.getElementById('reece-calculator').shadowRoot;
+        var pac = document.querySelector('.pac-container');
+        return {
+          street: root.getElementById('rc-street-address').value,
+          city: root.getElementById('rc-city').value,
+          state: root.getElementById('rc-state').value,
+          zip: root.getElementById('rc-postal-code').value,
+          // The dropdown is in the light DOM, as Google puts it. What matters
+          // is that a funnel-page z-index cannot bury it.
+          pacInLightDom: !!pac && pac.parentNode === document.body,
+          pacZ: pac ? getComputedStyle(pac).zIndex : null
+        };
+      });
+      eq(m.street, '742 Evergreen Terrace', 'street after place_changed');
+      eq(m.city, 'Springfield', 'city after place_changed');
+      eq(m.state, 'FL', 'state after place_changed');
+      eq(m.zip, '32701', 'zip after place_changed');
+      eq(m.pacInLightDom, true, 'the Places dropdown is a child of document.body');
+      eq(m.pacZ, '2147483647', '.pac-container z-index');
+    });
+
+    // Reset the address the stub overwrote, then walk the funnel.
+    await page.fill('#rc-street-address', LEAD.street);
+    await page.fill('#rc-city', LEAD.city);
+    await page.fill('#rc-postal-code', LEAD.zip);
+    await walkFunnel(page);
+
+    await check('full mode: the estimate renders', async function () {
+      const price = await page.locator('#rc-summary-content .rc-hero-price').textContent();
+      assert(/^\$[\d,]+\.\d\d$/.test(price.trim()), 'hero price looks wrong: ' + price);
+    });
+
+    // printEstimate clones #rc-host-header for the printed banner. On the
+    // standalone page that hook is a light-DOM element the HOST supplies; in
+    // full mode this file renders it, inside the shadow root. hostEl() is what
+    // makes one call site find both — if it ever stopped, the printed estimate
+    // would silently lose its Reece banner rather than fail.
+    await check('full mode: the printed estimate still picks up the branded banner',
+      async function () {
+        const m = await page.evaluate(function () {
+          window.print = function () { window.__printed = (window.__printed || 0) + 1; };
+          window.ReeceCalculator.printEstimate();
+          var root = document.getElementById('reece-calculator').shadowRoot;
+          var printRoot = root.getElementById('rc-print-root');
+          var header = printRoot.querySelector('.rc-print-header');
+          return {
+            header: !!header,
+            brand: header ? /Est\. 1972/.test(header.textContent) : false,
+            disclaimer: !!printRoot.querySelector('.rc-print-disclaimer')
+          };
+        });
+        eq(m.header, true, 'the print banner was not built');
+        eq(m.brand, true, 'the print banner lost the Reece brand line');
+        eq(m.disclaimer, true, 'the print disclaimer is missing');
+        await page.waitForFunction(function () { return window.__printed > 0; }, null, { timeout: 5000 });
+      });
+
+    await check('full mode: the running-total bar in the shadow root is filled in', async function () {
+      const total = await page.evaluate(function () {
+        var root = document.getElementById('reece-calculator').shadowRoot;
+        var bar = root.getElementById('rc-running-total');
+        return bar ? bar.querySelector('span').textContent : null;
+      });
+      assert(/^\$[\d,]+\.\d\d$/.test(String(total).trim()),
+        'the running total never updated: ' + total);
+    });
+
+    // Task 5.13
+    await check('full mode: UTMs, fbclid and the prefilled ids reach the submitted payload',
+      async function () {
+        const contact = events.filter(function (e) { return e.path.indexOf('/api/contact') === 0; });
+        assert(contact.length > 0, '/api/contact was never called');
+        const body = contact[contact.length - 1].body;
+        eq(body.utm.source, 'facebook', 'utm_source');
+        eq(body.utm.medium, 'cpc', 'utm_medium');
+        eq(body.utm.campaign, 'lg-sept', 'utm_campaign');
+        eq(body.utm.content, 'ad7', 'utm_content');
+        eq(body.utm.term, 'windows', 'utm_term');
+        eq(body.clickIds.fbclid, 'ABC123', 'fbclid');
+        // The 14 live trigger links carry these; a default would mean they were
+        // read from nowhere.
+        eq(body.proId, '9111', 'pro_id');
+        eq(body.lpSourceId, '9222', 'lp_source_id');
+      });
+
+    await check('full mode: the Meta pixel still fires exactly one trackSingle Lead',
+      async function () {
+        // fbq is a window global, so the shadow boundary is irrelevant to it —
+        // but only because the calculator calls it from its own handlers rather
+        // than relying on Meta's automatic form listener.
+        const calls = await page.evaluate(function () { return window.fbqCalls || []; });
+        const leads = calls.filter(function (c) { return c[0] === 'trackSingle' && c[2] === 'Lead'; });
+        eq(leads.length, 1, 'trackSingle Lead calls');
+        eq(leads[0][1], '926500861053624', 'Lead pixel id');
+      });
+
+    await check('full mode: calc_* events still mirror to ReeceTrack', async function () {
+      await page.waitForFunction(function () {
+        return (window.__rtCalls || []).some(function (c) { return c.name === 'calc_estimate_completed'; });
+      }, null, { timeout: 15000 }).catch(function () { /* asserted below */ });
+      const rt = await page.evaluate(function () { return window.__rtCalls || []; });
+      const names = rt.filter(function (c) { return c.type === 'track'; }).map(function (c) { return c.name; });
+      ['calc_page_view', 'calc_step_view', 'calc_step1_complete', 'calc_estimate_completed']
+        .forEach(function (n) {
+          assert(names.indexOf(n) !== -1, n + ' was never mirrored (saw: ' + names.join(', ') + ')');
+        });
+      const identifies = rt.filter(function (c) { return c.type === 'identify'; });
+      assert(identifies.length > 0, 'identify was never called in full mode');
+    });
+
+    await check('full mode: zero console errors', function () {
+      eq(consoleErrors.join(' | '), '', 'console errors');
+    });
+    await ctx.close();
+  }
+
+  // -------------------------------------------------------------------------
+  // Tasks 5.10 and 5.11 — no ReeceTrack, no fbq, nothing.
+  // -------------------------------------------------------------------------
+  {
+    const ctx = await browser.newContext();
+    const page = await ctx.newPage();
+    const consoleErrors = [];
+    const events = [];
+    page.on('console', function (m) { if (m.type() === 'error') consoleErrors.push(m.text()); });
+    page.on('pageerror', function (e) { consoleErrors.push(String(e)); });
+    await routeOffline(page, events);
+    await page.goto(HOST + '/funnel-full-bare', { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('#rc-section-1.rc-visible', { timeout: 10000 });
+
+    await check('full mode with no tracker and no pixel: the funnel still completes',
+      async function () {
+        const absent = await page.evaluate(function () {
+          return { track: typeof window.ReeceTrack, fbq: typeof window.fbq };
+        });
+        eq(absent.track, 'undefined', 'typeof window.ReeceTrack');
+        eq(absent.fbq, 'undefined', 'typeof window.fbq');
+        await walkFunnel(page);
+        const price = await page.locator('#rc-summary-content .rc-hero-price').textContent();
+        assert(/^\$[\d,]+\.\d\d$/.test(price.trim()), 'hero price looks wrong: ' + price);
+        const contact = events.filter(function (e) { return e.path.indexOf('/api/contact') === 0; });
+        assert(contact.length > 0, 'the contact was never submitted');
+        // Best-effort by design: no tracker means no visitor id, never an error.
+        const leaked = contact.filter(function (e) { return e.body.visitor_id; });
+        eq(leaked.length, 0, 'payloads carrying visitor_id with no tracker');
+        eq(consoleErrors.join(' | '), '', 'console errors');
+      });
+    await ctx.close();
+  }
+
+  // -------------------------------------------------------------------------
+  // Task 3.3 / the GHL external-tracking finding.
+  //
+  // external-tracking.js captures leads by running document.querySelectorAll
+  // ("form") and watching for added nodes with a MutationObserver — neither of
+  // which sees inside a shadow root. It does not matter here, because the
+  // calculator renders NO <form> at all: that capture path has never seen it on
+  // any of the three pages. This test is what keeps that answer true. If a
+  // <form> is ever added, full mode needs an explicit light-DOM bridge and this
+  // failure is the reminder.
+  // -------------------------------------------------------------------------
+  {
+    const ctx = await browser.newContext();
+    const page = await ctx.newPage();
+    await routeOffline(page, null);
+    await page.goto(HOST + '/funnel-full', { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('#rc-section-1.rc-visible', { timeout: 10000 });
+    await check('the calculator renders no <form>, so GHL form capture has nothing to lose',
+      async function () {
+        const m = await page.evaluate(function () {
+          var root = document.getElementById('reece-calculator').shadowRoot;
+          return { inShadow: root.querySelectorAll('form').length, inDocument: document.forms.length };
+        });
+        eq(m.inShadow, 0, '<form> elements inside the shadow root');
+        eq(m.inDocument, 0, '<form> elements in the document');
+      });
+    await ctx.close();
+  }
+
+  // -------------------------------------------------------------------------
+  // Task 5.15 — phones.
+  // -------------------------------------------------------------------------
+  for (const width of [360, 390]) {
+    const ctx = await browser.newContext({ viewport: { width: width, height: 780 } });
+    const page = await ctx.newPage();
+    const consoleErrors = [];
+    page.on('pageerror', function (e) { consoleErrors.push(String(e)); });
+    await routeOffline(page, null);
+    await page.goto(HOST + '/funnel-full', { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('#rc-section-1.rc-visible', { timeout: 10000 });
+
+    await check('full mode at ' + width + 'px: the page does not scroll sideways', async function () {
+      const m = await page.evaluate(function () {
+        return { scrollWidth: document.body.scrollWidth, viewport: window.innerWidth };
+      });
+      eq(m.scrollWidth, m.viewport, 'body scrollWidth at ' + width + 'px');
+    });
+
+    await check('full mode at ' + width + 'px: nothing reaches past the screen edge', async function () {
+      const past = await page.evaluate(function () {
+        var root = document.getElementById('reece-calculator').shadowRoot;
+        var out = [];
+        root.querySelectorAll('*').forEach(function (el) {
+          var b = el.getBoundingClientRect();
+          if (b.width === 0 && b.height === 0) return;
+          if (b.right > window.innerWidth + 1 || b.left < -1) {
+            out.push((el.id || el.className || el.tagName) + '@' + Math.round(b.left) + '+' + Math.round(b.width));
+          }
+        });
+        return out;
+      });
+      eq(past.join(', '), '', 'elements past the viewport at ' + width + 'px');
+    });
+
+    await check('full mode at ' + width + 'px: header, calculator and footer are all on screen',
+      async function () {
+        const m = await page.evaluate(function () {
+          var root = document.getElementById('reece-calculator').shadowRoot;
+          function w(sel) {
+            var el = root.querySelector(sel);
+            return el ? Math.round(el.getBoundingClientRect().width) : -1;
+          }
+          return {
+            header: w('.rc-page-header'),
+            calc: w('.rc-container'),
+            footer: w('.rc-page-footer'),
+            viewport: window.innerWidth,
+            // iOS zooms any focused field under 16px and never zooms back out.
+            fieldSize: parseFloat(getComputedStyle(root.getElementById('rc-city')).fontSize)
+          };
+        });
+        eq(m.header, m.viewport, 'header width at ' + width + 'px');
+        eq(m.footer, m.viewport, 'footer width at ' + width + 'px');
+        assert(m.calc > 0 && m.calc <= m.viewport, 'calculator width at ' + width + 'px: ' + m.calc);
+        assert(m.fieldSize >= 16, 'input font-size at ' + width + 'px is ' + m.fieldSize + 'px');
+      });
+
+    // :host carries contain:inline-size, which is what stops the funnel page's
+    // flex column from stretching to the stepper's min-content width. Size
+    // containment must NOT make the host a containing block for fixed-position
+    // descendants — if it ever did, the verification modal would be trapped
+    // inside the mount instead of covering the screen, and a lead on a phone
+    // could not read the code they were sent.
+    await check('full mode at ' + width + 'px: the verification modal still covers the viewport',
+      async function () {
+        const m = await page.evaluate(function () {
+          var root = document.getElementById('reece-calculator').shadowRoot;
+          var modal = root.getElementById('rc-verify-email-modal');
+          modal.classList.add('rc-active');
+          var r = modal.getBoundingClientRect();
+          var cs = getComputedStyle(modal);
+          modal.classList.remove('rc-active');
+          return {
+            position: cs.position,
+            top: Math.round(r.top), left: Math.round(r.left),
+            width: Math.round(r.width), height: Math.round(r.height),
+            viewport: window.innerWidth, viewportH: window.innerHeight
+          };
+        });
+        eq(m.position, 'fixed', 'modal position');
+        eq(m.top, 0, 'modal top at ' + width + 'px');
+        eq(m.left, 0, 'modal left at ' + width + 'px');
+        eq(m.width, m.viewport, 'modal width at ' + width + 'px');
+        eq(m.height, m.viewportH, 'modal height at ' + width + 'px');
+      });
+
+    await check('full mode at ' + width + 'px: no console errors', function () {
+      eq(consoleErrors.join(' | '), '', 'page errors');
+    });
+    await ctx.close();
+  }
+}
+
 async function browserChecks() {
   console.log('\nBrowser');
   const exe = chromiumPath();
@@ -1149,6 +1863,9 @@ async function browserChecks() {
     await ctx.close();
   }
 
+  // Full mode shares this browser rather than launching a second one.
+  await fullModeChecks(browser);
+
   await browser.close();
 }
 
@@ -1162,7 +1879,16 @@ async function main() {
 
   const hostServer = http.createServer(function (req, res) {
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-    res.end(req.url.indexOf('/embed-only') === 0 ? HOST_PAGE_EMBED_ONLY : HOST_PAGE);
+    const u = req.url;
+    res.end(
+      u.indexOf('/embed-only') === 0 ? HOST_PAGE_EMBED_ONLY :
+      u.indexOf('/funnel-full-bare') === 0 ? funnelPage('full', { bare: true }) :
+      u.indexOf('/funnel-full') === 0 ? funnelPage('full') :
+      u.indexOf('/funnel-embed') === 0 ? funnelPage('embed') :
+      u.indexOf('/funnel-default') === 0 ? funnelPage(null) :
+      u.indexOf('/funnel-garbage') === 0 ? funnelPage('garbage') :
+      u.indexOf('/no-mount') === 0 ? NO_MOUNT_PAGE :
+      HOST_PAGE);
   }).listen(HOST_PORT);
 
   await new Promise(function (r) { setTimeout(r, 500); });

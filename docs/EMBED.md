@@ -112,6 +112,12 @@ follows automatically.
   it is the **only** copy of the calculator. The standalone page at
   `estimate.getreecewindows.com` loads the very same file, so one deploy
   updates both pages.
+- The two lines in Step 1 are the **embed** mode, and they are unchanged. The
+  file also has a `data-mode="full"` mode, added for the GoHighLevel funnel
+  page — see `docs/FUNNEL-EMBED.md`. It is opt-in and this page must never use
+  it: full mode draws its own header and footer, which on WordPress would put a
+  second header inside the page. Leaving the attribute off is what keeps this
+  page exactly as it is.
 - Everything it draws is scoped under `#reece-calculator`, every id and class it
   creates starts with `rc-`, and the only global it defines is
   `window.ReeceCalculator`. A theme cannot collide with it and it does not need
