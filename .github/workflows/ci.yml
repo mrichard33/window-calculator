@@ -1,0 +1,149 @@
+# Runs the verification suite on every pull request.
+#
+# Until now nothing ran `npm test` except a person remembering to. The suite is
+# the only thing standing between a change and two live pages — the standalone
+# calculator and the WordPress embed — so it should not depend on memory.
+#
+# Two jobs:
+#   syntax  — node --check over every JS file. No install, so it answers in
+#             seconds and catches a typo before anyone waits on a browser.
+#   tests   — npm ci + npm test. This one BLOCKS.
+#
+# If the suite goes red, fix the code or the test. Never skip it, never
+# quarantine it, and never add continue-on-error — a suppressed test is worse
+# than an ungated one, because it reads as green.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# A second push to the same branch makes the first run irrelevant. Cancel it
+# rather than queueing behind it.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  syntax:
+    name: syntax
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # No npm install: nothing here needs a dependency, and a parse error
+      # should not wait on a registry. The file list mirrors jsFiles() in
+      # test/run.js — node_modules and every dot-directory skipped, so nothing
+      # outside this repo's own source is checked.
+      - name: node --check every JS file
+        run: |
+          set -euo pipefail
+          # '.?*' not '.*': the starting point '.' matches '.*' and would prune
+          # the entire tree, finding nothing.
+          files=$(find . -name node_modules -prune -o -name '.?*' -prune -o -name '*.js' -print)
+          if [ -z "$files" ]; then
+            echo "::error::Found no JS files to check — the find expression is wrong."
+            exit 1
+          fi
+          echo "$files" | while read -r f; do
+            node --check "$f"
+            echo "  ok  $f"
+          done
+
+  tests:
+    name: tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      # Set here rather than in a job-level `env:` block, where the `runner`
+      # context is not available and ${{ runner.temp }} would silently resolve
+      # to an empty string. RUNNER_TEMP is a plain environment variable every
+      # step already has.
+      #
+      # Deliberately OUTSIDE the checkout: the syntax phase walks the repo for
+      # *.js, and a browser unpacked into the workspace put three of Chromium's
+      # own bundled scripts through node --check.
+      - name: Put the browser outside the checkout
+        run: echo "PLAYWRIGHT_BROWSERS_PATH=$RUNNER_TEMP/pw-browsers" >> "$GITHUB_ENV"
+
+      - name: npm ci
+        run: npm ci
+
+      # Restoring the browser saves ~2 minutes a run. Keyed on the resolved
+      # playwright-core version, so a dependency bump fetches the matching
+      # build instead of reusing a stale one.
+      - name: Resolve the playwright-core version
+        id: pw
+        run: echo "version=$(node -p "require('playwright-core/package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Chromium
+        id: pw-cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.PLAYWRIGHT_BROWSERS_PATH }}
+          key: pw-chromium-${{ runner.os }}-${{ steps.pw.outputs.version }}
+
+      - name: Install Chromium
+        if: steps.pw-cache.outputs.cache-hit != 'true'
+        run: npx playwright-core install --with-deps chromium
+
+      # A cache hit restores the browser but not the system libraries it links
+      # against, so those are installed either way.
+      - name: Install Chromium's system dependencies
+        if: steps.pw-cache.outputs.cache-hit == 'true'
+        run: npx playwright-core install-deps chromium
+
+      # The browser phase SKIPS ITSELF when it cannot find Chromium, and the run
+      # still reports success. That is the one way this workflow could go green
+      # having verified nothing, so fail here — loudly — before the suite runs,
+      # rather than reading a pass that covered a third of what it claims to.
+      - name: Chromium must actually be installed
+        run: |
+          set -euo pipefail
+          binary=$(find "$PLAYWRIGHT_BROWSERS_PATH" \( -path '*/chrome-linux/chrome' -o -path '*/chrome-linux64/chrome' \) -type f 2>/dev/null | head -n 1 || true)
+          if [ -z "$binary" ]; then
+            echo "::error::No Chromium under $PLAYWRIGHT_BROWSERS_PATH. The browser phase would skip and the run would pass on nothing."
+            ls -la "$PLAYWRIGHT_BROWSERS_PATH" 2>/dev/null || echo "(the directory does not exist)"
+            exit 1
+          fi
+          echo "Using $binary"
+
+      - name: npm test
+        run: |
+          set -o pipefail
+          npm test 2>&1 | tee test-output.txt
+
+      # Belt and braces for the same failure mode: if the suite ever decides to
+      # skip the browser phase despite the check above, say so instead of
+      # banking the pass.
+      - name: The browser phase must have run
+        run: |
+          if grep -q 'SKIP browser tests' test-output.txt; then
+            echo "::error::The browser phase skipped. This run verified none of the rendering, tracker or funnel behaviour."
+            exit 1
+          fi
+          echo "Browser phase ran."
+
+      - name: Upload the test log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-output
+          path: test-output.txt
+          if-no-files-found: ignore
