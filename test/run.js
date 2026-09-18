@@ -114,7 +114,12 @@ function post(url, body, opts) {
 function jsFiles(dir, out) {
   out = out || [];
   fs.readdirSync(dir, { withFileTypes: true }).forEach(function (e) {
-    if (e.name === 'node_modules' || e.name === '.git') return;
+    if (e.name === 'node_modules') return;
+    // Every dot-directory, not just .git. A Playwright browser installed into
+    // the checkout put three of Chromium's own bundled scripts through
+    // node --check — they happened to parse, but nothing here owns them and
+    // one ESM file among them would fail the build for no reason.
+    if (e.name.charAt(0) === '.') return;
     const p = path.join(dir, e.name);
     if (e.isDirectory()) jsFiles(p, out);
     else if (e.name.endsWith('.js')) out.push(p);
@@ -452,14 +457,33 @@ async function grepChecks() {
 // 4/5. Browser
 // ---------------------------------------------------------------------------
 function chromiumPath() {
+  // Ask Playwright where its own browser is, first. It knows which revision it
+  // wants AND the directory layout that revision uses, and the layout has
+  // moved: playwright-core 1.63 installs Chrome for Testing to
+  // chromium-<rev>/chrome-linux64/chrome, where every older build was
+  // chromium-<rev>/chrome-linux/chrome. The hand-rolled list below matched only
+  // the old shape, so a freshly installed browser was invisible to it and the
+  // whole browser phase skipped itself — on a CI runner that is a green run
+  // that verified none of the rendering, tracker or funnel behaviour.
+  try {
+    const p = require('playwright-core').chromium.executablePath();
+    if (p && fs.existsSync(p)) return p;
+  } catch (e) { /* not where Playwright expects it; try the layouts below */ }
+
+  // Fallback for a browser put in place by something other than
+  // `playwright install` — a prebuilt CI image, for instance, which may carry a
+  // different revision than this playwright-core wants. Passing executablePath
+  // explicitly at launch is what makes that mismatch work.
   const base = process.env.PLAYWRIGHT_BROWSERS_PATH || '/opt/pw-browsers';
   const candidates = [
     path.join(base, 'chromium', 'chrome-linux', 'chrome'),
+    path.join(base, 'chromium', 'chrome-linux64', 'chrome'),
     path.join(base, 'chromium', 'chrome'),
   ];
   try {
     fs.readdirSync(base).filter(function (d) { return /^chromium-/.test(d); }).forEach(function (d) {
       candidates.push(path.join(base, d, 'chrome-linux', 'chrome'));
+      candidates.push(path.join(base, d, 'chrome-linux64', 'chrome'));
     });
   } catch (e) { /* no browsers dir */ }
   return candidates.find(function (p) { return fs.existsSync(p); }) || null;
