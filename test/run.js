@@ -197,6 +197,24 @@ async function httpChecks() {
       'tracker tag sets data-collector — the built-in default is the contract');
   });
 
+  await check('/ loads Microsoft Clarity exactly once', async function () {
+    // Clarity is host-page-owned, like the pixel and both trackers. The funnel
+    // page carries the same project id through GHL's own head tracking code;
+    // the WordPress page deliberately has none. Two copies here would double
+    // every recorded session.
+    const r = await get(APP + '/');
+    const tags = r.body.match(/clarity\.ms\/tag/g) || [];
+    eq(tags.length, 1, 'clarity.ms/tag references on the page');
+    // Quoted form only: the id also appears unquoted in the comment above the
+    // snippet, which is documentation, not a second loader.
+    const ids = r.body.match(/"vgbgmlukfj"/g) || [];
+    eq(ids.length, 1, 'Clarity project id occurrences in code');
+    // The loader appends its own script tag at runtime, so it cannot be
+    // render-blocking — but the inline snippet must not be either.
+    assert(/\(window, *document, *"clarity", *"script", *"vgbgmlukfj"\)/.test(r.body),
+      'the Clarity snippet is not in its expected form');
+  });
+
   await check('nothing in <head> blocks the first paint', async function () {
     const r = await get(APP + '/');
     const head = r.body.slice(0, r.body.indexOf('</head>'));
@@ -332,12 +350,27 @@ async function grepChecks() {
     });
   });
 
-  await check('the embed never initialises a pixel or loads GHL tracking', function () {
-    assert(embed.indexOf("fbq('init'") === -1, "embed calls fbq('init' — the host page owns that");
-    assert(embed.indexOf('fbq("init"') === -1, 'embed calls fbq("init"');
-    assert(embed.indexOf('external-tracking') === -1, 'embed loads external-tracking.js');
-    assert(!/fbq\(\s*'track'\s*,\s*'PageView'/.test(embed), 'embed fires PageView');
-  });
+  await check('the embed initialises a pixel in exactly one place, and never GHL tracking',
+    function () {
+      // This used to ban fbq('init' outright. It no longer can: injectMetaPixel
+      // supplies the pixel in FULL mode, because the funnel page's hand-placed
+      // block went missing in production and nothing noticed. What the ban was
+      // protecting — that reecewindows.com never gets a pixel from the embed —
+      // is now proved behaviourally by 'embed mode never injects a pixel'
+      // below, which is the test to keep green at all costs.
+      //
+      // The source-level rule that survives: exactly ONE init, so a second one
+      // cannot be added quietly, and it must be the real literal. Composing the
+      // string to slip past a grep is exactly what this check exists to stop.
+      const inits = embed.match(/fbq\(\s*['"]init['"]/g) || [];
+      eq(inits.length, 1, "fbq('init' occurrences in the embed");
+      assert(embed.indexOf('external-tracking') === -1, 'embed loads external-tracking.js');
+      assert(!/fbq\(\s*'track'\s*,\s*'PageView'/.test(embed),
+        "embed fires an untargeted PageView — it must be trackSingle so a funnel " +
+        'page that later gains a second pixel does not receive ours');
+      assert(embed.indexOf('clarity.ms') === -1,
+        'embed loads Microsoft Clarity — that stays host-page-owned');
+    });
 
   await check('the embed sends Meta events only via trackSingle', function () {
     const plain = embed.match(/fbq\(\s*'track(?:Custom)?'\s*,/g) || [];
@@ -1079,6 +1112,32 @@ async function fullModeChecks(browser) {
         eq(body.lpSourceId, '9222', 'lp_source_id');
       });
 
+    // The other half of injectMetaPixel's contract. This fixture ships its own
+    // pixel block, the way the funnel page did before the block went missing
+    // and the way it will again if anyone pastes one back into GHL. The
+    // window.fbq short-circuit must leave that page completely alone — no
+    // second init, no second PageView, no injected loader.
+    await check('full mode does not inject when the page already has a pixel',
+      async function () {
+        const m = await page.evaluate(function () {
+          var calls = window.fbqCalls || [];
+          return {
+            marker: document.querySelectorAll('meta[data-rc-pixel]').length,
+            loader: Array.prototype.slice.call(document.querySelectorAll('script[src]'))
+              .filter(function (s) { return s.src.indexOf('connect.facebook.net') !== -1; }).length,
+            inits: calls.filter(function (c) { return c[0] === 'init'; }).length,
+            views: calls.filter(function (c) {
+              return (c[0] === 'track' || c[0] === 'trackSingle') &&
+                     c[c[0] === 'track' ? 1 : 2] === 'PageView';
+            }).length
+          };
+        });
+        eq(m.marker, 0, 'the embed injected a pixel over the host page\'s own');
+        eq(m.loader, 0, 'connect.facebook.net loader tags injected by the embed');
+        eq(m.inits, 1, 'fbq init calls (the host page\'s, and only that)');
+        eq(m.views, 1, 'PageView calls — a second one would double-count every visit');
+      });
+
     await check('full mode: the Meta pixel still fires exactly one trackSingle Lead',
       async function () {
         // fbq is a window global, so the shadow boundary is irrelevant to it —
@@ -1124,13 +1183,17 @@ async function fullModeChecks(browser) {
     await page.goto(HOST + '/funnel-full-bare', { waitUntil: 'domcontentloaded' });
     await page.waitForSelector('#rc-section-1.rc-visible', { timeout: 10000 });
 
-    await check('full mode with no tracker and no pixel: the funnel still completes',
+    // The pixel half of this fixture's name changed meaning on 2026-09-18:
+    // full mode now SUPPLIES the pixel, so a bare funnel page is no longer a
+    // page without one. The half that still matters — the funnel completing
+    // with ReeceTrack entirely absent — is asserted here; the pixel behaviour
+    // it used to cover moved to the two checks below.
+    await check('full mode with no tracker: the funnel still completes',
       async function () {
         const absent = await page.evaluate(function () {
-          return { track: typeof window.ReeceTrack, fbq: typeof window.fbq };
+          return { track: typeof window.ReeceTrack };
         });
         eq(absent.track, 'undefined', 'typeof window.ReeceTrack');
-        eq(absent.fbq, 'undefined', 'typeof window.fbq');
         await walkFunnel(page);
         const price = await page.locator('#rc-summary-content .rc-hero-price').textContent();
         assert(/^\$[\d,]+\.\d\d$/.test(price.trim()), 'hero price looks wrong: ' + price);
@@ -1141,6 +1204,109 @@ async function fullModeChecks(browser) {
         eq(leaked.length, 0, 'payloads carrying visitor_id with no tracker');
         eq(consoleErrors.join(' | '), '', 'console errors');
       });
+
+    await ctx.close();
+  }
+
+  // -------------------------------------------------------------------------
+  // THE test that keeps a pixel off reecewindows.com.
+  //
+  // It has to live here, not in browserChecks(): that phase installs an fbq
+  // recorder via addInitScript before any page script runs, and injectMetaPixel
+  // short-circuits on window.fbq being truthy — so injection never happens
+  // there and an embed-mode leak would pass unnoticed. Verified by deliberately
+  // calling injectMetaPixel() from mountEmbed(): browserChecks stayed green,
+  // this test goes red.
+  //
+  // This fixture is embed mode with NOTHING on the page — no pixel, no tracker.
+  // Anything that appears came from the embed, which on a WordPress page is a
+  // fourth pixel nobody asked for.
+  // -------------------------------------------------------------------------
+  {
+    const ctx = await browser.newContext();
+    const page = await ctx.newPage();
+    const consoleErrors = [];
+    page.on('pageerror', function (e) { consoleErrors.push(String(e)); });
+    await routeOffline(page, null);
+    await page.goto(HOST + '/funnel-embed-bare', { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('#rc-section-1.rc-visible', { timeout: 10000 });
+
+    await check('embed mode never injects a pixel, on a page carrying none',
+      async function () {
+        const m = await page.evaluate(function () {
+          return {
+            mode: window.ReeceCalculator.renderMode,
+            fbq: typeof window.fbq,
+            marker: document.querySelectorAll('meta[data-rc-pixel]').length,
+            loader: Array.prototype.slice.call(document.querySelectorAll('script[src]'))
+              .filter(function (s) { return s.src.indexOf('connect.facebook.net') !== -1; }).length
+          };
+        });
+        eq(m.mode, 'embed', 'render mode of the fixture under test');
+        eq(m.fbq, 'undefined',
+          'the embed defined window.fbq in embed mode — this is how a pixel reaches ' +
+          'reecewindows.com');
+        eq(m.marker, 0, 'embed-injected pixel markers');
+        eq(m.loader, 0, 'connect.facebook.net loader tags');
+        eq(consoleErrors.join(' | '), '', 'page errors');
+      });
+    await ctx.close();
+  }
+
+  {
+    const ctx = await browser.newContext();
+    const page = await ctx.newPage();
+    const events = [];
+    await routeOffline(page, events);
+    await page.goto(HOST + '/funnel-full-bare', { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('#rc-section-1.rc-visible', { timeout: 10000 });
+    await walkFunnel(page);
+
+    // The reason injectMetaPixel exists: a funnel page whose pixel block has
+    // gone missing must still report to Meta.
+    //
+    // No fbq recorder is installed on this target on purpose. injectMetaPixel
+    // short-circuits on `window.fbq` being truthy, so a recorder assigned
+    // before page scripts would suppress the very thing under test. Instead
+    // this reads Meta's own stub queue: fbevents.js is routed to an empty body
+    // by routeOffline, so callMethod is never defined and every call stays in
+    // fbq.queue where it can be counted.
+    await check('full mode supplies the pixel when the page has none', async function () {
+      const m = await page.evaluate(function () {
+        var q = (window.fbq && window.fbq.queue) || [];
+        return {
+          fbq: typeof window.fbq,
+          marker: document.querySelectorAll('meta[data-rc-pixel="926500861053624"]').length,
+          loader: Array.prototype.slice.call(document.querySelectorAll('script[src]'))
+            .filter(function (s) { return s.src.indexOf('connect.facebook.net') !== -1; }).length,
+          calls: Array.prototype.slice.call(q).map(function (c) {
+            return Array.prototype.slice.call(c);
+          })
+        };
+      });
+      eq(m.fbq, 'function', 'typeof window.fbq after full mode mounted');
+      eq(m.marker, 1, 'embed-injected pixel markers');
+      eq(m.loader, 1, 'connect.facebook.net loader tags');
+
+      const inits = m.calls.filter(function (c) { return c[0] === 'init'; });
+      eq(inits.length, 1, 'fbq init calls');
+      eq(inits[0][1], '926500861053624', 'initialised pixel id');
+
+      // trackSingle, never the untargeted form — so a funnel page that later
+      // gains a second pixel never receives our PageView.
+      const views = m.calls.filter(function (c) {
+        return (c[0] === 'track' || c[0] === 'trackSingle') &&
+               c[c[0] === 'track' ? 1 : 2] === 'PageView';
+      });
+      eq(views.length, 1, 'PageView calls');
+      eq(views[0][0], 'trackSingle', 'PageView call form');
+      eq(views[0][1], '926500861053624', 'PageView pixel id');
+
+      // And the funnel events the missing pixel had been swallowing.
+      const leads = m.calls.filter(function (c) { return c[0] === 'trackSingle' && c[2] === 'Lead'; });
+      eq(leads.length, 1, 'trackSingle Lead calls');
+      eq(leads[0][1], '926500861053624', 'Lead pixel id');
+    });
     await ctx.close();
   }
 
@@ -1496,6 +1662,33 @@ async function browserChecks() {
         eq(views.length, 1, 'PageView calls');
       });
     }
+
+    // THE test that keeps a pixel off reecewindows.com.
+    //
+    // injectMetaPixel() runs in full mode only. Every target in this loop is
+    // embed mode, so none of them may gain a pixel from the embed — whatever
+    // the host page itself happens to carry. If this ever fails, the WordPress
+    // page is one deploy away from a fourth pixel that nobody asked for.
+    await check(target.name + ': embed mode never injects a pixel', async function () {
+      const m = await page.evaluate(function () {
+        return {
+          marker: document.querySelectorAll('meta[data-rc-pixel]').length,
+          loader: Array.prototype.slice.call(document.querySelectorAll('script[src]'))
+            .filter(function (s) { return s.src.indexOf('connect.facebook.net') !== -1; }).length,
+          inits: (window.fbqCalls || []).filter(function (c) { return c[0] === 'init'; }).length
+        };
+      });
+      eq(m.marker, 0, 'embed-injected pixel markers on an embed-mode page');
+      eq(m.loader, 0, 'connect.facebook.net script tags injected by the embed');
+      // NOT typeof window.fbq: this phase installs a recorder as window.fbq via
+      // addInitScript on every target, so it is 'function' everywhere no matter
+      // what the embed did. What the recorder CAPTURED is the honest signal —
+      // the embed-only fixture has no pixel block of its own, so any init call
+      // at all could only have come from the embed.
+      if (target.name.indexOf('embed only') !== -1) {
+        eq(m.inits, 0, "fbq('init') calls on a page the embed must not touch");
+      }
+    });
 
     await check(target.name + ': the embed injects no tracker script', async function () {
       // Only the standalone page's own <head> may load the tracker. The embed
@@ -1884,6 +2077,7 @@ async function main() {
       u.indexOf('/embed-only') === 0 ? HOST_PAGE_EMBED_ONLY :
       u.indexOf('/funnel-full-bare') === 0 ? funnelPage('full', { bare: true }) :
       u.indexOf('/funnel-full') === 0 ? funnelPage('full') :
+      u.indexOf('/funnel-embed-bare') === 0 ? funnelPage('embed', { bare: true }) :
       u.indexOf('/funnel-embed') === 0 ? funnelPage('embed') :
       u.indexOf('/funnel-default') === 0 ? funnelPage(null) :
       u.indexOf('/funnel-garbage') === 0 ? funnelPage('garbage') :

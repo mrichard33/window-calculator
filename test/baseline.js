@@ -67,13 +67,25 @@ body{margin:0;background:#fff}
 </div></div></div>
 </body></html>`;
 
+// Kept in step with chromiumPath() in test/run.js, and for the same reason:
+// playwright-core 1.63 installs Chrome for Testing to
+// chromium-<rev>/chrome-linux64/chrome, where older builds were
+// chromium-<rev>/chrome-linux/chrome. This file only matched the old shape, so
+// against a freshly installed browser it printed "No Chromium … cannot capture"
+// and exited — the regression-comparison tool quietly unable to compare
+// anything. Ask Playwright first, then fall back to scanning both layouts.
 function chromiumPath() {
-  const base = process.env.PLAYWRIGHT_BROWSERS_PATH;
-  if (!base) return null;
+  try {
+    const p = require('playwright-core').chromium.executablePath();
+    if (p && fs.existsSync(p)) return p;
+  } catch (e) { /* not where Playwright expects it; try the layouts below */ }
+
+  const base = process.env.PLAYWRIGHT_BROWSERS_PATH || '/opt/pw-browsers';
   const candidates = [];
   try {
     fs.readdirSync(base).filter(function (d) { return /^chromium-/.test(d); }).forEach(function (d) {
       candidates.push(path.join(base, d, 'chrome-linux', 'chrome'));
+      candidates.push(path.join(base, d, 'chrome-linux64', 'chrome'));
     });
   } catch (e) { /* no browsers dir */ }
   return candidates.find(function (p) { return fs.existsSync(p); }) || null;

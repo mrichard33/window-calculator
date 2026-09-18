@@ -60,11 +60,19 @@ navy header, the calculator, the running-total bar and the Reece footer —
 everything the standalone page shows — instead of just the calculator on its
 own.
 
-**Two things must stay exactly as they are:**
+**The Meta Pixel is no longer yours to place.** The calculator loads pixel
+`926500861053624` itself in full mode. You do not need a pixel block on this
+funnel, and you should not add one.
 
-- **Leave the Meta Pixel `926500861053624` block on the page.** That is the
-  pixel the Lead Gurus ads optimise against. Remove it and ad attribution
-  stops.
+That changed on 2026-09-18, because the hand-placed block went missing from the
+live page and nothing caught it: every Meta call in the calculator is guarded on
+`fbq` existing, so Lead, CompleteRegistration and the rest simply stopped
+reaching Meta, silently, on the page carrying most of the volume. If a block is
+pasted back in anyway, the injector stands down rather than double-counting — but
+the deploy is the source of truth now.
+
+**One thing that must stay exactly as it is:**
+
 - **Do not add `data-collector` to the tracker tag.** The default collector is
   what is already working live on `reecewindows.com`.
 
@@ -103,8 +111,12 @@ pages keep working exactly as they do today.
    (`79cc44ee-e7bd-4bbf-a2da-2bc3d3024143`).
 5. Confirm a `site.identity_stitched` event shows up for that visitor in
    `site_events` (LP Supabase) within about five minutes.
-6. Confirm the Meta Pixel fires (Meta Pixel Helper) and GHL external tracking
-   records the visit.
+6. Confirm the Meta Pixel fires with Meta Pixel Helper — pixel
+   `926500861053624`, PageView on load, and a Lead after Step 1. The calculator
+   injects this itself now, so if the helper shows nothing, the embed failed to
+   load rather than a block being missing: check the console and that
+   `data-mode="full"` is still on the script tag. Also confirm GHL external
+   tracking records the visit.
 7. Click one of the 14 trigger links that carry prefill details and confirm the
    name, address and phone fields fill in on the funnel page.
 8. Re-check `estimate.getreecewindows.com` and
@@ -138,6 +150,16 @@ pages keep working exactly as they do today.
   min-content width — the stepper's is 385px, which made the whole page scroll
   sideways at 360px. Size containment lets the column shrink to the screen. Do
   not remove it without re-running the phone checks in `test/run.js`.
+- **Full mode owns the Meta pixel; embed mode owns nothing.** `injectMetaPixel()`
+  runs only from `mountFull()`, so the WordPress page can never gain a pixel from
+  the embed — it keeps its own through Socius's GTM container, untouched. The
+  injector short-circuits on `window.fbq`, and fires PageView with `trackSingle`
+  rather than `track`, so a funnel that later gains a second pixel still never
+  receives ours. `test/run.js` proves the embed-mode half on a fixture carrying
+  no pixel at all; that test is the one keeping a pixel off `reecewindows.com`.
+- **Microsoft Clarity stays host-page-owned.** This funnel loads it through GHL's
+  head tracking code and the standalone page loads it from `public/index.html`;
+  the embed never injects it, which is what keeps it off the WordPress page.
 - **`page_variant` is still resolved from the hostname**, so the funnel page
   reports as `main-domain`, the same value the WordPress page reports. If
   funnel traffic ever needs its own bucket in reporting, that is a deliberate

@@ -50,7 +50,10 @@ embed already handles them and the page's own copies would double-count:
 - anything that loads `external-tracking.js` twice
 
 The Meta pixel and the GoHighLevel tracking script that the page already loads
-are correct and should stay. The embed deliberately does not load either one.
+are correct and should stay. The embed deliberately does not load either one on
+this page. (It does load a pixel on the GoHighLevel funnel, which runs it in a
+different mode — that cannot reach this page, and there is a test holding it
+that way.)
 
 ---
 
@@ -122,10 +125,13 @@ follows automatically.
   creates starts with `rc-`, and the only global it defines is
   `window.ReeceCalculator`. A theme cannot collide with it and it does not need
   jQuery.
-- It never initialises a Meta pixel and never fires `PageView` — the host page
-  owns those. The one Meta event it sends is a `trackSingle` **Lead** to pixel
-  `926500861053624` only, once per session, so a page carrying several pixels
-  does not leak the lead to the others.
+- On this page it never initialises a Meta pixel and never fires `PageView` — the
+  host page owns those. Every Meta event it sends is a `trackSingle` to pixel
+  `926500861053624` only, so a page carrying several pixels does not leak the
+  lead to the others. (Since 2026-09-18 the embed DOES load a pixel when a page
+  opts into `data-mode="full"`, which only the GoHighLevel funnel does. This
+  page does not use that attribute, so nothing here changes — and the test suite
+  asserts a pixel never appears in the default mode.)
 - Two optional hooks the host page may supply. Both are ignored when absent, so
   WordPress needs neither:
   - `<div id="rc-running-total"><div>…<span>$0</span></div></div>` — the
