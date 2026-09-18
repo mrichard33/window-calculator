@@ -246,6 +246,22 @@ fbq('track', 'PageView');
   </script>
   <noscript><img height="1" width="1" style="display:none"
     src="https://www.facebook.com/tr?id=926500861053624&amp;ev=PageView&amp;noscript=1" alt=""></noscript>
+  <!-- Microsoft Clarity — session replay and heatmaps, project vgbgmlukfj.
+       Host-page-owned like every other tracker on this page: /embed/calculator.js
+       never loads Clarity, so the WordPress page cannot pick it up from the
+       embed. The GHL funnel page carries the same project id through its own
+       head tracking code, which is why both surfaces report together.
+       NOTE: this page collects a name, address, phone number and email. Clarity
+       masks input text by default — if that default is ever turned off in the
+       Clarity dashboard, session replays start holding lead PII, which is not
+       what the consent on this form covers. -->
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "vgbgmlukfj");
+  </script>
   <!-- Reece's own visitor tracker, served by its own Railway service. Loaded by
        the HOST page, never by /embed/calculator.js: on WordPress, Socius installs
        this same line site-wide, so an embed that injected it would run two

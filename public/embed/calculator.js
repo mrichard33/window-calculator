@@ -10,12 +10,15 @@
  *   <div id="reece-calculator"></div>
  *   <script src="https://estimate.getreecewindows.com/embed/calculator.js" defer></script>
  *
- * Deliberately NOT in this file, because the host page owns them and doing it
- * here would double-count:
- *   - the Meta pixel base code, its init call and its PageView
- *   - the GHL external tracking script
- * The one Meta event this file sends is a trackSingle to Reece's pixel only,
- * so a host page carrying several pixels does not leak the lead to the others.
+ * Trackers are the HOST PAGE's, with one deliberate exception:
+ *   - the GHL external tracking script is never loaded here, on any page
+ *   - the Reece visitor tracker is never loaded here, on any page
+ *   - the Meta pixel is loaded here ONLY in full mode (see injectMetaPixel),
+ *     because full mode is the GHL funnel page and that page's hand-placed
+ *     pixel block went missing in production. Embed mode still initialises
+ *     nothing, which is what keeps a pixel off reecewindows.com.
+ * Every Meta event this file sends is a trackSingle to Reece's pixel only, so a
+ * host page carrying several pixels does not leak the lead to the others.
  *
  * Every id and class it creates is prefixed rc-, every style rule is scoped
  * under #reece-calculator, and the only global it defines is
@@ -4028,6 +4031,63 @@
     head.appendChild(style);
   }
 
+  // Full mode only. The Meta pixel base code, injected into the light DOM.
+  //
+  // This is the ONE place this file initialises a pixel, and it is deliberate.
+  // Everywhere else the host page owns its trackers — the standalone page
+  // carries its own block in public/index.html, and the WordPress page has its
+  // own through Socius's GTM container, which this must never touch. Embed mode
+  // therefore never calls this. Full mode means the GHL funnel page, and that
+  // page is the reason the rule has an exception:
+  //
+  // The funnel's pixel was a block someone pasted into GHL's head tracking
+  // code, and on 2026-09-18 it was found missing from the live page — no
+  // connect.facebook.net, no fbq, nothing. Every fbq call in this file is
+  // guarded on `typeof fbq === 'function'`, so nothing errored: Lead,
+  // CompleteRegistration, CalcVerified, CalcStep2/3/4 and CalcBookingIntent
+  // simply went nowhere, on the page carrying ~95% of calculator volume, for an
+  // unknown length of time. A tracker that fails silently is worse than one
+  // that fails loudly, so ownership moved into the deploy where it cannot be
+  // forgotten.
+  //
+  // Two properties keep it safe:
+  //   - window.fbq short-circuit. The same re-entry guard Meta's own base code
+  //     uses. If a pixel block is ever pasted into GHL as well, this no-ops
+  //     rather than initialising a second time and double-counting PageView.
+  //   - trackSingle for the PageView, never the untargeted form, matching the
+  //     rule the Lead call already follows: if the funnel ever gains a second
+  //     pixel, our PageView still reports only to ours.
+  //
+  // No <noscript> fallback image. The calculator does not run without
+  // JavaScript, so a noscript pixel would only ever record people who could not
+  // have used the page anyway.
+  function injectMetaPixel() {
+    if (window.fbq) return;
+    var head = document.head || document.documentElement;
+
+    /* eslint-disable */
+    !function (f, b, e, v, n, t, s) {
+      if (f.fbq) return; n = f.fbq = function () {
+        n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments);
+      };
+      if (!f._fbq) f._fbq = n; n.push = n; n.loaded = !0; n.version = '2.0';
+      n.queue = []; t = b.createElement(e); t.async = !0; t.src = v;
+      s = b.getElementsByTagName(e)[0]; s.parentNode.insertBefore(t, s);
+    }(window, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js');
+    /* eslint-enable */
+
+    try {
+      fbq('init', META_PIXEL_ID);
+      fbq('trackSingle', META_PIXEL_ID, 'PageView');
+    } catch (e) { /* analytics must never break the funnel */ }
+
+    // A marker the suite and a console session can both see, so "did the embed
+    // put this here, or did the host page?" is answerable without guessing.
+    var mark = document.createElement('meta');
+    mark.setAttribute('data-rc-pixel', META_PIXEL_ID);
+    head.appendChild(mark);
+  }
+
   function loadGoogleMaps() {
     if (document.querySelector('script[data-rc-maps]')) return;
     var s = document.createElement('script');
@@ -4091,6 +4151,7 @@
     queryRoot = root;
 
     injectLightDomSupport();
+    injectMetaPixel();
     injectShadowStyles(root);
 
     var page = document.createElement('div');
