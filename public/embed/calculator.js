@@ -21,6 +21,24 @@
  * under #reece-calculator, and the only global it defines is
  * window.ReeceCalculator — a WordPress theme cannot collide with it and it
  * does not need jQuery.
+ *
+ * TWO RENDER MODES (2026-09-18), selected by data-mode on the script tag:
+ *
+ *   embed  (the default, and what an absent attribute means)
+ *     Today's behaviour, unchanged. Light DOM, styles in document.head, the
+ *     markup written straight into #reece-calculator. This is what
+ *     estimate.getreecewindows.com and reecewindows.com/window-estimate run,
+ *     and neither page may change by so much as a pixel.
+ *
+ *   full   (opt-in: data-mode="full")
+ *     Page chrome + calculator + footer rendered inside a SHADOW ROOT on the
+ *     mount. Added for the GHL funnel page landing.reecewindows.com, which
+ *     ships its own .card / .btn / .container utility classes that collide
+ *     with the calculator's generic names. Isolation is needed there and
+ *     nowhere else, which is why it is opt-in rather than the new default.
+ *
+ * Everything full mode needs is an ADDITIVE branch. Read the embed path and
+ * nothing in it has moved.
  */
 (function (window, document) {
   'use strict';
@@ -36,9 +54,62 @@
     '?key=AIzaSyDHEXJFX600__uKskBl1RVs2wensuUW4c4' +
     '&libraries=places&callback=ReeceCalculator.initializeAddressForm';
 
+  // ==========================================================================
+  //  RENDER MODE + QUERY ROOT
+  // ==========================================================================
+  // Which of the two modes above this page asked for. Resolved once, at parse
+  // time, from the script tag that loaded this file.
+  //
+  // An unknown value falls back to 'embed' and warns. It must never throw: the
+  // WordPress page and the standalone page both run this line, and a typo on a
+  // third page is not a reason to take the calculator off the other two.
+  var RENDER_MODE = (function () {
+    var tag = document.currentScript;
+    if (!tag) {
+      // currentScript is null inside a module or when something re-executes
+      // this file. Fall back to finding our own tag by src.
+      tag = document.querySelector('script[src*="calculator.js"][data-mode]');
+    }
+    var requested = (tag && tag.getAttribute('data-mode') || '').trim().toLowerCase();
+    if (!requested || requested === 'embed') return 'embed';
+    if (requested === 'full') return 'full';
+    console.warn('[ReeceCalculator] Unknown data-mode="' + requested +
+      '" — rendering in embed mode. Valid values are "embed" and "full".');
+    return 'embed';
+  })();
+
+  // The node every calculator-INTERNAL query resolves against.
+  //
+  // In embed mode this is `document`, which is literally what all 111 call
+  // sites said before this branch — so the embed and standalone paths resolve
+  // exactly the nodes they always did. In full mode the calculator's markup is
+  // not in the document at all, so it is the shadow root instead.
+  //
+  // Reassigned at mount rather than defaulted differently: a shared helper
+  // whose DEFAULT moved would change the standalone page, which this branch
+  // must not touch.
+  var queryRoot = document;
+  function $id(id) { return queryRoot.getElementById(id); }
+  function $one(sel) { return queryRoot.querySelector(sel); }
+  function $all(sel) { return queryRoot.querySelectorAll(sel); }
+
+  // The two OPTIONAL host-page hooks (the running-total bar and the banner
+  // cloned into the printed estimate) are a different question from the
+  // calculator's own nodes: in embed mode the HOST page supplies them, in full
+  // mode this file renders them itself, inside the shadow root. Look in the
+  // render root first, then the document — so the standalone page keeps finding
+  // its own bar and header exactly as it does today.
+  function hostEl(id) {
+    var found = queryRoot.getElementById ? queryRoot.getElementById(id) : null;
+    return found || document.getElementById(id);
+  }
+
   // The element the calculator was mounted into, and the per-session state that
   // used to hang off window.
   var mountEl = null;
+  // The shadow root in full mode, null in embed mode. Exported for debugging
+  // and asserted against in the suite: embed mode must never create one.
+  var shadowRootEl = null;
   var state = {
     contactId: '',
     verifyId: '',
@@ -1745,6 +1816,320 @@
     "<div id=\"rc-print-root\"></div>"
   ].join('\n');
 
+  // ==========================================================================
+  //  FULL-MODE PAGE CHROME — data-mode="full" ONLY
+  //
+  //  The navy banner, the running-total bar and the site footer that
+  //  public/index.html gives the standalone page, rebuilt here so the GHL
+  //  funnel page gets the same full-page treatment from the same deploy.
+  //  Nothing below is reachable in embed mode.
+  //
+  //  Every selector is scoped under .rc-page-*, and the whole thing renders
+  //  inside the shadow root, so the funnel page's own utility classes cannot
+  //  reach it and it cannot reach them.
+  // ==========================================================================
+  var FULL_CSS = [
+    // The shadow HOST, styled from inside. :host is the weakest selector there
+    // is, so the funnel page can still override any of this.
+    //
+    // contain:inline-size is the load-bearing line. GHL builds every funnel row
+    // as a flex container (.c-row > .c-column), and a flex item's automatic
+    // minimum size is its CONTENT's min-content width. The stepper is a
+    // no-wrap flex row whose min-content is 385px, so the funnel column
+    // stretched to 385px and the whole page scrolled sideways by 25px at
+    // 360px — the common Android width. Size containment makes this box size
+    // from its container instead of from its contents, so the column shrinks
+    // to the screen.
+    //
+    // overflow-x:hidden then clips what no longer fits, the same guard the
+    // standalone page applies with body{overflow-x:hidden}. On its own it was
+    // NOT enough: Chromium still propagated the min-content width out through
+    // the scroll container. Both lines are needed.
+    //
+    // Size containment does not create a containing block for fixed-position
+    // descendants (only layout/paint containment does), so both modals and the
+    // sticky CTA still cover the viewport — asserted in test/run.js.
+    //
+    // It does mean the mount takes its width from its parent rather than from
+    // its contents, so full mode wants a parent with a real width — a GHL
+    // column, a section, a body. That is every funnel page; a floated or
+    // shrink-to-fit parent would collapse it, which is why display:block and
+    // max-width are pinned here too.
+    ":host {",
+    "  display: block;",
+    "  max-width: 100%;",
+    "  contain: inline-size;",
+    "  overflow-x: hidden;",
+    "}",
+    // The host page's own font-size and font-family DO inherit through a shadow
+    // boundary — only styles are blocked, not inheritance. Pin both on the root
+    // so a funnel-page body rule cannot resize the chrome, the same defect
+    // --rc-rem already fixes inside the calculator.
+    ".rc-page {",
+    // Same reason as the calculator's own --rc-rem, and the same reason it
+    // still applies behind a shadow boundary: shadow DOM blocks the host page's
+    // STYLE RULES, not inheritance and not rem. rem resolves against the host
+    // document's <html> font-size no matter which tree the element is in, so a
+    // funnel page with html{font-size:10px} would render this chrome at 62.5%.
+    "  --rc-rem: 16px;",
+    "  font-family: 'Nunito Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;",
+    "  font-size: 17px;",
+    "  font-weight: 400;",
+    "  line-height: 1.6;",
+    "  color: #636060;",
+    "  background: #F2F3F7;",
+    "  text-align: left;",
+    "}",
+    ".rc-page *, .rc-page *::before, .rc-page *::after { box-sizing: border-box; margin: 0; padding: 0; }",
+    "/* ===== HEADER ===== */",
+    ".rc-page-header {",
+    "  background: #0D2240;",
+    "  color: #FFFFFF;",
+    "  padding: calc(2.2 * var(--rc-rem)) calc(1 * var(--rc-rem)) calc(2.5 * var(--rc-rem));",
+    "  text-align: center;",
+    "  position: relative;",
+    "  overflow: hidden;",
+    "}",
+    ".rc-page-header::after {",
+    "  content: '';",
+    "  position: absolute;",
+    "  top: 0;",
+    "  right: 0;",
+    "  width: 50%;",
+    "  height: 100%;",
+    "  background: #9B2E2C;",
+    "  opacity: 1;",
+    "  clip-path: polygon(45% 0, 100% 0, 100% 100%, 0 100%);",
+    "  pointer-events: none;",
+    "}",
+    ".rc-page-header .rc-page-header-content { position: relative; z-index: 1; }",
+    ".rc-page-header .rc-page-brand {",
+    "  font-size: calc(1 * var(--rc-rem));",
+    "  font-weight: 300;",
+    "  letter-spacing: 2px;",
+    "  text-transform: uppercase;",
+    "  opacity: 0.85;",
+    "  margin-bottom: calc(0.3 * var(--rc-rem));",
+    "}",
+    ".rc-page-header h1 {",
+    "  font-size: calc(2 * var(--rc-rem));",
+    "  font-weight: 700;",
+    "  color: #FFFFFF;",
+    "  letter-spacing: -0.5px;",
+    "}",
+    ".rc-page-header p {",
+    "  color: #C1D5DB;",
+    "  margin-top: calc(0.4 * var(--rc-rem));",
+    "  font-size: calc(0.95 * var(--rc-rem));",
+    "  font-weight: 400;",
+    "}",
+    ".rc-page-header .rc-page-authority {",
+    "  font-size: calc(1.05 * var(--rc-rem));",
+    "  font-weight: 600;",
+    "  color: #FFFFFF;",
+    "  margin-top: calc(0.2 * var(--rc-rem));",
+    "  letter-spacing: 0.3px;",
+    "}",
+    ".rc-page-header .rc-page-intro {",
+    "  max-width: 640px;",
+    "  margin: calc(0.6 * var(--rc-rem)) auto 0;",
+    "  font-size: calc(0.88 * var(--rc-rem));",
+    "  line-height: 1.5;",
+    "  color: rgba(255,255,255,0.82);",
+    "  font-weight: 300;",
+    "}",
+    "@media (max-width: 600px) {",
+    "  .rc-page-header { padding: calc(1.6 * var(--rc-rem)) calc(1 * var(--rc-rem)) calc(1.8 * var(--rc-rem)); }",
+    "  .rc-page-header h1 { font-size: calc(1.45 * var(--rc-rem)); }",
+    "}",
+    "/* ===== THIN SITE FOOTER ===== */",
+    ".rc-page-siteline {",
+    "  text-align: center;",
+    "  padding: calc(1.25 * var(--rc-rem)) calc(1 * var(--rc-rem));",
+    "  font-size: calc(0.82 * var(--rc-rem));",
+    "  color: #87898B;",
+    "  background: #FFFFFF;",
+    "  border-top: 1px solid #C1D5DB;",
+    "}",
+    "/* ===== RUNNING TOTAL BAR =====",
+    "   position:sticky is deliberately NOT used here. On the standalone page the",
+    "   calculator is the document and the bar sticks to the viewport; inside a",
+    "   shadow root on a funnel page it would stick to the wrong scroll container",
+    "   and float over the page's own content. Static keeps it where it belongs. */",
+    ".rc-page-total {",
+    "  background: #0D2240;",
+    "  color: #FFFFFF;",
+    "  text-align: center;",
+    "  padding: calc(0.75 * var(--rc-rem)) calc(1 * var(--rc-rem));",
+    "  font-size: calc(0.95 * var(--rc-rem));",
+    "  font-weight: 600;",
+    "  position: relative;",
+    "  overflow: hidden;",
+    "}",
+    ".rc-page-total::after {",
+    "  content: '';",
+    "  position: absolute;",
+    "  top: 0;",
+    "  right: 0;",
+    "  width: 40%;",
+    "  height: 100%;",
+    "  background: #9B2E2C;",
+    "  opacity: 1;",
+    "  clip-path: polygon(45% 0, 100% 0, 100% 100%, 0 100%);",
+    "  pointer-events: none;",
+    "}",
+    ".rc-page-total .rc-page-total-content { position: relative; z-index: 1; }",
+    ".rc-page-total span { font-size: calc(1.15 * var(--rc-rem)); }",
+    "/* ===== BRAND FOOTER ===== */",
+    ".rc-page-footer {",
+    "  width: 100%;",
+    "  background: #122739;",
+    "  color: #FFFFFF;",
+    "  text-align: center;",
+    "  padding: 40px 20px;",
+    "  overflow-x: hidden;",
+    "}",
+    ".rc-page-footer-inner { width: 100%; max-width: 1200px; margin: 0 auto; }",
+    ".rc-page-trust {",
+    "  margin-bottom: 22px;",
+    "  display: flex;",
+    "  justify-content: center;",
+    "  align-items: center;",
+    "  gap: 30px;",
+    "  flex-wrap: wrap;",
+    "}",
+    ".rc-page-trust img { height: 38px; width: auto; display: block; }",
+    ".rc-page-locations {",
+    "  display: flex;",
+    "  justify-content: center;",
+    "  align-items: center;",
+    "  gap: 34px;",
+    "  flex-wrap: wrap;",
+    "  margin-bottom: 56px;",
+    "}",
+    ".rc-page-locations span {",
+    "  color: #FFFFFF;",
+    "  font-size: 13px;",
+    "  font-weight: 700;",
+    "  letter-spacing: 2px;",
+    "  text-transform: uppercase;",
+    "}",
+    ".rc-page-logo { margin-bottom: 20px; }",
+    ".rc-page-logo img { height: 64px; width: auto; display: inline-block; }",
+    ".rc-page-policies { margin-bottom: 20px; }",
+    ".rc-page-policies a, .rc-page-policies span {",
+    "  color: #FFFFFF;",
+    "  font-size: 14px;",
+    "  font-weight: 700;",
+    "  text-decoration: none;",
+    "}",
+    ".rc-page-copy {",
+    "  width: 100%;",
+    "  text-align: center;",
+    "  font-size: 14px;",
+    "  color: #C1D5DB;",
+    "  margin: 0 auto 15px;",
+    "  padding: 0 15px;",
+    "}",
+    ".rc-page-disclaimer {",
+    "  display: block;",
+    "  width: 100%;",
+    "  max-width: 800px;",
+    "  margin: 0 auto;",
+    "  padding: 0 20px;",
+    "  font-size: 12px;",
+    "  line-height: 1.6;",
+    "  color: #C1D5DB;",
+    "  text-align: center;",
+    "  overflow-wrap: anywhere;",
+    "  word-break: break-word;",
+    "}",
+    "@media screen and (max-width: 768px) {",
+    "  .rc-page-footer { padding: 36px 18px; }",
+    "  .rc-page-trust { gap: 16px; }",
+    "  .rc-page-trust img { height: 34px; }",
+    "  .rc-page-locations { gap: 18px 24px; margin-bottom: 46px; }",
+    "  .rc-page-locations span { font-size: 12px; letter-spacing: 1.5px; }",
+    "  .rc-page-logo img { height: 60px; }",
+    "}",
+    "@media screen and (max-width: 640px) {",
+    "  .rc-page-trust { gap: 10px; }",
+    "  .rc-page-trust img { height: 30px; max-width: 100%; }",
+    "  .rc-page-locations { gap: 16px 22px; margin-bottom: 42px; }",
+    "  .rc-page-logo img { height: 58px; }",
+    "}",
+    "@media screen and (max-width: 420px) {",
+    "  .rc-page-trust { gap: 8px; }",
+    "  .rc-page-trust img { height: 27px; }",
+    "  .rc-page-locations { flex-direction: column; gap: 13px; }",
+    "  .rc-page-disclaimer { padding: 0 15px; }",
+    "}"
+  ].join('\n');
+
+  // Assets the chrome loads. Absolute against this service, because in full
+  // mode the host page is landing.reecewindows.com and a root-relative path
+  // would resolve against THAT origin and 404.
+  var ASSET_BASE = 'https://estimate.getreecewindows.com';
+
+  var FULL_HTML = [
+    // id="rc-host-header" is the same hook the standalone page uses: the
+    // printed estimate clones it for the banner. hostEl() finds it in here.
+    "<header class=\"rc-page-header\" id=\"rc-host-header\">",
+    "  <div class=\"rc-page-header-content\">",
+    "    <div class=\"rc-page-brand\">Reece Windows &amp; Doors &bull; Est. 1972</div>",
+    "    <h1>Get Your Window Replacement Estimate &mdash; No Sales Visit Required</h1>",
+    "    <p>Family-Owned Since 1972. Trusted by Thousands of Florida Homeowners.</p>",
+    "    <p class=\"rc-page-authority\">No in-home appointment required to see pricing.</p>",
+    "    <p class=\"rc-page-intro\">New windows don't just improve how your home looks. They lower energy bills, increase storm protection, reduce outside noise, and raise your home's value.<br>This quick estimator shows you what that upgrade could realistically cost, before you commit to anything.</p>",
+    "  </div>",
+    "</header>",
+    // The wrapper deliberately carries id="reece-calculator" — the SAME id as
+    // the shadow host outside it. Every one of the calculator's ~400 style
+    // rules is scoped "#reece-calculator .rc-…", so reusing the id means the
+    // stylesheet below is the byte-identical string embed mode injects, with
+    // no selector rewriting and therefore no specificity drift between the two
+    // modes. Ids are scoped per node tree: document.getElementById() still
+    // returns the host, shadowRoot.getElementById() returns this wrapper, and
+    // the two never collide.
+    "<div id=\"reece-calculator\" class=\"rc-full-inner\">",
+    "  <!-- calculator markup is written in here at mount -->",
+    "</div>",
+    "<div class=\"rc-page-siteline\">Serving Homeowners Since 1972 &bull; Licensed, Insured, Hurricane Code Compliant</div>",
+    "<div class=\"rc-page-total\" id=\"rc-running-total\">",
+    "  <div class=\"rc-page-total-content\">Estimated Total: <span>$0</span></div>",
+    "</div>",
+    "<footer class=\"rc-page-footer\">",
+    "  <div class=\"rc-page-footer-inner\">",
+    "    <div class=\"rc-page-trust\">",
+    "      <img src=\"https://storage.googleapis.com/msgsndr/SsBG7j5KQAIP1SFP2Sca/media/68cd79e3fb98c8859da49752.png\" alt=\"Trusted 50 plus years\" width=\"600\" height=\"266\" loading=\"lazy\" decoding=\"async\">",
+    "      <img src=\"https://storage.googleapis.com/msgsndr/SsBG7j5KQAIP1SFP2Sca/media/68cd7dc3e8e00983775f45ab.webp\" alt=\"BBB A plus rating\" width=\"326\" height=\"323\" loading=\"lazy\" decoding=\"async\">",
+    "      <img src=\"https://storage.googleapis.com/msgsndr/SsBG7j5KQAIP1SFP2Sca/media/68cd79e327afc809f37b5868.png\" alt=\"Double lifetime warranty\" width=\"492\" height=\"200\" loading=\"lazy\" decoding=\"async\">",
+    "    </div>",
+    // Plain spans, not links. The standalone page's location list points at
+    // href="#", which inside a shadow root on a funnel page would scroll the
+    // HOST document to the top mid-funnel. A label that never navigated is not
+    // worth a navigation bug.
+    "    <div class=\"rc-page-locations\" aria-label=\"Service areas\">",
+    "      <span>Fort Lauderdale</span><span>Tampa</span><span>Orlando</span><span>Sarasota</span>",
+    "      <span>Fort Myers</span><span>Jacksonville</span><span>Lakeland</span><span>St. Petersburg</span>",
+    "    </div>",
+    "    <div class=\"rc-page-logo\">",
+    "      <picture>",
+    "        <source srcset=\"" + ASSET_BASE + "/static/logo-footer.webp\" type=\"image/webp\">",
+    "        <img src=\"" + ASSET_BASE + "/static/logo-footer.png\" alt=\"Reece Windows &amp; Doors\" width=\"160\" height=\"160\" loading=\"lazy\" decoding=\"async\">",
+    "      </picture>",
+    "    </div>",
+    "    <div class=\"rc-page-policies\">",
+    "      <a href=\"https://landing.reecewindows.com/privacy\" target=\"_blank\" rel=\"noopener\">Privacy Policy</a>",
+    "      <span>|</span>",
+    "      <a href=\"https://landing.reecewindows.com/terms\" target=\"_blank\" rel=\"noopener\">Terms &amp; Conditions</a>",
+    "    </div>",
+    "    <p class=\"rc-page-copy\">&copy; <span id=\"rc-page-year\"></span> Reece Windows &amp; Doors All Rights Reserved</p>",
+    "    <p class=\"rc-page-disclaimer\">Reece Windows &amp; Doors is an independent entity and is not affiliated with, endorsed by, or sponsored by Meta Platforms, Inc. or Google LLC. The information provided is for informational purposes only. Client testimonials reflect individual experiences and do not guarantee future results. This content is not a substitute for professional legal, financial, or insurance advice.</p>",
+    "  </div>",
+    "</footer>"
+  ].join('\n');
+
   // =============================================================
   //  Reece Windows & Doors — Window Cost Estimator
   //  All application logic (inlined for standalone use)
@@ -2132,16 +2517,16 @@
   //  GATHER CONTACT DATA FROM FORM FIELDS
   // ============================================================
   function gatherContactData() {
-    var fullName = (document.getElementById("rc-full-name")?.value || "").trim();
+    var fullName = ($id("rc-full-name")?.value || "").trim();
     var nameParts = fullName.split(/\s+/);
     var firstName = nameParts[0] || "";
     var lastName = nameParts.slice(1).join(" ") || "";
-    var phone = (document.getElementById("rc-phone")?.value || "").replace(/\D/g, '');
-    var email = (document.getElementById("rc-email")?.value || "").trim();
-    var street = (document.getElementById("rc-street-address")?.value || "").trim();
-    var city = (document.getElementById("rc-city")?.value || "").trim();
-    var state = (document.getElementById("rc-state")?.value || "").trim();
-    var zip = (document.getElementById("rc-postal-code")?.value || "").trim();
+    var phone = ($id("rc-phone")?.value || "").replace(/\D/g, '');
+    var email = ($id("rc-email")?.value || "").trim();
+    var street = ($id("rc-street-address")?.value || "").trim();
+    var city = ($id("rc-city")?.value || "").trim();
+    var state = ($id("rc-state")?.value || "").trim();
+    var zip = ($id("rc-postal-code")?.value || "").trim();
     if (phone.length === 10) {
       phone = '+1' + phone;
     } else if (phone.length === 11 && phone.charAt(0) === '1') {
@@ -2197,7 +2582,7 @@
       lpSourceId: data.lpSourceId,
       proId: data.proId,
       pageVariant: PAGE_VARIANT,
-      consent: !!(document.getElementById('rc-consent-checkbox') && document.getElementById('rc-consent-checkbox').checked),
+      consent: !!($id('rc-consent-checkbox') && $id('rc-consent-checkbox').checked),
       consentVersion: CONSENT_VERSION
     };
     if (includeEmail && data.email) payload.email = data.email;
@@ -2221,7 +2606,7 @@
   //  GOOGLE PLACES ADDRESS AUTOCOMPLETE
   // ============================================================
   function initializeAddressForm() {
-    var input = document.getElementById('rc-street-address');
+    var input = $id('rc-street-address');
     var autocomplete = new google.maps.places.Autocomplete(input, {
       types: ['address'],
       componentRestrictions: { country: 'us' }
@@ -2254,13 +2639,13 @@
           postalCode = component.long_name;
         }
       }
-      document.getElementById('rc-street-address').value = (streetNumber + ' ' + route).trim();
-      document.getElementById('rc-city').value = city;
-      document.getElementById('rc-state').value = state;
-      document.getElementById('rc-postal-code').value = postalCode;
+      $id('rc-street-address').value = (streetNumber + ' ' + route).trim();
+      $id('rc-city').value = city;
+      $id('rc-state').value = state;
+      $id('rc-postal-code').value = postalCode;
       // Clear validation errors on autofilled fields
       ['rc-field-street-address', 'rc-field-city', 'rc-field-state', 'rc-field-postal-code'].forEach(function(id) {
-        document.getElementById(id).classList.remove('rc-field-error');
+        $id(id).classList.remove('rc-field-error');
       });
     });
   }
@@ -2450,16 +2835,16 @@
     }, 0);
   }
   function adjustQty(delta) {
-    const inp = document.getElementById('rc-win-qty');
+    const inp = $id('rc-win-qty');
     let v = parseInt(inp.value) + delta;
     if (v < 1) v = 1;
     if (v > 50) v = 50;
     inp.value = v;
   }
   function handlePaneChange() {
-    const panes = document.getElementById('rc-glass-panes').value;
-    const gasFillField = document.getElementById('rc-gas-fill-field');
-    const gasFill = document.getElementById('rc-gas-fill');
+    const panes = $id('rc-glass-panes').value;
+    const gasFillField = $id('rc-gas-fill-field');
+    const gasFill = $id('rc-gas-fill');
     if (panes === 'single') {
       // Single pane: hide gas fill, reset to Standard
       gasFill.innerHTML = '<option value="air" selected>Air (Standard)<\/option>';
@@ -2485,8 +2870,8 @@
     ];
     let valid = true;
     fields.forEach(f => {
-      const el = document.getElementById(f.id);
-      const wrapper = document.getElementById(f.fieldId);
+      const el = $id(f.id);
+      const wrapper = $id(f.fieldId);
       if (!el.value.trim()) {
         wrapper.classList.add('rc-field-error');
         valid = false;
@@ -2495,23 +2880,23 @@
       }
     });
     // Phone is required, must be at least 10 digits
-    const phoneRaw = document.getElementById('rc-phone').value.replace(/\D/g, '');
+    const phoneRaw = $id('rc-phone').value.replace(/\D/g, '');
     if (phoneRaw.length < 10) {
-      document.getElementById('rc-field-phone').classList.add('rc-field-error');
+      $id('rc-field-phone').classList.add('rc-field-error');
       valid = false;
     } else {
-      document.getElementById('rc-field-phone').classList.remove('rc-field-error');
+      $id('rc-field-phone').classList.remove('rc-field-error');
     }
     // Consent is required before the phone number leaves this page
-    var consentBox = document.getElementById('rc-consent-checkbox');
+    var consentBox = $id('rc-consent-checkbox');
     if (!consentBox || !consentBox.checked) {
-      document.getElementById('rc-field-consent').classList.add('rc-field-error');
+      $id('rc-field-consent').classList.add('rc-field-error');
       valid = false;
     } else {
-      document.getElementById('rc-field-consent').classList.remove('rc-field-error');
+      $id('rc-field-consent').classList.remove('rc-field-error');
     }
     if (!valid) {
-      const firstError = document.querySelector('#rc-section-1 .rc-field-error input');
+      const firstError = $one('#rc-section-1 .rc-field-error input');
       if (firstError) firstError.focus();
       return;
     }
@@ -2540,25 +2925,25 @@
   //  STEP 3 (CONTACT) VALIDATION
   // ============================================================
   function validateAndGoToStep4() {
-    const phoneRaw = document.getElementById('rc-phone').value.replace(/\D/g, '');
-    const email = document.getElementById('rc-email').value.trim();
+    const phoneRaw = $id('rc-phone').value.replace(/\D/g, '');
+    const email = $id('rc-email').value.trim();
     let valid = true;
     // Phone is required, must be at least 10 digits
     if (phoneRaw.length < 10) {
-      document.getElementById('rc-field-phone').classList.add('rc-field-error');
+      $id('rc-field-phone').classList.add('rc-field-error');
       valid = false;
     } else {
-      document.getElementById('rc-field-phone').classList.remove('rc-field-error');
+      $id('rc-field-phone').classList.remove('rc-field-error');
     }
     // Email is required and must be valid format
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      document.getElementById('rc-field-email').classList.add('rc-field-error');
+      $id('rc-field-email').classList.add('rc-field-error');
       valid = false;
     } else {
-      document.getElementById('rc-field-email').classList.remove('rc-field-error');
+      $id('rc-field-email').classList.remove('rc-field-error');
     }
     if (!valid) {
-      const firstError = document.querySelector('#rc-section-3 .rc-field-error input');
+      const firstError = $one('#rc-section-3 .rc-field-error input');
       if (firstError) firstError.focus();
       return;
     }
@@ -2577,7 +2962,7 @@
   // ============================================================
 
   function startEmailVerification() {
-    var email = document.getElementById('rc-email').value.trim();
+    var email = $id('rc-email').value.trim();
     var data = gatherContactData();
     showVerificationModal(email);
     sendEvent('verify_sent');
@@ -2589,7 +2974,7 @@
       if (result && result.verifyId) state.verifyId = result.verifyId;
     }).catch(function(err) {
       console.error('[Verify] start failed:', err);
-      var errorMsg = document.getElementById('rc-verify-error-msg');
+      var errorMsg = $id('rc-verify-error-msg');
       errorMsg.textContent = (err.status === 429)
         ? 'Too many codes requested. Please wait a bit and try Resend Code.'
         : 'We could not send the code. Please click Resend Code to try again.';
@@ -2598,11 +2983,11 @@
   }
 
   function showVerificationModal(email) {
-    var modal = document.getElementById('rc-verify-email-modal');
-    var display = document.getElementById('rc-verify-email-display');
-    var input = document.getElementById('rc-verify-code-input');
-    var errorMsg = document.getElementById('rc-verify-error-msg');
-    var successMsg = document.getElementById('rc-verify-success-msg');
+    var modal = $id('rc-verify-email-modal');
+    var display = $id('rc-verify-email-display');
+    var input = $id('rc-verify-code-input');
+    var errorMsg = $id('rc-verify-error-msg');
+    var successMsg = $id('rc-verify-success-msg');
     display.textContent = email;
     input.value = '';
     input.classList.remove('rc-field-error');
@@ -2613,14 +2998,14 @@
   }
 
   function hideVerificationModal() {
-    document.getElementById('rc-verify-email-modal').classList.remove('rc-active');
+    $id('rc-verify-email-modal').classList.remove('rc-active');
   }
 
   function verifyEnteredCode() {
-    var input = document.getElementById('rc-verify-code-input');
+    var input = $id('rc-verify-code-input');
     var entered = (input.value || '').trim();
-    var errorMsg = document.getElementById('rc-verify-error-msg');
-    var successMsg = document.getElementById('rc-verify-success-msg');
+    var errorMsg = $id('rc-verify-error-msg');
+    var successMsg = $id('rc-verify-success-msg');
     if (entered.length !== 6 || !/^\d{6}$/.test(entered)) {
       input.classList.add('rc-field-error');
       errorMsg.textContent = 'Please enter the 6-digit code from your email.';
@@ -2628,7 +3013,7 @@
       successMsg.classList.remove('rc-visible');
       return;
     }
-    var btn = document.getElementById('rc-verify-submit-btn');
+    var btn = $id('rc-verify-submit-btn');
     if (btn) btn.disabled = true;
     apiPost('/api/verify/check', {
       verifyId: state.verifyId || '',
@@ -2672,8 +3057,8 @@
   }
 
   function resendVerificationCode() {
-    var btn = document.getElementById('rc-verify-resend-btn');
-    var email = document.getElementById('rc-email').value.trim();
+    var btn = $id('rc-verify-resend-btn');
+    var email = $id('rc-email').value.trim();
     var data = gatherContactData();
     // Ask the server for a fresh code (new verifyId invalidates the old one)
     apiPost('/api/verify/start', {
@@ -2692,8 +3077,8 @@
     var originalText = 'Resend Code';
     btn.textContent = 'Resend Code (' + seconds + 's)';
     // Show success indicator for the resend action
-    var errorMsg = document.getElementById('rc-verify-error-msg');
-    var successMsg = document.getElementById('rc-verify-success-msg');
+    var errorMsg = $id('rc-verify-error-msg');
+    var successMsg = $id('rc-verify-success-msg');
     errorMsg.classList.remove('rc-visible');
     successMsg.textContent = 'New code sent. Check your email (and spam folder).';
     successMsg.classList.add('rc-visible');
@@ -2715,7 +3100,7 @@
 
   function changeEmail() {
     hideVerificationModal();
-    var emailInput = document.getElementById('rc-email');
+    var emailInput = $id('rc-email');
     emailInput.focus();
     emailInput.select();
   }
@@ -2723,7 +3108,7 @@
   //  PHONE AUTO-FORMATTER
   // ============================================================
   function setupPhoneFormatter() {
-    const phoneInput = document.getElementById('rc-phone');
+    const phoneInput = $id('rc-phone');
     if (!phoneInput) return;
     phoneInput.addEventListener('input', function(e) {
       let digits = e.target.value.replace(/\D/g, '');
@@ -2740,9 +3125,9 @@
   function goToStep(n) {
     if (n === 1) { sendStep1View(); } else { sendEvent('step_view', { step: n }); }
     if (typeof fbq === 'function' && n >= 2) { fbq('trackSingleCustom', META_PIXEL_ID, 'CalcStep' + n); }
-    document.querySelectorAll('.rc-section').forEach(s => s.classList.remove('rc-visible'));
-    document.getElementById('rc-section-' + n).classList.add('rc-visible');
-    document.querySelectorAll('.rc-stepper .rc-step').forEach(s => {
+    $all('.rc-section').forEach(s => s.classList.remove('rc-visible'));
+    $id('rc-section-' + n).classList.add('rc-visible');
+    $all('.rc-stepper .rc-step').forEach(s => {
       const sn = parseInt(s.dataset.step);
       s.classList.remove('rc-active', 'rc-done');
       if (sn < n) s.classList.add('rc-done');
@@ -2750,10 +3135,10 @@
     });
     // Show running total only on the estimate step (step 4). The bar belongs to
     // the host page, so it is optional — WordPress does not supply one.
-    const runningTotal = document.getElementById(HOST_TOTAL_ID);
+    const runningTotal = hostEl(HOST_TOTAL_ID);
     if (runningTotal) runningTotal.style.display = (n === 4) ? '' : 'none';
     // Show sticky mobile CTA only on step 4
-    var stickyCta = document.querySelector('.rc-sticky-cta');
+    var stickyCta = $one('.rc-sticky-cta');
     if (stickyCta) {
       if (n === 4) {
         stickyCta.classList.add('rc-visible');
@@ -2764,7 +3149,7 @@
       }
     }
     // Show "How This Works" only on step 1
-    document.getElementById('rc-how-it-works').style.display = (n === 1) ? '' : 'none';
+    $id('rc-how-it-works').style.display = (n === 1) ? '' : 'none';
     // Build summary and auto-send PDF to GHL when arriving at estimate step
   if (n === 4) {
       buildSummary();
@@ -2805,7 +3190,7 @@
       }
     }
     // Video playback: play on Step 2, pause on all other steps
-    var video = document.getElementById('rc-intro-video');
+    var video = $id('rc-intro-video');
     if (video) {
       if (n === 2) {
         // Entering Step 2: wait 2s then play once with sound
@@ -2833,12 +3218,12 @@
     scrollToCalculator();
   }
   function getSelectedTile(groupId) {
-    const sel = document.querySelector('#' + groupId + ' .rc-tile.rc-selected');
+    const sel = $one('#' + groupId + ' .rc-tile.rc-selected');
     return sel ? sel.dataset.value : null;
   }
   function getCheckedUpgrades() {
     const upgrades = [];
-    document.querySelectorAll('#glassUpgrades .check-item input[type="checkbox"]').forEach(cb => {
+    $all('#glassUpgrades .check-item input[type="checkbox"]').forEach(cb => {
       if (cb.checked && !upgrades.includes(cb.value)) upgrades.push(cb.value);
     });
     return upgrades;
@@ -2938,16 +3323,16 @@
     return {
       style: getSelectedTile('rc-window-style') || 'single_hung',
       frame: getSelectedTile('rc-frame-material') || 'vinyl',
-      panes: document.getElementById('rc-glass-panes').value,
-      gas: document.getElementById('rc-gas-fill').value,
-      grid: document.getElementById('rc-grid-pattern').value,
+      panes: $id('rc-glass-panes').value,
+      gas: $id('rc-gas-fill').value,
+      grid: $id('rc-grid-pattern').value,
       upgrades: getCheckedUpgrades(),
       size: size,
       width: dims.width,
       height: dims.height,
-      qty: parseInt(document.getElementById('rc-win-qty').value) || 1,
+      qty: parseInt($id('rc-win-qty').value) || 1,
       installType: DEFAULTS.installType,
-      stories: document.getElementById('rc-stories').value
+      stories: $id('rc-stories').value
     };
   }
   function getWindowLabel(config) {
@@ -2971,27 +3356,27 @@
     }
     renderWindowList();
     updateRunningTotal();
-    document.getElementById('rc-win-qty').value = 1;
+    $id('rc-win-qty').value = 1;
   }
   function editWindow(idx) {
     const w = windows[idx];
     const c = w.config;
     editingIndex = idx;
-    document.querySelectorAll('#rc-window-style .rc-tile').forEach(t => {
+    $all('#rc-window-style .rc-tile').forEach(t => {
       t.classList.toggle('rc-selected', t.dataset.value === c.style);
     });
-    document.querySelectorAll('#rc-frame-material .rc-tile').forEach(t => {
+    $all('#rc-frame-material .rc-tile').forEach(t => {
       t.classList.toggle('rc-selected', t.dataset.value === c.frame);
     });
-    document.getElementById('rc-glass-panes').value = c.panes;
+    $id('rc-glass-panes').value = c.panes;
     handlePaneChange();
-    document.getElementById('rc-gas-fill').value = c.gas;
-    document.getElementById('rc-grid-pattern').value = c.grid;
-    document.querySelectorAll('#rc-window-size .rc-tile').forEach(t => {
+    $id('rc-gas-fill').value = c.gas;
+    $id('rc-grid-pattern').value = c.grid;
+    $all('#rc-window-size .rc-tile').forEach(t => {
       t.classList.toggle('rc-selected', t.dataset.value === c.size);
     });
-    document.getElementById('rc-win-qty').value = c.qty;
-    document.querySelectorAll('#rc-glass-upgrades .rc-check-item').forEach(item => {
+    $id('rc-win-qty').value = c.qty;
+    $all('#rc-glass-upgrades .rc-check-item').forEach(item => {
       const cb = item.querySelector('input[type="checkbox"]');
       const checked = c.upgrades.includes(cb.value);
       cb.checked = checked;
@@ -3008,13 +3393,13 @@
   //  ENHANCED CART RENDERING
   // ============================================================
   function renderWindowList() {
-    const list = document.getElementById('rc-window-list');
+    const list = $id('rc-window-list');
     if (windows.length === 0) {
       list.innerHTML = '<div class="rc-empty-state">No windows added yet. Configure a window above and click "Add Window to Estimate".<\/div>';
-      document.getElementById('rc-btn-to-step3').disabled = true;
+      $id('rc-btn-to-step3').disabled = true;
       return;
     }
-    document.getElementById('rc-btn-to-step3').disabled = false;
+    $id('rc-btn-to-step3').disabled = false;
     let html = '';
     windows.forEach((w, i) => {
       const c = w.config;
@@ -3068,7 +3453,8 @@
     windows.forEach(w => { windowTotal += w.cost.totalCost; });
     const permitFee = round2(windowTotal * 0.03);
     const total = windowTotal + permitFee;
-    var totalEl = document.querySelector('#' + HOST_TOTAL_ID + ' span');
+    var totalBar = hostEl(HOST_TOTAL_ID);
+    var totalEl = totalBar && totalBar.querySelector('span');
     if (totalEl) totalEl.textContent = fmt(total);
   }
   function getProjectCosts() {
@@ -3096,14 +3482,14 @@
   //  service expects. Replaces DOM-scraping + html2pdf.
   // ============================================================
   function buildEstimatePayload() {
-    var custName = (document.getElementById('rc-full-name').value || '').trim();
-    var custAddress = (document.getElementById('rc-street-address').value || '').trim();
-    var custCity = (document.getElementById('rc-city').value || '').trim();
-    var custState = (document.getElementById('rc-state').value || '').trim();
-    var custPostal = (document.getElementById('rc-postal-code').value || '').trim();
-    var custPhone = (document.getElementById('rc-phone').value || '').trim();
-    var custEmail = (document.getElementById('rc-email').value || '').trim();
-    var storiesVal = document.getElementById('rc-stories').value;
+    var custName = ($id('rc-full-name').value || '').trim();
+    var custAddress = ($id('rc-street-address').value || '').trim();
+    var custCity = ($id('rc-city').value || '').trim();
+    var custState = ($id('rc-state').value || '').trim();
+    var custPostal = ($id('rc-postal-code').value || '').trim();
+    var custPhone = ($id('rc-phone').value || '').trim();
+    var custEmail = ($id('rc-email').value || '').trim();
+    var storiesVal = $id('rc-stories').value;
     var storiesLabel = storiesVal === '1' ? '1 Story' : storiesVal === '2' ? '2 Stories' : '3+ Stories';
 
     var project = getProjectCosts();
@@ -3248,14 +3634,14 @@
     const lowEstimate = round2(grandTotal * 0.80);
     const highEstimate = round2(grandTotal * 1.20);
     // Customer info
-    const custName = document.getElementById('rc-full-name').value.trim();
-    const custAddress = document.getElementById('rc-street-address').value.trim();
-    const custCity = document.getElementById('rc-city').value.trim();
-    const custState = document.getElementById('rc-state').value.trim();
-    const custPostal = document.getElementById('rc-postal-code').value.trim();
+    const custName = $id('rc-full-name').value.trim();
+    const custAddress = $id('rc-street-address').value.trim();
+    const custCity = $id('rc-city').value.trim();
+    const custState = $id('rc-state').value.trim();
+    const custPostal = $id('rc-postal-code').value.trim();
     // Contact info from step 3
-    const custPhone = document.getElementById('rc-phone').value.trim();
-    const custEmail = document.getElementById('rc-email').value.trim();
+    const custPhone = $id('rc-phone').value.trim();
+    const custEmail = $id('rc-email').value.trim();
     // ===== PRICE HERO BLOCK =====
     var estMonthlyLow = Math.round(lowEstimate * 0.0107);
     var estMonthlyAvg = Math.round(grandTotal * 0.0107);
@@ -3318,7 +3704,7 @@
       '<table class="rc-summary-table">' +
         '<tr><td>Total Windows<\/td><td>' + totalWindows + '<\/td><\/tr>' +
         '<tr><td>Installation Type<\/td><td>Full-Frame Replacement<\/td><\/tr>' +
-        '<tr><td>Building Stories<\/td><td>' + (document.getElementById('rc-stories').value === '1' ? '1 Story' : document.getElementById('rc-stories').value === '2' ? '2 Stories' : '3+ Stories') + '<\/td><\/tr>' +
+        '<tr><td>Building Stories<\/td><td>' + ($id('rc-stories').value === '1' ? '1 Story' : $id('rc-stories').value === '2' ? '2 Stories' : '3+ Stories') + '<\/td><\/tr>' +
       '<\/table>' +
     '<\/div>';
     // ===== ITEMIZED BREAKDOWN =====
@@ -3364,15 +3750,15 @@
       '<p>Unverified estimates are not assigned to an installation zone.<\/p>' +
       '<p>Early confirmation improves access to the most efficient installation cycle.<\/p>' +
     '<\/div>';
-    document.getElementById('rc-summary-content').innerHTML = html;
+    $id('rc-summary-content').innerHTML = html;
     updateRunningTotal();
   }
   function printEstimate() {
-    var printRoot = document.getElementById('rc-print-root');
+    var printRoot = $id('rc-print-root');
     printRoot.innerHTML = '';
 
     // 1. Clone the host page's banner, when it offers one — WordPress does not.
-    var siteHeader = document.getElementById(HOST_HEADER_ID);
+    var siteHeader = hostEl(HOST_HEADER_ID);
     if (siteHeader) {
       var headerDiv = document.createElement('div');
       headerDiv.className = 'rc-print-header';
@@ -3381,7 +3767,7 @@
     }
 
     // 2. Clone summary content
-    var summaryEl = document.getElementById('rc-summary-content');
+    var summaryEl = $id('rc-summary-content');
     var contentClone = summaryEl.cloneNode(true);
     contentClone.removeAttribute('id');
 
@@ -3450,12 +3836,12 @@
   // ============================================================
   function init() {
     // Ensure initial check-item states match checkboxes
-    document.querySelectorAll('#rc-glass-upgrades .rc-check-item').forEach(item => {
+    $all('#rc-glass-upgrades .rc-check-item').forEach(item => {
       const cb = item.querySelector('input[type="checkbox"]');
       item.classList.toggle('rc-checked', cb.checked);
     });
     // Hide running total on load (only visible on step 4)
-    var hostTotal = document.getElementById(HOST_TOTAL_ID);
+    var hostTotal = hostEl(HOST_TOTAL_ID);
     if (hostTotal) hostTotal.style.display = 'none';
     // Set up phone formatter
     setupPhoneFormatter();
@@ -3482,10 +3868,10 @@
       Object.keys(fieldMap).forEach(function(paramName) {
         var value = params.get(paramName);
         if (value) {
-          var el = document.getElementById(fieldMap[paramName]);
+          var el = $id(fieldMap[paramName]);
           if (el) {
             el.value = value;
-            var wrapper = document.getElementById(fieldMap[paramName].replace('rc-', 'rc-field-'));
+            var wrapper = $id(fieldMap[paramName].replace('rc-', 'rc-field-'));
             if (wrapper) wrapper.classList.remove('rc-field-error');
           }
         }
@@ -3494,7 +3880,7 @@
       // Run the phone formatter so pre-filled numbers display as (954) 500-0000
       var phoneParam = params.get('phone');
       if (phoneParam) {
-        var phoneEl = document.getElementById('rc-phone');
+        var phoneEl = $id('rc-phone');
         if (phoneEl) {
           phoneEl.dispatchEvent(new Event('input', { bubbles: true }));
         }
@@ -3505,7 +3891,7 @@
     //  VERIFICATION CODE INPUT — Enter to submit, digits-only filter
     // ============================================================
     (function setupVerifyCodeInput() {
-      var codeInput = document.getElementById('rc-verify-code-input');
+      var codeInput = $id('rc-verify-code-input');
       if (!codeInput) return;
       codeInput.addEventListener('input', function(e) {
         // Strip any non-digit characters as user types
@@ -3514,7 +3900,7 @@
         // Clear error styling once user starts typing again
         if (cleaned.length > 0) {
           e.target.classList.remove('rc-field-error');
-          document.getElementById('rc-verify-error-msg').classList.remove('rc-visible');
+          $id('rc-verify-error-msg').classList.remove('rc-visible');
         }
       });
       codeInput.addEventListener('keydown', function(e) {
@@ -3539,10 +3925,10 @@
   // ============================================================
   function showKeepEstimateModal() {
     sendEvent('keep_estimate_shown');
-    document.getElementById('rc-keep-estimate-modal').classList.add('rc-active');
+    $id('rc-keep-estimate-modal').classList.add('rc-active');
   }
   function hideKeepEstimateModal() {
-    document.getElementById('rc-keep-estimate-modal').classList.remove('rc-active');
+    $id('rc-keep-estimate-modal').classList.remove('rc-active');
   }
   function openMeasurementVerification() {
     sendEvent('verify_cta_clicked');
@@ -3579,7 +3965,10 @@
     // On the standalone page the calculator is the page. Embedded in a longer
     // WordPress page, scrolling the document to 0 would throw the visitor up
     // into the site header instead of the step they just opened.
-    if (PAGE_VARIANT === 'standalone' || !mountEl) {
+    // Full mode is the standalone case again — chrome, calculator and footer
+    // are the whole of what the visitor came for — so it scrolls to the top
+    // even though its PAGE_VARIANT is main-domain.
+    if (RENDER_MODE === 'full' || PAGE_VARIANT === 'standalone' || !mountEl) {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
       mountEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -3592,6 +3981,51 @@
     style.id = STYLE_ID;
     style.appendChild(document.createTextNode(CSS));
     (document.head || document.documentElement).appendChild(style);
+  }
+
+  // Full mode only. The same CSS string, plus the page chrome's, placed INSIDE
+  // the shadow root — where document.head styles cannot reach and the funnel
+  // page's .card / .btn / .container rules cannot reach either.
+  function injectShadowStyles(root) {
+    var style = document.createElement('style');
+    style.id = STYLE_ID;
+    style.appendChild(document.createTextNode(FULL_CSS + '\n' + CSS));
+    root.appendChild(style);
+  }
+
+  // Full mode only. Two things that have to live in the LIGHT dom:
+  //
+  //  1. The webfont. An @font-face declared only inside a shadow root does not
+  //     resolve — the font has to be loaded by the document. Once it is, the
+  //     shadow content inherits it like any other page font.
+  //  2. A z-index floor for Google Places. Its .pac-container dropdown is
+  //     appended to document.body, outside the shadow root, and Google styles
+  //     it from its own document.head stylesheet — so it renders correctly, but
+  //     a funnel-page section with a z-index of its own can cover it. This rule
+  //     puts it above everything. See initializeAddressForm.
+  function injectLightDomSupport() {
+    if (document.getElementById('rc-full-light-support')) return;
+    var head = document.head || document.documentElement;
+
+    ['https://fonts.googleapis.com', 'https://fonts.gstatic.com'].forEach(function (href) {
+      var pre = document.createElement('link');
+      pre.rel = 'preconnect';
+      pre.href = href;
+      if (href.indexOf('gstatic') !== -1) pre.crossOrigin = '';
+      head.appendChild(pre);
+    });
+
+    var font = document.createElement('link');
+    font.rel = 'stylesheet';
+    font.href = 'https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300..900&display=swap';
+    head.appendChild(font);
+
+    var style = document.createElement('style');
+    style.id = 'rc-full-light-support';
+    style.appendChild(document.createTextNode(
+      '.pac-container { z-index: 2147483647 !important; }'
+    ));
+    head.appendChild(style);
   }
 
   function loadGoogleMaps() {
@@ -3612,6 +4046,22 @@
     }
     if (el.getAttribute('data-rc-mounted') === '1') return;
     el.setAttribute('data-rc-mounted', '1');
+
+    if (RENDER_MODE === 'full') {
+      mountFull(el);
+    } else {
+      mountEmbed(el);
+    }
+    init();
+    loadGoogleMaps();
+    ReeceCalculator.mounted = true;
+  }
+
+  // Today's path, byte for byte. estimate.getreecewindows.com and
+  // reecewindows.com/window-estimate both land here and nothing in it moved
+  // when full mode was added — queryRoot is still document, the styles still
+  // go to document.head, the markup still goes straight into the mount.
+  function mountEmbed(el) {
     mountEl = el;
     // Embedded in the WordPress page the calculator is a block INSIDE an
     // article, not the page itself: no grey page background, cards carry their
@@ -3625,9 +4075,41 @@
     // to appendChild/insertAdjacentHTML — the placeholder would survive and
     // sit above the calculator.
     el.innerHTML = HTML;
-    init();
-    loadGoogleMaps();
-    ReeceCalculator.mounted = true;
+  }
+
+  // data-mode="full": chrome + calculator + footer inside a shadow root.
+  //
+  // 'open', never 'closed': closed blocks devtools inspection and would also
+  // block the light-DOM bridging the trackers need.
+  function mountFull(el) {
+    var root = el.attachShadow({ mode: 'open' });
+    shadowRootEl = root;
+    // Everything the calculator queries from here on lives in the shadow root,
+    // not the document. This one line is what makes all 111 internal lookups
+    // resolve — which is why they go through $id/$one/$all rather than naming
+    // document directly.
+    queryRoot = root;
+
+    injectLightDomSupport();
+    injectShadowStyles(root);
+
+    var page = document.createElement('div');
+    page.className = 'rc-page';
+    page.innerHTML = FULL_HTML;
+    root.appendChild(page);
+
+    // The inner wrapper, NOT the shadow host: the calculator's stylesheet is
+    // scoped under #reece-calculator, and policy-link clicks have to be
+    // delegated from inside the shadow tree — a listener on the host would see
+    // the retargeted event and never match #rc-link-privacy.
+    mountEl = root.getElementById(MOUNT_ID);
+    // No .rc-embed here even though PAGE_VARIANT is main-domain on the funnel
+    // page: full mode IS the full-page treatment, which is the whole point of
+    // the mode. .rc-embed is the WordPress in-article treatment.
+    mountEl.innerHTML = HTML;
+
+    var year = root.getElementById('rc-page-year');
+    if (year) year.textContent = String(new Date().getFullYear());
   }
 
   // Only the functions the rendered markup and Google Maps call by name are
@@ -3635,8 +4117,13 @@
   var ReeceCalculator = {
     mount: mount,
     mounted: false,
-    version: '3.0.0',
+    version: '3.1.0',
     pageVariant: PAGE_VARIANT,
+    renderMode: RENDER_MODE,
+    // The shadow root in full mode, null in embed mode. Exported so the suite
+    // can assert the isolation actually happened, and so a console session on
+    // the funnel page has a handle on the tree.
+    get shadowRoot() { return shadowRootEl; },
     initializeAddressForm: initializeAddressForm,
     sendEvent: sendEvent,
     goToStep: goToStep,
