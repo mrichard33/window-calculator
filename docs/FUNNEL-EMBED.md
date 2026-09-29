@@ -47,7 +47,8 @@ bar directly and its cookies stay first-party.
 
 <!-- GHL external tracking -->
 <script src="https://link.reecewindows.com/js/external-tracking.js"
-        data-tracking-id="tk_e546f581cf8f430dad0ec8f0838d01d3"></script>
+        data-tracking-id="tk_e546f581cf8f430dad0ec8f0838d01d3"
+        async></script>
 
 <!-- Calculator, full-page mode -->
 <div id="reece-calculator"></div>
@@ -59,6 +60,13 @@ bar directly and its cookies stay first-party.
 navy header, the calculator, the running-total bar and the Reece footer —
 everything the standalone page shows — instead of just the calculator on its
 own.
+
+`async` on the GHL tag lets the page keep drawing while that script downloads
+(it is 267 KB, 82 KB over the wire). It is safe: the script finds its own tag
+through `document.currentScript`, which works with `async`, and nothing else on
+the page waits for it. `estimate.getreecewindows.com` has loaded it this way
+since 2026-09-10. As of 2026-09-29 the live funnel tag still lacks it — add the
+one word and republish.
 
 **The Meta Pixel is no longer yours to place.** The calculator loads pixel
 `926500861053624` itself in full mode. You do not need a pixel block on this

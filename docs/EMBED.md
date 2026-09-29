@@ -49,11 +49,41 @@ embed already handles them and the page's own copies would double-count:
 - a second copy of the calculator's stylesheet
 - anything that loads `external-tracking.js` twice
 
-The Meta pixel and the GoHighLevel tracking script that the page already loads
-are correct and should stay. The embed deliberately does not load either one on
-this page. (It does load a pixel on the GoHighLevel funnel, which runs it in a
-different mode — that cannot reach this page, and there is a test holding it
-that way.)
+The Meta pixel the page already loads is correct and should stay. The embed
+deliberately does not load a pixel on this page. (It does load one on the
+GoHighLevel funnel, which runs it in a different mode — that cannot reach this
+page, and there is a test holding it that way.)
+
+**Tracking scripts are installed site-wide, not by the embed (2026-09-29).**
+Both of these belong in the site-wide header, once, on every page of
+reecewindows.com — Kyle owns that install:
+
+```html
+<!-- Reece internal tracking -->
+<script src="https://track.getreecewindows.com/reece-tracker.js" data-reece-tracker data-sister-domains="reecewindows.com,getreecewindows.com" defer></script>
+
+<!-- GoHighLevel tracking -->
+<script
+  src="https://link.reecewindows.com/js/external-tracking.js"
+  data-tracking-id="tk_e546f581cf8f430dad0ec8f0838d01d3"
+  async
+></script>
+```
+
+The embed never loads either script, so the site-wide copy is the only one on
+the window-estimate page. Two things to check when installing:
+
+- **The Reece tracker line is already on every page** (Socius added it). Replace
+  that line rather than adding a second one. The tracker has no double-load
+  guard, so two copies count every page view twice.
+- **GoHighLevel tracking was not on the site** as of 2026-09-29, even though an
+  earlier version of this guide said it was. Adding it is new, not a duplicate.
+  `async` is optional but keeps this 82 KB script from holding up the page.
+
+The two calculator pages outside WordPress — `estimate.getreecewindows.com` and
+the GHL funnel `landing.reecewindows.com/instant-window-pricing` — each carry
+their own copy of both scripts already, so the site-wide install does not
+touch them.
 
 ---
 
