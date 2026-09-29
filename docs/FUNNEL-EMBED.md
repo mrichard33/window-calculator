@@ -68,6 +68,15 @@ the page waits for it. `estimate.getreecewindows.com` has loaded it this way
 since 2026-09-10. As of 2026-09-29 the live funnel tag still lacks it — add the
 one word and republish.
 
+**How GHL ties a visit to a contact (2026-09-29).** GHL external tracking knows
+who a visitor is only from a note it keeps in the browser (`_ud` in local
+storage). GHL writes that note when one of its own forms is submitted, and it
+never reads the contact from a link. The calculator is not a GHL form, so it
+writes the note itself once the lead is saved. Page views before the calculator
+is submitted stay anonymous, and GHL has no way to re-tag them. To test it, use
+a fresh private window, submit the calculator, then refresh or move on a step.
+Those later views should appear on the contact.
+
 **The Meta Pixel is no longer yours to place.** The calculator loads pixel
 `926500861053624` itself in full mode. You do not need a pixel block on this
 funnel, and you should not add one.

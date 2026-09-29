@@ -2447,6 +2447,30 @@
     } catch (e) { /* never throw from analytics */ }
   }
 
+  // Tells GHL external tracking who this visitor is (2026-09-29). A test contact
+  // who used the funnel showed no page views in GHL. The script was loading
+  // fine. It attaches a visit to a contact only through localStorage `_ud`
+  // ({ customer_id }), which GHL writes when one of ITS forms is submitted.
+  // It never reads the link, and this calculator renders no <form> for it to
+  // capture. So every calculator lead stayed an anonymous GHL visitor. Writing
+  // the id we already hold makes later GHL events from this browser carry the
+  // contact. Page views before the submit stay anonymous; GHL has no way to
+  // re-tag them. `_ud` is GHL's internal format, not a documented API. If they
+  // rename it, visits simply go back to anonymous, which is why this only ever
+  // writes and never reads anything back that the funnel depends on.
+  var GHL_USER_DATA_KEY = '_ud';
+  function ghlRememberContact(contactId) {
+    try {
+      if (!contactId || !window.localStorage) return;
+      var existing = null;
+      try { existing = JSON.parse(window.localStorage.getItem(GHL_USER_DATA_KEY) || 'null'); } catch (e) { existing = null; }
+      // A GHL form already identified this browser, and wrote a richer record
+      // than ours. Leave it alone.
+      if (existing && typeof existing === 'object' && existing.customer_id) return;
+      window.localStorage.setItem(GHL_USER_DATA_KEY, JSON.stringify({ customer_id: String(contactId) }));
+    } catch (e) { /* storage can be blocked (private mode); never throw from analytics */ }
+  }
+
   // First-party funnel events. Analytics must never break the funnel.
   function sendEvent(eventName, extra) {
     try {
@@ -2597,6 +2621,7 @@
       if (result && result.contactId) {
         state.contactId = result.contactId;
         console.log('Contact upserted via server:', result.contactId);
+        ghlRememberContact(result.contactId);
       }
       // Only once the upsert succeeded: I.STITCH matches identify rows against
       // GHL contacts, so identifying before the contact exists gives it nothing

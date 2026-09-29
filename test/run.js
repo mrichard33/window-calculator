@@ -1112,6 +1112,15 @@ async function fullModeChecks(browser) {
         eq(body.lpSourceId, '9222', 'lp_source_id');
       });
 
+    // GHL external tracking ties a visit to a contact only through
+    // localStorage `_ud`. The calculator has no GHL form to set it, so it
+    // writes the id the server returned (2026-09-29).
+    await check('full mode: the GHL contact id is left for GHL tracking in _ud', async function () {
+      const ud = await page.evaluate(function () { return localStorage.getItem('_ud'); });
+      assert(ud, '_ud was never written');
+      eq(JSON.parse(ud).customer_id, 'test-contact', '_ud.customer_id');
+    });
+
     // The other half of injectMetaPixel's contract. This fixture ships its own
     // pixel block, the way the funnel page did before the block went missing
     // and the way it will again if anyone pastes one back into GHL. The
@@ -1180,6 +1189,11 @@ async function fullModeChecks(browser) {
     page.on('console', function (m) { if (m.type() === 'error') consoleErrors.push(m.text()); });
     page.on('pageerror', function (e) { consoleErrors.push(String(e)); });
     await routeOffline(page, events);
+    // A browser a GHL form already identified. Its record must survive the
+    // calculator's own write (asserted after the funnel below).
+    await page.addInitScript(function () {
+      localStorage.setItem('_ud', JSON.stringify({ customer_id: 'ghl-form-contact', email: 'x@example.com' }));
+    });
     await page.goto(HOST + '/funnel-full-bare', { waitUntil: 'domcontentloaded' });
     await page.waitForSelector('#rc-section-1.rc-visible', { timeout: 10000 });
 
@@ -1204,6 +1218,12 @@ async function fullModeChecks(browser) {
         eq(leaked.length, 0, 'payloads carrying visitor_id with no tracker');
         eq(consoleErrors.join(' | '), '', 'console errors');
       });
+
+    await check('an _ud a GHL form already wrote is left untouched', async function () {
+      const ud = JSON.parse(await page.evaluate(function () { return localStorage.getItem('_ud'); }));
+      eq(ud.customer_id, 'ghl-form-contact', '_ud.customer_id');
+      eq(ud.email, 'x@example.com', '_ud.email');
+    });
 
     await ctx.close();
   }
@@ -1336,6 +1356,29 @@ async function fullModeChecks(browser) {
         eq(m.inShadow, 0, '<form> elements inside the shadow root');
         eq(m.inDocument, 0, '<form> elements in the document');
       });
+    await ctx.close();
+  }
+
+  // Storage refused outright (some private modes): writing _ud is best-effort,
+  // so the funnel must still complete with no page error.
+  {
+    const ctx = await browser.newContext();
+    const page = await ctx.newPage();
+    const errors = [];
+    const events = [];
+    page.on('pageerror', function (e) { errors.push(String(e)); });
+    await routeOffline(page, events);
+    await page.addInitScript(function () {
+      Object.defineProperty(window, 'localStorage', { get: function () { throw new Error('storage blocked'); } });
+    });
+    await page.goto(HOST + '/funnel-full-bare', { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('#rc-section-1.rc-visible', { timeout: 10000 });
+    await check('blocked storage: the funnel still completes, with no page error', async function () {
+      await walkFunnel(page);
+      const contact = events.filter(function (e) { return e.path.indexOf('/api/contact') === 0; });
+      assert(contact.length > 0, 'the contact was never submitted');
+      eq(errors.join(' | '), '', 'page errors');
+    });
     await ctx.close();
   }
 
