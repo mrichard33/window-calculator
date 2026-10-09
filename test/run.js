@@ -402,30 +402,29 @@ async function grepChecks() {
     });
   });
 
-  await check('the consent block is the v2 wording, and only v2 ships', function () {
+  await check('the consent block is the v3 wording, and only v3 ships', function () {
     // The version string is the audit record on every contact. A wording change
-    // that forgets the bump makes v1 contacts and v2 contacts indistinguishable.
-    assert(embed.indexOf("'calc-consent-2026-09-17-v2'") !== -1,
-      'CONSENT_VERSION is not calc-consent-2026-09-17-v2');
-    const stale = embed.match(/calc-consent-2026-08-13-v1/g) || [];
-    eq(stale.length, 0, 'references to the superseded consent version');
-
-    // The 10DLC SMS elements. Carriers reject a campaign missing any of these.
-    ['I agree to receive SMS messages from Reece Windows &amp; Doors',
-     'at the number I entered above',
-     'Msg frequency varies',
-     'Msg &amp; data rates may apply',
-     'Reply HELP for help, STOP to opt out'].forEach(function (phrase) {
-      assert(embed.indexOf(phrase) !== -1, 'consent text is missing: ' + phrase);
+    // that forgets the bump makes contacts on different wordings indistinguishable.
+    assert(embed.indexOf("'calc-consent-2026-10-09-v3'") !== -1,
+      'CONSENT_VERSION is not calc-consent-2026-10-09-v3');
+    ['calc-consent-2026-08-13-v1', 'calc-consent-2026-09-17-v2'].forEach(function (old) {
+      eq((embed.split("'" + old + "'").length - 1), 0, 'references to the superseded consent version ' + old);
     });
 
-    // CONSENT_A also collects calling and email consent. Reece dials these leads
-    // through Five9, so dropping any of this is a compliance change, not a copy
-    // tweak — it fails here rather than being noticed after the first dial.
-    ['live agent', 'AI generative voice', 'artificial or prerecorded voice',
-     'calls dialed manually or by auto dialer', 'and by email',
-     'not required to sign or agree to this as a condition of purchase'].forEach(function (phrase) {
-      assert(embed.indexOf(phrase) !== -1, 'calling/email consent is missing: ' + phrase);
+    // v3 is the user's exact wording (2026-10-09). It still carries every 10DLC
+    // SMS element; carriers reject a campaign missing any of these.
+    const sms = '<span>By checking this box I agree to receive SMS messages from Reece Windows &amp; Doors, ' +
+      'including appointment reminders, account notifications, and promotional offers. ' +
+      'Msg frequency varies. Msg &amp; data rates may apply. Reply HELP for help, STOP to opt out.</span>';
+    assert(embed.indexOf(sms) !== -1, 'consent checkbox text is not the v3 wording');
+    assert(embed.indexOf('By submitting this form you agree to our <a ') !== -1, 'consent footer lead-in changed');
+    assert(embed.indexOf('id=\\"rc-link-terms\\" target=\\"_blank\\" rel=\\"noopener\\">Terms of Service</a>.</p>') !== -1,
+      'consent footer does not end with the Terms of Service link');
+
+    // v3 dropped the calling and email consent on purpose (the user's ruling,
+    // 2026-10-09). If it comes back, it is a new version, not a silent edit.
+    ['AI generative voice', 'calls dialed manually or by auto dialer'].forEach(function (phrase) {
+      assert(embed.indexOf(phrase) === -1, 'v3 consent still carries calling consent: ' + phrase);
     });
   });
 

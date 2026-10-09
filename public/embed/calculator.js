@@ -1418,7 +1418,7 @@
     "          <div class=\"rc-field\" id=\"rc-field-consent\">",
     "            <label class=\"rc-consent-label\">",
     "              <input type=\"checkbox\" id=\"rc-consent-checkbox\">",
-    "              <span>By checking this box, I agree to receive SMS messages from Reece Windows &amp; Doors at the number I entered above, including appointment reminders, account notifications, and promotional offers. Msg frequency varies. Msg &amp; data rates may apply. Reply HELP for help, STOP to opt out.<br><br>I also agree by electronic signature to be contacted by Reece Windows &amp; Doors at that number through a live agent, AI generative voice, artificial or prerecorded voice, and automated technology, including calls dialed manually or by auto dialer, and by email. I understand I am not required to sign or agree to this as a condition of purchase.</span>",
+    "              <span>By checking this box I agree to receive SMS messages from Reece Windows &amp; Doors, including appointment reminders, account notifications, and promotional offers. Msg frequency varies. Msg &amp; data rates may apply. Reply HELP for help, STOP to opt out.</span>",
     "            </label>",
     "            <div class=\"rc-field-error-msg\">You must agree to the consent terms to continue.</div>",
     // The policy links sit OUTSIDE .rc-consent-label deliberately: a link inside
@@ -1429,7 +1429,7 @@
     // resolve to link.reecewindows.com/r/2/<token>, which is what puts the click
     // in GHL trigger-link reporting and lets the destination move without a
     // deploy. Never "simplify" these to the direct policy URLs.
-    "            <p class=\"rc-consent-footer\">By submitting this form you agree to our <a href=\"https://landing.reecewindows.com/privacy\" id=\"rc-link-privacy\" target=\"_blank\" rel=\"noopener\">Privacy Policy</a> &amp; <a href=\"https://landing.reecewindows.com/terms\" id=\"rc-link-terms\" target=\"_blank\" rel=\"noopener\">Terms &amp; Conditions</a>.</p>",
+    "            <p class=\"rc-consent-footer\">By submitting this form you agree to our <a href=\"https://landing.reecewindows.com/privacy\" id=\"rc-link-privacy\" target=\"_blank\" rel=\"noopener\">Privacy Policy</a> &amp; <a href=\"https://landing.reecewindows.com/terms\" id=\"rc-link-terms\" target=\"_blank\" rel=\"noopener\">Terms of Service</a>.</p>",
     "          </div>",
     "        </div>",
     "      </div>",
@@ -2153,7 +2153,10 @@
   // of the consent block changes, and NEVER backfill contacts carrying an older
   // value — that value is the record of what those leads actually agreed to.
   // v2 (2026-09-17): 10DLC SMS block split out, calling and email consent kept.
-  var CONSENT_VERSION = 'calc-consent-2026-09-17-v2';
+  // v3 (2026-10-09): SMS block only, footer link reads "Terms of Service". The
+  // calling and email consent paragraph was removed on purpose (the user's
+  // ruling): v3 contacts did NOT agree to auto-dialed, AI or prerecorded calls.
+  var CONSENT_VERSION = 'calc-consent-2026-10-09-v3';
   var CALC_SESSION_ID = (window.crypto && crypto.randomUUID)
     ? crypto.randomUUID()
     : String(Date.now()) + '-' + Math.random().toString(16).slice(2);
