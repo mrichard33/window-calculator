@@ -2060,6 +2060,21 @@ async function browserChecks() {
       eq(m.fontWeight, '400', 'consent font-weight at ' + width + 'px');
     });
 
+    await check('WordPress stand-in at ' + width + 'px: the policy line starts under the consent text', async function () {
+      const m = await page.evaluate(function () {
+        const span = document.querySelector('#reece-calculator .rc-consent-label span');
+        const p = document.querySelector('#reece-calculator .rc-consent-footer');
+        const r = document.createRange();
+        r.selectNodeContents(p);
+        return {
+          consent: span.getBoundingClientRect().left,
+          footer:  r.getClientRects()[0].left
+        };
+      });
+      assert(Math.abs(m.consent - m.footer) <= 1,
+        'consent text starts at ' + m.consent + 'px, policy line at ' + m.footer + 'px at ' + width + 'px');
+    });
+
     await check('WordPress stand-in at ' + width + 'px: the policy links stay legible and tappable', async function () {
       const m = await page.evaluate(function () {
         const p = document.querySelector('#reece-calculator .rc-consent-footer');
