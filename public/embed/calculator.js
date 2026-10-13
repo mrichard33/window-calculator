@@ -324,6 +324,50 @@
     "  margin-top: calc(1 * var(--rc-rem));",
     "  margin-bottom: calc(-0.5 * var(--rc-rem));",
     "}",
+    "/* ===== STEP 1 NOTE + STEP 3 ESTIMATE TEASER (2026-10-13) =====",
+    "   Step 1 asks only for a zip; the contact form waits on Step 3 behind a",
+    "   blurred price, so the lead sees the estimate is real before giving details. */",
+    "#reece-calculator .rc-step1-note {",
+    "  font-size: calc(0.9 * var(--rc-rem));",
+    "  color: var(--text-gray);",
+    "  margin: 0 0 calc(0.75 * var(--rc-rem));",
+    "}",
+    "#reece-calculator .rc-teaser {",
+    "  text-align: center;",
+    "  background: #f0f5f8;",
+    "  border: 1px solid var(--powder-blue);",
+    "  border-radius: 10px;",
+    "  padding: calc(1 * var(--rc-rem));",
+    "  margin-bottom: calc(1.25 * var(--rc-rem));",
+    "}",
+    "#reece-calculator .rc-teaser-label {",
+    "  font-size: calc(0.8 * var(--rc-rem));",
+    "  font-weight: 700;",
+    "  letter-spacing: 0.06em;",
+    "  text-transform: uppercase;",
+    "  color: var(--steel-blue);",
+    "  margin: 0;",
+    "}",
+    "#reece-calculator .rc-teaser-count {",
+    "  font-size: calc(1 * var(--rc-rem));",
+    "  font-weight: 600;",
+    "  color: var(--deep-navy);",
+    "  margin: calc(0.3 * var(--rc-rem)) 0 0;",
+    "}",
+    "#reece-calculator .rc-teaser-price {",
+    "  font-size: calc(2.2 * var(--rc-rem));",
+    "  font-weight: 800;",
+    "  color: var(--deep-navy);",
+    "  filter: blur(9px);",
+    "  user-select: none;",
+    "  pointer-events: none;",
+    "  margin: calc(0.25 * var(--rc-rem)) 0;",
+    "}",
+    "#reece-calculator .rc-teaser-sub {",
+    "  font-size: calc(0.85 * var(--rc-rem));",
+    "  color: var(--text-gray);",
+    "  margin: 0;",
+    "}",
     "/* ===== TILE SELECTORS ===== */",
     "#reece-calculator .rc-tile-group {",
     "  display: grid;",
@@ -1372,9 +1416,9 @@
     "    <div class=\"rc-how-it-works\" id=\"rc-how-it-works\">",
     "      <h2>How This Works</h2>",
     "      <ul class=\"rc-how-steps\">",
-    "        <li><span class=\"rc-how-check\">&#10003;</span> Enter your project details</li>",
+    "        <li><span class=\"rc-how-check\">&#10003;</span> Enter your zip code and home details</li>",
     "        <li><span class=\"rc-how-check\">&#10003;</span> Select your window types</li>",
-    "        <li><span class=\"rc-how-check\">&#10003;</span> Instantly see your estimated investment range</li>",
+    "        <li><span class=\"rc-how-check\">&#10003;</span> Tell us where to send it and see your estimated investment range</li>",
     "        <li><span class=\"rc-how-check\">&#10003;</span> Decide if you'd like to explore next steps</li>",
     "      </ul>",
     "      <p class=\"rc-how-tagline\">No appointment. No pressure. Just clarity.</p>",
@@ -1383,61 +1427,13 @@
     "    <div class=\"rc-section rc-visible\" id=\"rc-section-1\">",
     "      <div class=\"rc-card\">",
     "        <h2>Step 1: Tell Us About Your Home</h2>",
+    "        <p class=\"rc-step1-note\">Start with your zip code. No name, phone or email needed to see how it works.</p>",
     "        <div class=\"rc-form-row rc-full\">",
-    "          <div class=\"rc-field\" id=\"rc-field-full-name\">",
-    "            <label>Name <span style=\"color:var(--cta-red);\">*</span></label>",
-    "            <input type=\"text\" id=\"rc-full-name\" placeholder=\"Name\">",
-    "            <div class=\"rc-field-error-msg\">Name is required.</div>",
-    "          </div>",
-    "        </div>",
-    "        <div class=\"rc-form-row rc-full\">",
-    "          <div class=\"rc-field\" id=\"rc-field-street-address\">",
-    "            <label>Street Address <span style=\"color:var(--cta-red);\">*</span></label>",
-    "            <input type=\"text\" id=\"rc-street-address\" placeholder=\"Start typing your address...\">",
-    "            <div class=\"rc-field-error-msg\">Street address is required.</div>",
-    "          </div>",
-    "        </div>",
-    "        <div class=\"rc-form-row rc-four\">",
-    "          <div class=\"rc-field\" id=\"rc-field-city\">",
-    "            <label>City <span style=\"color:var(--cta-red);\">*</span></label>",
-    "            <input type=\"text\" id=\"rc-city\" placeholder=\"City\">",
-    "            <div class=\"rc-field-error-msg\">City is required.</div>",
-    "          </div>",
-    "          <div class=\"rc-field\" id=\"rc-field-state\">",
-    "            <label>State <span style=\"color:var(--cta-red);\">*</span></label>",
-    "            <input type=\"text\" id=\"rc-state\" placeholder=\"FL\">",
-    "            <div class=\"rc-field-error-msg\">State is required.</div>",
-    "          </div>",
-    "          <div class=\"rc-field\" id=\"rc-field-postal-code\">",
-    "            <label>Postal Code <span style=\"color:var(--cta-red);\">*</span></label>",
-    "            <input type=\"text\" id=\"rc-postal-code\" placeholder=\"33601\">",
-    "            <div class=\"rc-field-error-msg\">Postal code is required.</div>",
-    "          </div>",
-    "        </div>",
-    "        <div class=\"rc-form-row rc-full\">",
-    "          <div class=\"rc-field\" id=\"rc-field-phone\">",
-    "            <label>Phone Number <span style=\"color:var(--cta-red);\">*</span></label>",
-    "            <input type=\"tel\" id=\"rc-phone\" placeholder=\"(555) 555-5555\" inputmode=\"numeric\">",
-    "            <div class=\"rc-field-error-msg\">A valid 10-digit phone number is required.</div>",
-    "            <p class=\"rc-field-hint\">We'll text your estimate to this number.</p>",
-    "          </div>",
-    "        </div>",
-    "        <div class=\"rc-form-row rc-full\">",
-    "          <div class=\"rc-field\" id=\"rc-field-consent\">",
-    "            <label class=\"rc-consent-label\">",
-    "              <input type=\"checkbox\" id=\"rc-consent-checkbox\">",
-    "              <span>By checking this box I agree to receive SMS messages from Reece Windows &amp; Doors, including appointment reminders, account notifications, and promotional offers. Msg frequency varies. Msg &amp; data rates may apply. Reply HELP for help, STOP to opt out.</span>",
-    "            </label>",
-    "            <div class=\"rc-field-error-msg\">You must agree to the consent terms to continue.</div>",
-    // The policy links sit OUTSIDE .rc-consent-label deliberately: a link inside
-    // the <label> that wraps the checkbox toggles that checkbox on click, so a
-    // lead reading the policy would silently flip their own consent.
-    //
-    // Both hrefs are GHL URL redirects, not the policy pages themselves. They
-    // resolve to link.reecewindows.com/r/2/<token>, which is what puts the click
-    // in GHL trigger-link reporting and lets the destination move without a
-    // deploy. Never "simplify" these to the direct policy URLs.
-    "            <p class=\"rc-consent-footer\">By submitting this form you agree to our <a href=\"https://landing.reecewindows.com/privacy\" id=\"rc-link-privacy\" target=\"_blank\" rel=\"noopener\">Privacy Policy</a> &amp; <a href=\"https://landing.reecewindows.com/terms\" id=\"rc-link-terms\" target=\"_blank\" rel=\"noopener\">Terms of Service</a>.</p>",
+    "          <div class=\"rc-field\" id=\"rc-field-start-zip\">",
+    "            <label>Zip Code <span style=\"color:var(--cta-red);\">*</span></label>",
+    "            <input type=\"text\" id=\"rc-start-zip\" placeholder=\"33601\" inputmode=\"numeric\" maxlength=\"5\" autocomplete=\"postal-code\">",
+    "            <div class=\"rc-field-error-msg\">Please enter your 5-digit zip code.</div>",
+    "            <p class=\"rc-field-hint\">So your estimate reflects pricing in your area.</p>",
     "          </div>",
     "        </div>",
     "      </div>",
@@ -1459,7 +1455,7 @@
     "        </div>",
     "        <p style=\"font-size:calc(0.8 * var(--rc-rem)); color:var(--text-gray); margin-top:calc(0.5 * var(--rc-rem));\">A 3% permit fee and disposal of old windows are automatically included in every estimate.</p>",
     "      </div>",
-    "      <p class=\"rc-reassurance-note\">We will NOT send a salesperson to your home unless you request it. Your information is only used to generate your estimate.</p>",
+    "      <p class=\"rc-reassurance-note\">We will NOT send a salesperson to your home unless you request it. No contact details needed until your estimate is ready.</p>",
     "      <div class=\"rc-btn-row\">",
     "        <div></div>",
     "        <button class=\"rc-btn rc-btn-primary\" onclick=\"ReeceCalculator.validateAndGoToStep2()\">Start My Estimate &rarr;</button>",
@@ -1739,8 +1735,53 @@
     "    <!-- ========== STEP 3: CONTACT INFORMATION ========== -->",
     "    <div class=\"rc-section\" id=\"rc-section-3\">",
     "      <div class=\"rc-card\">",
-    "        <h2>Where Should We Email Your Estimate?</h2>",
-    "        <p class=\"rc-contact-note\">Enter your email address below to receive a PDF copy of your estimate.</p>",
+    "        <div class=\"rc-teaser\" id=\"rc-teaser\">",
+    "          <p class=\"rc-teaser-label\">Your estimate is ready</p>",
+    "          <p class=\"rc-teaser-count\" id=\"rc-teaser-count\">Your windows are priced.</p>",
+    "          <div class=\"rc-teaser-price\" aria-hidden=\"true\">$&#8203;00,000</div>",
+    "          <p class=\"rc-teaser-sub\">Tell us where to send it to unlock your full estimate.</p>",
+    "        </div>",
+    "        <h2>Where Should We Send Your Estimate?</h2>",
+    "        <p class=\"rc-contact-note\">We'll email a PDF copy of your estimate. Your details are only used for your estimate.</p>",
+    "        <div class=\"rc-form-row rc-full\">",
+    "          <div class=\"rc-field\" id=\"rc-field-full-name\">",
+    "            <label>Name <span style=\"color:var(--cta-red);\">*</span></label>",
+    "            <input type=\"text\" id=\"rc-full-name\" placeholder=\"Name\">",
+    "            <div class=\"rc-field-error-msg\">Name is required.</div>",
+    "          </div>",
+    "        </div>",
+    "        <div class=\"rc-form-row rc-full\">",
+    "          <div class=\"rc-field\" id=\"rc-field-street-address\">",
+    "            <label>Street Address <span style=\"color:var(--cta-red);\">*</span></label>",
+    "            <input type=\"text\" id=\"rc-street-address\" placeholder=\"Start typing your address...\">",
+    "            <div class=\"rc-field-error-msg\">Street address is required.</div>",
+    "          </div>",
+    "        </div>",
+    "        <div class=\"rc-form-row rc-four\">",
+    "          <div class=\"rc-field\" id=\"rc-field-city\">",
+    "            <label>City <span style=\"color:var(--cta-red);\">*</span></label>",
+    "            <input type=\"text\" id=\"rc-city\" placeholder=\"City\">",
+    "            <div class=\"rc-field-error-msg\">City is required.</div>",
+    "          </div>",
+    "          <div class=\"rc-field\" id=\"rc-field-state\">",
+    "            <label>State <span style=\"color:var(--cta-red);\">*</span></label>",
+    "            <input type=\"text\" id=\"rc-state\" placeholder=\"FL\">",
+    "            <div class=\"rc-field-error-msg\">State is required.</div>",
+    "          </div>",
+    "          <div class=\"rc-field\" id=\"rc-field-postal-code\">",
+    "            <label>Postal Code <span style=\"color:var(--cta-red);\">*</span></label>",
+    "            <input type=\"text\" id=\"rc-postal-code\" placeholder=\"33601\">",
+    "            <div class=\"rc-field-error-msg\">Postal code is required.</div>",
+    "          </div>",
+    "        </div>",
+    "        <div class=\"rc-form-row rc-full\">",
+    "          <div class=\"rc-field\" id=\"rc-field-phone\">",
+    "            <label>Phone Number <span style=\"color:var(--cta-red);\">*</span></label>",
+    "            <input type=\"tel\" id=\"rc-phone\" placeholder=\"(555) 555-5555\" inputmode=\"numeric\">",
+    "            <div class=\"rc-field-error-msg\">A valid 10-digit phone number is required.</div>",
+    "            <p class=\"rc-field-hint\">So we can reach you about your estimate.</p>",
+    "          </div>",
+    "        </div>",
     "        <div class=\"rc-form-row rc-full\">",
     "          <div class=\"rc-field\" id=\"rc-field-email\">",
     "            <label>Email Address <span style=\"color:var(--cta-red);\">*</span></label>",
@@ -1749,10 +1790,28 @@
     "            <p class=\"rc-field-hint\">We'll email a PDF copy of your estimate.</p>",
     "          </div>",
     "        </div>",
+    "        <div class=\"rc-form-row rc-full\">",
+    "          <div class=\"rc-field\" id=\"rc-field-consent\">",
+    "            <label class=\"rc-consent-label\">",
+    "              <input type=\"checkbox\" id=\"rc-consent-checkbox\">",
+    "              <span>By checking this box I agree to receive SMS messages from Reece Windows &amp; Doors, including appointment reminders, account notifications, and promotional offers. Msg frequency varies. Msg &amp; data rates may apply. Reply HELP for help, STOP to opt out.</span>",
+    "            </label>",
+    "            <div class=\"rc-field-error-msg\">You must agree to the consent terms to continue.</div>",
+    // The policy links sit OUTSIDE .rc-consent-label deliberately: a link inside
+    // the <label> that wraps the checkbox toggles that checkbox on click, so a
+    // lead reading the policy would silently flip their own consent.
+    //
+    // Both hrefs are GHL URL redirects, not the policy pages themselves. They
+    // resolve to link.reecewindows.com/r/2/<token>, which is what puts the click
+    // in GHL trigger-link reporting and lets the destination move without a
+    // deploy. Never "simplify" these to the direct policy URLs.
+    "            <p class=\"rc-consent-footer\">By submitting this form you agree to our <a href=\"https://landing.reecewindows.com/privacy\" id=\"rc-link-privacy\" target=\"_blank\" rel=\"noopener\">Privacy Policy</a> &amp; <a href=\"https://landing.reecewindows.com/terms\" id=\"rc-link-terms\" target=\"_blank\" rel=\"noopener\">Terms of Service</a>.</p>",
+    "          </div>",
+    "        </div>",
     "        <p class=\"rc-reassurance-note\">We respect your privacy. No spam. No surprise visits.</p>",
     "        <div class=\"rc-btn-row\">",
     "          <button class=\"rc-btn rc-btn-secondary\" onclick=\"ReeceCalculator.goToStep(2)\">&larr; Edit Windows</button>",
-    "          <button class=\"rc-btn rc-btn-primary\" onclick=\"ReeceCalculator.validateAndGoToStep4()\">Calculate My Estimate &rarr;</button>",
+    "          <button class=\"rc-btn rc-btn-primary\" onclick=\"ReeceCalculator.validateAndGoToStep4()\">Unlock My Estimate &rarr;</button>",
     "        </div>",
     "      </div>",
     "    </div>",
@@ -2505,6 +2564,10 @@
         event: eventName,
         client_ts: new Date().toISOString(),
         page_variant: PAGE_VARIANT,
+        // Automated browsers (headless crawlers, ad reviewers) announce
+        // themselves here. The server drops flagged events so they never
+        // inflate page views. A hint only — the server also checks the UA.
+        bot: navigator.webdriver === true,
         utm_source: ATTRIBUTION.utm_source,
         utm_medium: ATTRIBUTION.utm_medium,
         utm_campaign: ATTRIBUTION.utm_campaign,
@@ -2601,7 +2664,7 @@
   }
   // ============================================================
   //  CONTACT SUBMIT (server-side GHL upsert)
-  //  Step 1 sends without email; Step 3 re-sends with email.
+  //  Sent once from Step 3 with every detail, email included.
   //  The server enforces consent and stamps the consent audit fields.
   // ============================================================
   function submitContact(includeEmail) {
@@ -2899,18 +2962,42 @@
   // ============================================================
   //  STEP 1 VALIDATION
   // ============================================================
+  // Step 1 asks for a zip code and nothing else (2026-10-13). It used to be a
+  // full lead form (name, address, phone, SMS consent) shown before the lead
+  // had seen a single window or price, and 87% of real visitors left there.
+  // The contact form now lives on Step 3, behind a blurred estimate, so the
+  // GHL contact, the Meta Lead and consent all move to validateAndGoToStep4().
   function validateAndGoToStep2() {
-    const fields = [
+    var zipEl = $id('rc-start-zip');
+    var zip = ((zipEl && zipEl.value) || '').replace(/\D/g, '').slice(0, 5);
+    if (zip.length !== 5) {
+      $id('rc-field-start-zip').classList.add('rc-field-error');
+      if (zipEl) zipEl.focus();
+      return;
+    }
+    $id('rc-field-start-zip').classList.remove('rc-field-error');
+    zipEl.value = zip;
+    // Carry the zip into the Step 3 address row so the lead never types it twice.
+    var postal = $id('rc-postal-code');
+    if (postal && !postal.value.trim()) postal.value = zip;
+    sendEvent('step1_complete');
+    goToStep(2);
+  }
+  // ============================================================
+  //  STEP 3 (CONTACT) VALIDATION
+  // ============================================================
+  function validateAndGoToStep4() {
+    var fields = [
       { id: 'rc-full-name', fieldId: 'rc-field-full-name' },
       { id: 'rc-street-address', fieldId: 'rc-field-street-address' },
       { id: 'rc-city', fieldId: 'rc-field-city' },
       { id: 'rc-state', fieldId: 'rc-field-state' },
       { id: 'rc-postal-code', fieldId: 'rc-field-postal-code' }
     ];
-    let valid = true;
-    fields.forEach(f => {
-      const el = $id(f.id);
-      const wrapper = $id(f.fieldId);
+    var valid = true;
+    fields.forEach(function (f) {
+      var el = $id(f.id);
+      var wrapper = $id(f.fieldId);
       if (!el.value.trim()) {
         wrapper.classList.add('rc-field-error');
         valid = false;
@@ -2919,12 +3006,20 @@
       }
     });
     // Phone is required, must be at least 10 digits
-    const phoneRaw = $id('rc-phone').value.replace(/\D/g, '');
+    var phoneRaw = $id('rc-phone').value.replace(/\D/g, '');
     if (phoneRaw.length < 10) {
       $id('rc-field-phone').classList.add('rc-field-error');
       valid = false;
     } else {
       $id('rc-field-phone').classList.remove('rc-field-error');
+    }
+    // Email is required and must be valid format
+    var email = $id('rc-email').value.trim();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      $id('rc-field-email').classList.add('rc-field-error');
+      valid = false;
+    } else {
+      $id('rc-field-email').classList.remove('rc-field-error');
     }
     // Consent is required before the phone number leaves this page
     var consentBox = $id('rc-consent-checkbox');
@@ -2935,63 +3030,27 @@
       $id('rc-field-consent').classList.remove('rc-field-error');
     }
     if (!valid) {
-      const firstError = $one('#rc-section-1 .rc-field-error input');
+      var firstError = $one('#rc-section-3 .rc-field-error input');
       if (firstError) firstError.focus();
       return;
     }
     sendEvent('consent_checked');
-    // The GHL contact is created here — this is the lead, not Step 4. Always
-    // trackSingle, never the untargeted form: the WordPress page initialises
-    // three pixels, and an untargeted Lead would be reported to all of them.
-    // The one-shot guard keeps Back -> Next from counting the same lead twice.
+    // The GHL contact is created here — this is the lead. Always trackSingle,
+    // never the untargeted form: the WordPress page initialises three pixels,
+    // and an untargeted Lead would be reported to all of them. The one-shot
+    // guard keeps Back -> Next from counting the same lead twice.
     if (!state.leadFired) {
       state.leadFired = true;
       if (typeof fbq === 'function') {
         fbq('trackSingle', META_PIXEL_ID, 'Lead', { page_variant: PAGE_VARIANT });
       }
     }
-    submitContact(false).then(function() {
-      sendEvent('step1_complete');
-      goToStep(2);
-    }).catch(function(err) {
-      console.error('Contact submit failed:', err);
-      sendEvent('contact_failed', { meta: { reason: String((err && err.status) || 'network') } });
-      // The funnel continues; the Step 3 re-submit retries the upsert.
-      goToStep(2);
-    });
-  }
-  // ============================================================
-  //  STEP 3 (CONTACT) VALIDATION
-  // ============================================================
-  function validateAndGoToStep4() {
-    const phoneRaw = $id('rc-phone').value.replace(/\D/g, '');
-    const email = $id('rc-email').value.trim();
-    let valid = true;
-    // Phone is required, must be at least 10 digits
-    if (phoneRaw.length < 10) {
-      $id('rc-field-phone').classList.add('rc-field-error');
-      valid = false;
-    } else {
-      $id('rc-field-phone').classList.remove('rc-field-error');
-    }
-    // Email is required and must be valid format
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      $id('rc-field-email').classList.add('rc-field-error');
-      valid = false;
-    } else {
-      $id('rc-field-email').classList.remove('rc-field-error');
-    }
-    if (!valid) {
-      const firstError = $one('#rc-section-3 .rc-field-error input');
-      if (firstError) firstError.focus();
-      return;
-    }
     sendEvent('step3_complete');
-    // Consent was captured on Step 1. Re-upsert the contact with email attached,
-    // then start server-side email verification. Step 4 is unreachable until the
-    // server confirms the 6-digit code.
+    // One upsert carrying everything, then server-side email verification.
+    // Step 4 is unreachable until the server confirms the 6-digit code.
     submitContact(true).catch(function(err) {
-      console.error('Contact upsert with email failed:', err);
+      console.error('Contact upsert failed:', err);
+      sendEvent('contact_failed', { meta: { reason: String((err && err.status) || 'network') } });
     }).finally(function() {
       startEmailVerification();
     });
@@ -3187,6 +3246,7 @@
         mountEl.classList.remove('rc-step-4-active');
       }
     }
+    if (n === 3) updateTeaser();
     // Show "How This Works" only on step 1
     $id('rc-how-it-works').style.display = (n === 1) ? '' : 'none';
     // Build summary and auto-send PDF to GHL when arriving at estimate step
@@ -3255,6 +3315,20 @@
       }
     }
     scrollToCalculator();
+  }
+  // Step 3's teaser line. The price itself stays a blurred placeholder in the
+  // markup — the real figure is never in the DOM until the email is verified.
+  function updateTeaser() {
+    var el = $id('rc-teaser-count');
+    if (!el) return;
+    var count = 0;
+    windows.forEach(function (w) { count += (w.config && w.config.qty) || 0; });
+    el.textContent = count > 0
+      ? 'We priced ' + count + ' window' + (count === 1 ? '' : 's') + ' for your home.'
+      : 'Your windows are priced.';
+    var postal = $id('rc-postal-code');
+    var startZip = $id('rc-start-zip');
+    if (postal && startZip && !postal.value.trim() && startZip.value) postal.value = startZip.value;
   }
   function getSelectedTile(groupId) {
     const sel = $one('#' + groupId + ' .rc-tile.rc-selected');
@@ -3915,6 +3989,13 @@
           }
         }
       });
+
+      // The Step 1 zip is the only required field before Step 2, so a prefilled
+      // postal code fills it too.
+      var zipParam = (params.get('postalCode') || '').replace(/\D/g, '').slice(0, 5);
+      if (zipParam.length === 5 && $id('rc-start-zip') && !$id('rc-start-zip').value) {
+        $id('rc-start-zip').value = zipParam;
+      }
 
       // Run the phone formatter so pre-filled numbers display as (954) 500-0000
       var phoneParam = params.get('phone');

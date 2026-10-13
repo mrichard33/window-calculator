@@ -669,6 +669,9 @@ app.post('/api/estimate', rateLimit(10, 10 * 60 * 1000), async function (req, re
 // ---------------------------------------------------------------------------
 // POST /api/events — first-party funnel analytics -> HL Supabase
 // ---------------------------------------------------------------------------
+// Bots never reach estimator_events — see lib/bot-filter.js.
+const { isBot } = require('./lib/bot-filter');
+
 app.post('/api/events', rateLimit(120, 60 * 1000), function (req, res) {
   let p = req.body || {};
   // text/plain bodies (sendBeacon) arrive as a raw string.
@@ -698,6 +701,9 @@ app.post('/api/events', rateLimit(120, 60 * 1000), function (req, res) {
     user_agent: str(req.get('user-agent') || '', 400) || null
   };
   if (!row.session_id || !row.event_type) return res.status(400).json({ error: 'BAD_EVENT' });
+  // Bots get the same 204 a person gets, so nothing tells them they were
+  // filtered — the row is simply never written.
+  if (isBot(req.get('user-agent'), p.bot)) return res.status(204).end();
 
   if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
     fetch(SUPABASE_URL + '/rest/v1/estimator_events', {
