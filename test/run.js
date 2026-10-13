@@ -1570,6 +1570,16 @@ async function browserChecks() {
         headers: { 'access-control-allow-origin': '*' }
       });
     });
+    // Records video play() calls. Unmuted play is refused the way a real browser
+    // refuses it on page load (no tap yet); muted play is allowed.
+    await page.addInitScript(function () {
+      window.__plays = [];
+      HTMLMediaElement.prototype.play = function () {
+        window.__plays.push({ id: this.id, muted: this.muted, inline: this.playsInline });
+        if (!this.muted) return Promise.reject(new DOMException('blocked', 'NotAllowedError'));
+        return Promise.resolve();
+      };
+    });
     // The standalone page has its own real pixel loader; record calls the same
     // way the stand-in host does so both sides are measured identically.
     await page.addInitScript(function () {
@@ -1601,6 +1611,22 @@ async function browserChecks() {
       eq(await page.locator('#rc-stories').isVisible(), true, 'building stories on the window step');
       eq(await page.locator('#rc-full-name').count(), 1, 'name field');
       eq(await page.locator('#rc-full-name').isVisible(), false, 'name field hidden until pricing');
+    });
+
+    await check(target.name + ': building stories offers 1 or 2 stories only', async function () {
+      const values = await page.locator('#rc-stories option').evaluateAll(function (os) {
+        return os.map(function (o) { return o.value; });
+      });
+      eq(values.join(','), '1,2', 'stories options');
+    });
+
+    await check(target.name + ': the measuring video autoplays muted and inline on load', async function () {
+      await page.waitForFunction(function () {
+        return (window.__plays || []).some(function (p) { return p.id === 'rc-intro-video' && p.muted; });
+      }, null, { timeout: 5000 });
+      const plays = await page.evaluate(function () { return window.__plays; });
+      const muted = plays.filter(function (p) { return p.id === 'rc-intro-video' && p.muted; });
+      eq(muted[0].inline, true, 'playsinline (needed for iPhone autoplay)');
     });
 
     await check(target.name + ': PAGE_VARIANT is ' + target.variant, async function () {
