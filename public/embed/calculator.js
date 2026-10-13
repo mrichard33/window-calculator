@@ -324,14 +324,9 @@
     "  margin-top: calc(1 * var(--rc-rem));",
     "  margin-bottom: calc(-0.5 * var(--rc-rem));",
     "}",
-    "/* ===== STEP 1 NOTE + STEP 3 ESTIMATE TEASER (2026-10-13) =====",
-    "   Step 1 asks only for a zip; the contact form waits on Step 3 behind a",
-    "   blurred price, so the lead sees the estimate is real before giving details. */",
-    "#reece-calculator .rc-step1-note {",
-    "  font-size: calc(0.9 * var(--rc-rem));",
-    "  color: var(--text-gray);",
-    "  margin: 0 0 calc(0.75 * var(--rc-rem));",
-    "}",
+    "/* ===== STEP 3 ESTIMATE TEASER (2026-10-13) =====",
+    "   The contact form waits on the pricing step behind a blurred price,",
+    "   so the lead sees the estimate is real before giving details. */",
     "#reece-calculator .rc-teaser {",
     "  text-align: center;",
     "  background: #f0f5f8;",
@@ -918,7 +913,6 @@
     "  #reece-calculator .rc-btn-row,",
     "  #reece-calculator .rc-btn-print,",
     "  #reece-calculator .rc-btn,",
-    "  #reece-calculator #rc-section-1,",
     "  #reece-calculator #rc-section-2,",
     "  #reece-calculator #rc-section-3,",
     "  #reece-calculator .rc-config-video,",
@@ -1404,47 +1398,31 @@
     "  <div class=\"rc-container\">",
     "    <!-- Stepper — 4 Steps -->",
     "    <div class=\"rc-stepper\" id=\"rc-stepper\">",
-    "      <div class=\"rc-step rc-active\" data-step=\"1\"><span class=\"rc-num\">1</span> Home Details</div>",
+    "      <div class=\"rc-step rc-active\" data-step=\"2\"><span class=\"rc-num\">1</span> Choose Windows</div>",
     "      <div class=\"rc-connector\"></div>",
-    "      <div class=\"rc-step\" data-step=\"2\"><span class=\"rc-num\">2</span> Window Selection</div>",
+    "      <div class=\"rc-step\" data-step=\"3\"><span class=\"rc-num\">2</span> Get Pricing</div>",
     "      <div class=\"rc-connector\"></div>",
-    "      <div class=\"rc-step\" data-step=\"3\"><span class=\"rc-num\">3</span> Get Pricing</div>",
-    "      <div class=\"rc-connector\"></div>",
-    "      <div class=\"rc-step\" data-step=\"4\"><span class=\"rc-num\">4</span> Your Estimate</div>",
+    "      <div class=\"rc-step\" data-step=\"4\"><span class=\"rc-num\">3</span> Your Estimate</div>",
     "    </div>",
     "    <!-- HOW THIS WORKS -->",
     "    <div class=\"rc-how-it-works\" id=\"rc-how-it-works\">",
     "      <h2>How This Works</h2>",
     "      <ul class=\"rc-how-steps\">",
-    "        <li><span class=\"rc-how-check\">&#10003;</span> Enter your zip code and home details</li>",
-    "        <li><span class=\"rc-how-check\">&#10003;</span> Select your window types</li>",
-    "        <li><span class=\"rc-how-check\">&#10003;</span> Tell us where to send it and see your estimated investment range</li>",
+    "        <li><span class=\"rc-how-check\">&#10003;</span> Pick your window types and sizes</li>",
+    "        <li><span class=\"rc-how-check\">&#10003;</span> Tell us where to send your estimate</li>",
+    "        <li><span class=\"rc-how-check\">&#10003;</span> See your estimated investment range</li>",
     "        <li><span class=\"rc-how-check\">&#10003;</span> Decide if you'd like to explore next steps</li>",
     "      </ul>",
     "      <p class=\"rc-how-tagline\">No appointment. No pressure. Just clarity.</p>",
     "    </div>",
-    "    <!-- ========== STEP 1: PROJECT DETAILS ========== -->",
-    "    <div class=\"rc-section rc-visible\" id=\"rc-section-1\">",
-    "      <div class=\"rc-card\">",
-    "        <h2>Step 1: Tell Us About Your Home</h2>",
-    "        <p class=\"rc-step1-note\">Start with your zip code. No name, phone or email needed to see how it works.</p>",
+    "    <!-- ========== STEP 2: WINDOW CONFIGURATION ========== -->",
+    "    <div class=\"rc-section rc-visible\" id=\"rc-section-2\">",
+    "      <div class=\"rc-config-layout\">",
+    "      <div class=\"rc-config-form\">",
+    "      <div class=\"rc-card rc-card--config\">",
+    "        <h2>Step 1: Choose Your Windows</h2>",
     "        <div class=\"rc-form-row rc-full\">",
-    "          <div class=\"rc-field\" id=\"rc-field-start-zip\">",
-    "            <label>Zip Code <span style=\"color:var(--cta-red);\">*</span></label>",
-    "            <input type=\"text\" id=\"rc-start-zip\" placeholder=\"33601\" inputmode=\"numeric\" maxlength=\"5\" autocomplete=\"postal-code\">",
-    "            <div class=\"rc-field-error-msg\">Please enter your 5-digit zip code.</div>",
-    "            <p class=\"rc-field-hint\">So your estimate reflects pricing in your area.</p>",
-    "          </div>",
-    "        </div>",
-    "      </div>",
-    "      <div class=\"rc-card\">",
-    "        <h2>Project Details</h2>",
-    "        <div class=\"rc-form-row\">",
-    "          <div class=\"rc-field\">",
-    "            <label>Installation Type</label>",
-    "            <div class=\"rc-install-type-display\">Full-Frame Replacement</div>",
-    "          </div>",
-    "          <div class=\"rc-field\">",
+    "          <div class=\"rc-field\" id=\"rc-field-stories\">",
     "            <label>Building Stories <span class=\"rc-info-tip\" data-tip=\"Upper-story windows cost more due to scaffolding, ladders, and added labor time. 2-story adds $35/window, 3+ story adds $65/window.\">?</span></label>",
     "            <select id=\"rc-stories\">",
     "              <option value=\"1\">1 Story (Ground Floor)</option>",
@@ -1453,20 +1431,7 @@
     "            </select>",
     "          </div>",
     "        </div>",
-    "        <p style=\"font-size:calc(0.8 * var(--rc-rem)); color:var(--text-gray); margin-top:calc(0.5 * var(--rc-rem));\">A 3% permit fee and disposal of old windows are automatically included in every estimate.</p>",
-    "      </div>",
-    "      <p class=\"rc-reassurance-note\">We will NOT send a salesperson to your home unless you request it. No contact details needed until your estimate is ready.</p>",
-    "      <div class=\"rc-btn-row\">",
-    "        <div></div>",
-    "        <button class=\"rc-btn rc-btn-primary\" onclick=\"ReeceCalculator.validateAndGoToStep2()\">Start My Estimate &rarr;</button>",
-    "      </div>",
-    "    </div>",
-    "    <!-- ========== STEP 2: WINDOW CONFIGURATION ========== -->",
-    "    <div class=\"rc-section\" id=\"rc-section-2\">",
-    "      <div class=\"rc-config-layout\">",
-    "      <div class=\"rc-config-form\">",
-    "      <div class=\"rc-card rc-card--config\">",
-    "        <h2>Window Configuration</h2>",
+    "        <p style=\"font-size:calc(0.8 * var(--rc-rem)); color:var(--text-gray); margin-top:calc(0.5 * var(--rc-rem));\">Every estimate is a full-frame replacement and includes a 3% permit fee and disposal of your old windows.</p>",
     "        <!-- Window Style -->",
     "        <h3>Window Style</h3>",
     "        <div class=\"rc-style-section\">",
@@ -1712,7 +1677,7 @@
     "          <button onclick=\"ReeceCalculator.adjustQty(1)\">+</button>",
     "        </div>",
     "        <div class=\"rc-btn-row\">",
-    "          <button class=\"rc-btn rc-btn-secondary\" onclick=\"ReeceCalculator.goToStep(1)\">&larr; Back</button>",
+    "          <div></div>",
     "          <div style=\"display:flex; gap:calc(0.5 * var(--rc-rem));\">",
     "            <button class=\"rc-btn rc-btn-accent\" onclick=\"ReeceCalculator.addWindow()\">Add Window to Estimate</button>",
     "          </div>",
@@ -1725,8 +1690,8 @@
     "          <div class=\"rc-empty-state\">No windows added yet. Configure a window above and click \"Add Window to Estimate\".</div>",
     "        </div>",
     "        <div class=\"rc-btn-row\">",
-    "          <button class=\"rc-btn rc-btn-secondary\" onclick=\"ReeceCalculator.goToStep(1)\">&larr; Project Details</button>",
-    "          <button class=\"rc-btn rc-btn-primary\" id=\"rc-btn-to-step3\" onclick=\"ReeceCalculator.goToStep(3)\" disabled>Show My Window Pricing &rarr;</button>",
+    "          <div></div>",
+    "          <button class=\"rc-btn rc-btn-primary\" id=\"rc-btn-to-step3\" onclick=\"ReeceCalculator.continueToPricing()\" disabled>Show My Window Pricing &rarr;</button>",
     "        </div>",
     "      </div>",
     "      </div><!-- /.config-form -->",
@@ -2599,20 +2564,16 @@
     } catch (e) { /* never throw from analytics */ }
   }
 
-  // Step 1 is visible from markup (section-1 carries "visible"), so goToStep(1)
-  // never runs on load and no step_view was ever emitted for it — the funnel had
-  // no denominator. Emit it once at init instead. The flag is shared with
-  // goToStep() so the Back buttons, which DO call goToStep(1), cannot fire a
-  // second one and inflate the denominator.
-  // page_view is the funnel's top in estimator_funnel_daily and shares this same
-  // one-shot guard: the view counts distinct sessions, and a Back button firing a
-  // second page_view would not double-count but would add noise to detail queries.
-  var _step1ViewSent = false;
-  function sendStep1View() {
-    if (_step1ViewSent) return;
-    _step1ViewSent = true;
+  // The window step (section 2) is the first screen and is visible from markup,
+  // so goToStep(2) never runs on load. Emit page_view and its step_view once at
+  // init — the funnel's denominator. Internal step numbers stay 2/3/4 so
+  // step_view history keeps one meaning; the stepper shows them as 1/2/3.
+  var _firstViewSent = false;
+  function sendFirstView() {
+    if (_firstViewSent) return;
+    _firstViewSent = true;
     sendEvent('page_view');
-    sendEvent('step_view', { step: 1 });
+    sendEvent('step_view', { step: 2 });
   }
   // ============================================================
   //  GATHER CONTACT DATA FROM FORM FIELDS
@@ -2962,26 +2923,15 @@
   // ============================================================
   //  STEP 1 VALIDATION
   // ============================================================
-  // Step 1 asks for a zip code and nothing else (2026-10-13). It used to be a
-  // full lead form (name, address, phone, SMS consent) shown before the lead
-  // had seen a single window or price, and 87% of real visitors left there.
-  // The contact form now lives on Step 3, behind a blurred estimate, so the
-  // GHL contact, the Meta Lead and consent all move to validateAndGoToStep4().
-  function validateAndGoToStep2() {
-    var zipEl = $id('rc-start-zip');
-    var zip = ((zipEl && zipEl.value) || '').replace(/\D/g, '').slice(0, 5);
-    if (zip.length !== 5) {
-      $id('rc-field-start-zip').classList.add('rc-field-error');
-      if (zipEl) zipEl.focus();
-      return;
-    }
-    $id('rc-field-start-zip').classList.remove('rc-field-error');
-    zipEl.value = zip;
-    // Carry the zip into the Step 3 address row so the lead never types it twice.
-    var postal = $id('rc-postal-code');
-    if (postal && !postal.value.trim()) postal.value = zip;
+  // Windows first (2026-10-13). The first screen is window selection: the old
+  // contact-first Step 1 lost 87% of real visitors, and the zip-only Step 1 that
+  // replaced it asked for something pricing never uses and Places fills on the
+  // address step anyway. Leaving the window step is the funnel's first
+  // completion, so it keeps the step1_complete name estimator_funnel_daily reads.
+  function continueToPricing() {
+    if (windows.length === 0) return;
     sendEvent('step1_complete');
-    goToStep(2);
+    goToStep(3);
   }
   // ============================================================
   //  STEP 3 (CONTACT) VALIDATION
@@ -3221,7 +3171,10 @@
   //  STEP NAVIGATION — 4 STEPS
   // ============================================================
   function goToStep(n) {
-    if (n === 1) { sendStep1View(); } else { sendEvent('step_view', { step: n }); }
+    // There is no step 1 any more (2026-10-13); anything still asking for it
+    // lands on the window step.
+    if (n === 1) n = 2;
+    sendEvent('step_view', { step: n });
     if (typeof fbq === 'function' && n >= 2) { fbq('trackSingleCustom', META_PIXEL_ID, 'CalcStep' + n); }
     $all('.rc-section').forEach(s => s.classList.remove('rc-visible'));
     $id('rc-section-' + n).classList.add('rc-visible');
@@ -3247,8 +3200,8 @@
       }
     }
     if (n === 3) updateTeaser();
-    // Show "How This Works" only on step 1
-    $id('rc-how-it-works').style.display = (n === 1) ? '' : 'none';
+    // Show "How This Works" only on the first screen (the window step)
+    $id('rc-how-it-works').style.display = (n === 2) ? '' : 'none';
     // Build summary and auto-send PDF to GHL when arriving at estimate step
   if (n === 4) {
       buildSummary();
@@ -3326,9 +3279,6 @@
     el.textContent = count > 0
       ? 'We priced ' + count + ' window' + (count === 1 ? '' : 's') + ' for your home.'
       : 'Your windows are priced.';
-    var postal = $id('rc-postal-code');
-    var startZip = $id('rc-start-zip');
-    if (postal && startZip && !postal.value.trim() && startZip.value) postal.value = startZip.value;
   }
   function getSelectedTile(groupId) {
     const sel = $one('#' + groupId + ' .rc-tile.rc-selected');
@@ -3990,13 +3940,6 @@
         }
       });
 
-      // The Step 1 zip is the only required field before Step 2, so a prefilled
-      // postal code fills it too.
-      var zipParam = (params.get('postalCode') || '').replace(/\D/g, '').slice(0, 5);
-      if (zipParam.length === 5 && $id('rc-start-zip') && !$id('rc-start-zip').value) {
-        $id('rc-start-zip').value = zipParam;
-      }
-
       // Run the phone formatter so pre-filled numbers display as (954) 500-0000
       var phoneParam = params.get('phone');
       if (phoneParam) {
@@ -4036,9 +3979,9 @@
     // Registered once per mount, after innerHTML has built the form.
     watchPolicyLinks(mountEl);
 
-    // Step 1 is already on screen by the time init() runs — this is the moment it
-    // first becomes visible to the lead, so this is where its step_view belongs.
-    sendStep1View();
+    // The window step is already on screen by the time init() runs — this is the
+    // moment it first becomes visible to the lead, so its step_view belongs here.
+    sendFirstView();
   }
   // ============================================================
   //  KEEP ESTIMATE MODAL
@@ -4309,7 +4252,7 @@
     toggleCheck: toggleCheck,
     adjustQty: adjustQty,
     handlePaneChange: handlePaneChange,
-    validateAndGoToStep2: validateAndGoToStep2,
+    continueToPricing: continueToPricing,
     validateAndGoToStep4: validateAndGoToStep4,
     addWindow: addWindow,
     editWindow: editWindow,
