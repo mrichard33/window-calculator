@@ -1423,11 +1423,10 @@
     "        <h2>Step 1: Choose Your Windows</h2>",
     "        <div class=\"rc-form-row rc-full\">",
     "          <div class=\"rc-field\" id=\"rc-field-stories\">",
-    "            <label>Building Stories <span class=\"rc-info-tip\" data-tip=\"Upper-story windows cost more due to scaffolding, ladders, and added labor time. 2-story adds $35/window, 3+ story adds $65/window.\">?</span></label>",
+    "            <label>Building Stories <span class=\"rc-info-tip\" data-tip=\"Upper-story windows cost more due to scaffolding, ladders, and added labor time. A 2-story home adds $35/window.\">?</span></label>",
     "            <select id=\"rc-stories\">",
     "              <option value=\"1\">1 Story (Ground Floor)</option>",
     "              <option value=\"2\">2 Stories (+$35/window)</option>",
-    "              <option value=\"3\">3+ Stories (+$65/window)</option>",
     "            </select>",
     "          </div>",
     "        </div>",
@@ -1570,7 +1569,7 @@
     "        </div>",
     "        </div>",
     "        <div class=\"rc-config-video\">",
-    "          <video id=\"rc-intro-video\" controls preload=\"metadata\">",
+    "          <video id=\"rc-intro-video\" controls muted playsinline preload=\"metadata\">",
     "            <source src=\"https://storage.googleapis.com/msgsndr/SsBG7j5KQAIP1SFP2Sca/media/698df13124813c50d4832586.mp4\" type=\"video/mp4\">",
     "            Your browser does not support the video tag.",
     "          </video>",
@@ -3241,25 +3240,13 @@
         });
       }
     }
-    // Video playback: play on Step 2, pause on all other steps
+    // Video playback: play on the window step, pause on all other steps
     var video = $id('rc-intro-video');
     if (video) {
       if (n === 2) {
-        // Entering Step 2: wait 2s then play once with sound
-        if (videoPlayTimer) clearTimeout(videoPlayTimer);
-        videoPlayTimer = setTimeout(function() {
-          video.muted = false;
-          video.loop = false;
-          var playAttempt = video.play();
-          if (playAttempt !== undefined) {
-            playAttempt.catch(function() {
-              video.muted = true;
-              video.play().catch(function() {});
-            });
-          }
-        }, 2000);
+        playIntroVideo(2000);
       } else {
-        // Leaving Step 2: cancel pending play and pause
+        // Leaving the window step: cancel pending play and pause
         if (videoPlayTimer) {
           clearTimeout(videoPlayTimer);
           videoPlayTimer = null;
@@ -3268,6 +3255,28 @@
       }
     }
     scrollToCalculator();
+  }
+  // Plays the how-to-measure video once. Tries with sound first; browsers block
+  // that without a tap (always the case on page load), so it falls back to
+  // muted, which every browser allows. The muted + playsinline attributes in
+  // the markup are what let iPhones autoplay inline. The visitor taps the
+  // speaker for sound.
+  function playIntroVideo(delayMs) {
+    var video = $id('rc-intro-video');
+    if (!video) return;
+    if (videoPlayTimer) clearTimeout(videoPlayTimer);
+    videoPlayTimer = setTimeout(function() {
+      videoPlayTimer = null;
+      video.loop = false;
+      video.muted = false;
+      var playAttempt = video.play();
+      if (playAttempt !== undefined) {
+        playAttempt.catch(function() {
+          video.muted = true;
+          video.play().catch(function() {});
+        });
+      }
+    }, delayMs);
   }
   // Step 3's teaser line. The price itself stays a blurred placeholder in the
   // markup — the real figure is never in the DOM until the email is verified.
@@ -3982,6 +3991,10 @@
     // The window step is already on screen by the time init() runs — this is the
     // moment it first becomes visible to the lead, so its step_view belongs here.
     sendFirstView();
+
+    // The window step is on screen from markup, so goToStep(2) — which starts
+    // the video — never runs on load. Start it here, after a short beat.
+    playIntroVideo(1000);
   }
   // ============================================================
   //  KEEP ESTIMATE MODAL
