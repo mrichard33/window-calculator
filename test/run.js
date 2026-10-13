@@ -721,11 +721,9 @@ async function routeOffline(page, sink) {
   });
 }
 
-// Step 1 through the estimate. Mode-agnostic: Playwright pierces the shadow
-// root, so one walk covers both.
+// The window step through the estimate. Mode-agnostic: Playwright pierces the
+// shadow root, so one walk covers both.
 async function walkFunnel(page) {
-  await page.fill('#rc-start-zip', LEAD.zip);
-  await page.click('#rc-section-1 button.rc-btn-primary');
   await page.waitForSelector('#rc-section-2.rc-visible', { timeout: 10000 });
   await page.click('#rc-window-style .rc-tile[data-value="single_hung"]');
   await page.click('#rc-window-size .rc-tile[data-value="medium"]');
@@ -781,7 +779,7 @@ async function fullModeChecks(browser) {
     page.on('pageerror', function (e) { consoleErrors.push(String(e)); });
     await routeOffline(page, null);
     await page.goto(HOST + variant.path, { waitUntil: 'domcontentloaded' });
-    await page.waitForSelector('#rc-section-1.rc-visible', { timeout: 10000 });
+    await page.waitForSelector('#rc-section-2.rc-visible', { timeout: 10000 });
 
     await check(variant.name + ': renders into the LIGHT dom, no shadow root', async function () {
       const m = await page.evaluate(function () {
@@ -791,7 +789,7 @@ async function fullModeChecks(browser) {
           exported: window.ReeceCalculator.shadowRoot,
           mode: window.ReeceCalculator.renderMode,
           // In the light DOM the section is a real descendant of the mount.
-          inMount: !!host.querySelector('#rc-section-1'),
+          inMount: !!host.querySelector('#rc-section-2'),
           styleInHead: !!document.getElementById('rc-calculator-styles')
         };
       });
@@ -809,7 +807,7 @@ async function fullModeChecks(browser) {
         const hit = warnings.filter(function (w) { return /Unknown data-mode="garbage"/.test(w); });
         eq(hit.length, 1, 'warnings naming the bad mode (saw: ' + warnings.join(' | ') + ')');
         eq(consoleErrors.join(' | '), '', 'console errors');
-        eq(await page.locator('#rc-section-1').isVisible(), true, 'step 1 still renders');
+        eq(await page.locator('#rc-section-2').isVisible(), true, 'the window step still renders');
       });
     }
     await ctx.close();
@@ -835,7 +833,7 @@ async function fullModeChecks(browser) {
     await check('no #reece-calculator: warns, exits, never injects into body', async function () {
       const m = await page.evaluate(function () {
         return {
-          sections: document.querySelectorAll('.rc-section, #rc-section-1').length,
+          sections: document.querySelectorAll('.rc-section, #rc-section-2').length,
           bodyChildren: Array.prototype.slice.call(document.body.children)
             .map(function (e) { return e.tagName + (e.id ? '#' + e.id : ''); }).join(','),
           mounted: window.ReeceCalculator.mounted
@@ -873,7 +871,7 @@ async function fullModeChecks(browser) {
       '&utm_source=facebook&utm_medium=cpc&utm_campaign=lg-sept' +
       '&utm_content=ad7&utm_term=windows&fbclid=ABC123';
     await page.goto(HOST + '/funnel-full' + query, { waitUntil: 'domcontentloaded' });
-    await page.waitForSelector('#rc-section-1.rc-visible', { timeout: 10000 });
+    await page.waitForSelector('#rc-section-2.rc-visible', { timeout: 10000 });
 
     // Task 5.5
     await check('full mode: header, calculator and footer all render INSIDE the shadow root',
@@ -887,13 +885,13 @@ async function fullModeChecks(browser) {
             exported: root === window.ReeceCalculator.shadowRoot,
             header: !!root.querySelector('.rc-page-header h1'),
             headerText: (root.querySelector('.rc-page-brand') || {}).textContent || '',
-            calculator: !!root.getElementById('rc-section-1'),
+            calculator: !!root.getElementById('rc-section-2'),
             siteline: !!root.querySelector('.rc-page-siteline'),
             footer: !!root.querySelector('.rc-page-footer'),
             total: !!root.getElementById('rc-running-total'),
             year: (root.getElementById('rc-page-year') || {}).textContent || '',
             // Nothing the calculator draws may also exist in the document.
-            leakedToDocument: document.querySelectorAll('#rc-section-1, .rc-page-header').length,
+            leakedToDocument: document.querySelectorAll('#rc-section-2, .rc-page-header').length,
             styleInHead: !!document.getElementById('rc-calculator-styles'),
             styleInShadow: !!root.getElementById('rc-calculator-styles')
           };
@@ -940,10 +938,10 @@ async function fullModeChecks(browser) {
           }
           return {
             hostCardHidden: getComputedStyle(document.getElementById('host-card')).display,
-            card: box('#rc-section-1 .rc-card'),
-            field: box('#rc-field-start-zip'),
+            card: box('#rc-section-2 .rc-card'),
+            field: box('#rc-field-stories'),
             tile: box('#rc-window-style .rc-tile'),
-            section: box('#rc-section-1'),
+            section: box('#rc-section-2'),
             container: box('.rc-container')
           };
         });
@@ -1054,22 +1052,10 @@ async function fullModeChecks(browser) {
       eq(m.pacZ, '2147483647', '.pac-container z-index');
     });
 
-    await check('full mode: Step 1 refuses a short zip and stays put', async function () {
-      await page.fill('#rc-start-zip', '336');
-      await page.click('#rc-section-1 button.rc-btn-primary');
-      eq(await page.locator('#rc-section-1').isVisible(), true, 'still on Step 1');
-      eq(await page.locator('#rc-field-start-zip.rc-field-error').count(), 1, 'zip error shown');
-    });
-
-    await check('full mode: the Step 1 zip carries into the Step 3 address row', async function () {
-      // Hidden on Step 1, so cleared directly rather than typed into.
-      await page.locator('#rc-postal-code').evaluate(function (el) { el.value = ''; });
-      await page.fill('#rc-start-zip', '33612');
-      await page.click('#rc-section-1 button.rc-btn-primary');
-      await page.waitForSelector('#rc-section-2.rc-visible', { timeout: 10000 });
-      eq(await page.inputValue('#rc-postal-code'), '33612', 'Step 3 postal code');
-      await page.evaluate(function () { window.ReeceCalculator.goToStep(1); });
-      await page.waitForSelector('#rc-section-1.rc-visible', { timeout: 10000 });
+    await check('full mode: the pricing button waits for a window', async function () {
+      eq(await page.locator('#rc-btn-to-step3').isDisabled(), true, 'pricing button with an empty cart');
+      await page.evaluate(function () { window.ReeceCalculator.continueToPricing(); });
+      eq(await page.locator('#rc-section-2').isVisible(), true, 'still on the window step');
     });
 
     // walkFunnel's Step 3 fill resets the address the stub overwrote.
@@ -1216,7 +1202,7 @@ async function fullModeChecks(browser) {
       localStorage.setItem('_ud', JSON.stringify({ customer_id: 'ghl-form-contact', email: 'x@example.com' }));
     });
     await page.goto(HOST + '/funnel-full-bare', { waitUntil: 'domcontentloaded' });
-    await page.waitForSelector('#rc-section-1.rc-visible', { timeout: 10000 });
+    await page.waitForSelector('#rc-section-2.rc-visible', { timeout: 10000 });
 
     // The pixel half of this fixture's name changed meaning on 2026-09-18:
     // full mode now SUPPLIES the pixel, so a bare funnel page is no longer a
@@ -1270,7 +1256,7 @@ async function fullModeChecks(browser) {
     page.on('pageerror', function (e) { consoleErrors.push(String(e)); });
     await routeOffline(page, null);
     await page.goto(HOST + '/funnel-embed-bare', { waitUntil: 'domcontentloaded' });
-    await page.waitForSelector('#rc-section-1.rc-visible', { timeout: 10000 });
+    await page.waitForSelector('#rc-section-2.rc-visible', { timeout: 10000 });
 
     await check('embed mode never injects a pixel, on a page carrying none',
       async function () {
@@ -1300,7 +1286,7 @@ async function fullModeChecks(browser) {
     const events = [];
     await routeOffline(page, events);
     await page.goto(HOST + '/funnel-full-bare', { waitUntil: 'domcontentloaded' });
-    await page.waitForSelector('#rc-section-1.rc-visible', { timeout: 10000 });
+    await page.waitForSelector('#rc-section-2.rc-visible', { timeout: 10000 });
     await walkFunnel(page);
 
     // The reason injectMetaPixel exists: a funnel page whose pixel block has
@@ -1367,7 +1353,7 @@ async function fullModeChecks(browser) {
     const page = await ctx.newPage();
     await routeOffline(page, null);
     await page.goto(HOST + '/funnel-full', { waitUntil: 'domcontentloaded' });
-    await page.waitForSelector('#rc-section-1.rc-visible', { timeout: 10000 });
+    await page.waitForSelector('#rc-section-2.rc-visible', { timeout: 10000 });
     await check('the calculator renders no <form>, so GHL form capture has nothing to lose',
       async function () {
         const m = await page.evaluate(function () {
@@ -1393,7 +1379,7 @@ async function fullModeChecks(browser) {
       Object.defineProperty(window, 'localStorage', { get: function () { throw new Error('storage blocked'); } });
     });
     await page.goto(HOST + '/funnel-full-bare', { waitUntil: 'domcontentloaded' });
-    await page.waitForSelector('#rc-section-1.rc-visible', { timeout: 10000 });
+    await page.waitForSelector('#rc-section-2.rc-visible', { timeout: 10000 });
     await check('blocked storage: the funnel still completes, with no page error', async function () {
       await walkFunnel(page);
       const contact = events.filter(function (e) { return e.path.indexOf('/api/contact') === 0; });
@@ -1413,7 +1399,7 @@ async function fullModeChecks(browser) {
     page.on('pageerror', function (e) { consoleErrors.push(String(e)); });
     await routeOffline(page, null);
     await page.goto(HOST + '/funnel-full', { waitUntil: 'domcontentloaded' });
-    await page.waitForSelector('#rc-section-1.rc-visible', { timeout: 10000 });
+    await page.waitForSelector('#rc-section-2.rc-visible', { timeout: 10000 });
 
     await check('full mode at ' + width + 'px: the page does not scroll sideways', async function () {
       const m = await page.evaluate(function () {
@@ -1607,13 +1593,14 @@ async function browserChecks() {
     }
 
     await page.goto(target.url, { waitUntil: 'domcontentloaded' });
-    await page.waitForSelector('#rc-section-1.rc-visible', { timeout: 10000 });
+    await page.waitForSelector('#rc-section-2.rc-visible', { timeout: 10000 });
 
-    await check(target.name + ': step 1 renders', async function () {
-      eq(await page.locator('#rc-section-1').isVisible(), true, 'step 1 visible');
+    await check(target.name + ': window selection is the first screen', async function () {
+      eq(await page.locator('#rc-section-2').isVisible(), true, 'window step visible on load');
+      eq(await page.locator('#rc-section-1').count(), 0, 'the old Step 1 section');
+      eq(await page.locator('#rc-stories').isVisible(), true, 'building stories on the window step');
       eq(await page.locator('#rc-full-name').count(), 1, 'name field');
-      eq(await page.locator('#rc-start-zip').isVisible(), true, 'zip field visible on Step 1');
-      eq(await page.locator('#rc-full-name').isVisible(), false, 'name field hidden until Step 3');
+      eq(await page.locator('#rc-full-name').isVisible(), false, 'name field hidden until pricing');
     });
 
     await check(target.name + ': PAGE_VARIANT is ' + target.variant, async function () {
@@ -1630,7 +1617,7 @@ async function browserChecks() {
           root: getComputedStyle(document.documentElement).fontSize,
           body: getComputedStyle(document.getElementById('reece-calculator')).fontSize,
           step: getComputedStyle(document.querySelector('#reece-calculator .rc-stepper .rc-step')).fontSize,
-          h2: getComputedStyle(document.querySelector('#rc-section-1 .rc-card h2')).fontSize
+          h2: getComputedStyle(document.querySelector('#rc-section-2 .rc-card h2')).fontSize
         };
       });
       if (/WordPress/.test(target.name)) {
@@ -1656,7 +1643,7 @@ async function browserChecks() {
     await check(target.name + ': the embed treatment is applied only off the standalone page', async function () {
       const m = await page.evaluate(function () {
         var mount = document.getElementById('reece-calculator');
-        var card = document.querySelector('#rc-section-1 .rc-card');
+        var card = document.querySelector('#rc-section-2 .rc-card');
         return {
           embed: mount.classList.contains('rc-embed'),
           bg: getComputedStyle(mount).backgroundColor,
@@ -1682,7 +1669,7 @@ async function browserChecks() {
     await check(target.name + ': the calculator is as wide as its column allows, up to the cap', async function () {
       const m = await page.evaluate(function () {
         var container = document.querySelector('#reece-calculator .rc-container');
-        var card = document.querySelector('#rc-section-1 .rc-card');
+        var card = document.querySelector('#rc-section-2 .rc-card');
         var column = document.getElementById('reece-calculator').parentElement;
         return {
           column: Math.round(column.getBoundingClientRect().width),
@@ -1776,7 +1763,7 @@ async function browserChecks() {
     // to a person until I.STITCH runs.
     // -----------------------------------------------------------------------
     // The consent block and its links live on Step 3 since 2026-10-13, so open
-    // it the way a lead would reach it, then come back to Step 1 for the walk.
+    // it the way a lead would reach it, then come back to the window step.
     await page.evaluate(function () { window.ReeceCalculator.goToStep(3); });
     await page.waitForSelector('#rc-section-3.rc-visible', { timeout: 10000 });
 
@@ -1832,19 +1819,17 @@ async function browserChecks() {
       });
     }
 
-    await page.evaluate(function () { window.ReeceCalculator.goToStep(1); });
-    await page.waitForSelector('#rc-section-1.rc-visible', { timeout: 10000 });
-
-    // Walk the whole funnel. Step 1 is the zip alone.
-    await page.fill('#rc-start-zip', LEAD.zip);
-    await page.click('#rc-section-1 button.rc-btn-primary');
+    await page.evaluate(function () { window.ReeceCalculator.goToStep(2); });
     await page.waitForSelector('#rc-section-2.rc-visible', { timeout: 10000 });
 
-    await check(target.name + ': step 2 advances', async function () {
-      eq(await page.locator('#rc-section-2').isVisible(), true, 'step 2 visible');
+    await check(target.name + ': the stepper shows three steps, windows first', async function () {
+      const labels = await page.locator('.rc-stepper .rc-step').allTextContents();
+      eq(labels.length, 3, 'stepper steps');
+      assert(/Choose Windows/.test(labels[0]), 'first step label: ' + labels[0]);
     });
 
-    await check(target.name + ': no contact is created before Step 3', async function () {
+    // Walk the whole funnel from the window step.
+    await check(target.name + ': no contact is created before the pricing step', async function () {
       const early = events.filter(function (e) { return e.path.indexOf('/api/contact') === 0; });
       eq(early.length, 0, '/api/contact calls before Step 3');
       const leads = await page.evaluate(function () {
@@ -2043,7 +2028,7 @@ async function browserChecks() {
     const ctx = await browser.newContext({ viewport: { width: width, height: 780 } });
     const page = await ctx.newPage();
     await page.goto(HOST + '/', { waitUntil: 'networkidle' });
-    await page.waitForSelector('#rc-section-1 .rc-card');
+    await page.waitForSelector('#rc-section-2 .rc-card');
 
     await check('WordPress stand-in at ' + width + 'px: the page does not scroll sideways', async function () {
       const m = await page.evaluate(function () {
@@ -2067,17 +2052,17 @@ async function browserChecks() {
       eq(past.join(', '), '', 'elements past the viewport at ' + width + 'px');
     });
 
-    await check('WordPress stand-in at ' + width + 'px: Step 1 asks for the zip and nothing else', async function () {
+    await check('WordPress stand-in at ' + width + 'px: the first screen asks for no contact details', async function () {
       const m = await page.evaluate(function () {
-        const s1 = document.getElementById('rc-section-1');
+        const first = document.getElementById('rc-section-2');
         return {
-          zip: !!s1.querySelector('#rc-start-zip'),
+          visible: first.classList.contains('rc-visible'),
           contact: ['rc-full-name', 'rc-phone', 'rc-email', 'rc-street-address', 'rc-consent-checkbox']
-            .filter(function (id) { return !!s1.querySelector('#' + id); })
+            .filter(function (id) { return !!first.querySelector('#' + id); })
         };
       });
-      eq(m.zip, true, 'the zip field is on Step 1');
-      eq(m.contact.join(', '), '', 'contact fields on Step 1');
+      eq(m.visible, true, 'the window step is the first screen');
+      eq(m.contact.join(', '), '', 'contact fields on the first screen');
     });
 
     // The contact form, consent and policy links are on Step 3.

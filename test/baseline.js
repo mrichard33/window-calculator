@@ -125,7 +125,7 @@ async function capture(browser, label, url, widths) {
     });
 
     await page.goto(url, { waitUntil: 'domcontentloaded' });
-    await page.waitForSelector('#rc-section-1.rc-visible', { timeout: 15000 });
+    await page.waitForSelector('#rc-section-2.rc-visible', { timeout: 15000 });
 
     // The footer's trust badges and logo are loading="lazy", and a full-page
     // screenshot scrolls the page — which starts those loads DURING the
