@@ -724,13 +724,7 @@ async function routeOffline(page, sink) {
 // Step 1 through the estimate. Mode-agnostic: Playwright pierces the shadow
 // root, so one walk covers both.
 async function walkFunnel(page) {
-  await page.fill('#rc-full-name', LEAD.name);
-  await page.fill('#rc-street-address', LEAD.street);
-  await page.fill('#rc-city', LEAD.city);
-  await page.fill('#rc-state', 'FL');
-  await page.fill('#rc-postal-code', LEAD.zip);
-  await page.fill('#rc-phone', LEAD.phone);
-  await page.check('#rc-consent-checkbox');
+  await page.fill('#rc-start-zip', LEAD.zip);
   await page.click('#rc-section-1 button.rc-btn-primary');
   await page.waitForSelector('#rc-section-2.rc-visible', { timeout: 10000 });
   await page.click('#rc-window-style .rc-tile[data-value="single_hung"]');
@@ -739,12 +733,25 @@ async function walkFunnel(page) {
   await page.waitForSelector('#rc-window-list .rc-cart-item', { timeout: 10000 });
   await page.click('#rc-btn-to-step3');
   await page.waitForSelector('#rc-section-3.rc-visible', { timeout: 10000 });
-  await page.fill('#rc-email', LEAD.email);
+  await fillContact(page);
   await page.click('#rc-section-3 button.rc-btn-primary');
   await page.waitForSelector('#rc-verify-email-modal.rc-active', { timeout: 10000 });
   await page.fill('#rc-verify-code-input', '123456');
   await page.click('#rc-verify-submit-btn');
   await page.waitForSelector('#rc-section-4.rc-visible', { timeout: 10000 });
+}
+
+// Step 3 carries the whole contact form since 2026-10-13. Fills over anything
+// a prefill or the Places stub left behind.
+async function fillContact(page) {
+  await page.fill('#rc-full-name', LEAD.name);
+  await page.fill('#rc-street-address', LEAD.street);
+  await page.fill('#rc-city', LEAD.city);
+  await page.fill('#rc-state', 'FL');
+  await page.fill('#rc-postal-code', LEAD.zip);
+  await page.fill('#rc-phone', LEAD.phone);
+  await page.fill('#rc-email', LEAD.email);
+  await page.check('#rc-consent-checkbox');
 }
 
 async function fullModeChecks(browser) {
@@ -934,7 +941,7 @@ async function fullModeChecks(browser) {
           return {
             hostCardHidden: getComputedStyle(document.getElementById('host-card')).display,
             card: box('#rc-section-1 .rc-card'),
-            field: box('#rc-field-city'),
+            field: box('#rc-field-start-zip'),
             tile: box('#rc-window-style .rc-tile'),
             section: box('#rc-section-1'),
             container: box('.rc-container')
@@ -1047,10 +1054,25 @@ async function fullModeChecks(browser) {
       eq(m.pacZ, '2147483647', '.pac-container z-index');
     });
 
-    // Reset the address the stub overwrote, then walk the funnel.
-    await page.fill('#rc-street-address', LEAD.street);
-    await page.fill('#rc-city', LEAD.city);
-    await page.fill('#rc-postal-code', LEAD.zip);
+    await check('full mode: Step 1 refuses a short zip and stays put', async function () {
+      await page.fill('#rc-start-zip', '336');
+      await page.click('#rc-section-1 button.rc-btn-primary');
+      eq(await page.locator('#rc-section-1').isVisible(), true, 'still on Step 1');
+      eq(await page.locator('#rc-field-start-zip.rc-field-error').count(), 1, 'zip error shown');
+    });
+
+    await check('full mode: the Step 1 zip carries into the Step 3 address row', async function () {
+      // Hidden on Step 1, so cleared directly rather than typed into.
+      await page.locator('#rc-postal-code').evaluate(function (el) { el.value = ''; });
+      await page.fill('#rc-start-zip', '33612');
+      await page.click('#rc-section-1 button.rc-btn-primary');
+      await page.waitForSelector('#rc-section-2.rc-visible', { timeout: 10000 });
+      eq(await page.inputValue('#rc-postal-code'), '33612', 'Step 3 postal code');
+      await page.evaluate(function () { window.ReeceCalculator.goToStep(1); });
+      await page.waitForSelector('#rc-section-1.rc-visible', { timeout: 10000 });
+    });
+
+    // walkFunnel's Step 3 fill resets the address the stub overwrote.
     await walkFunnel(page);
 
     await check('full mode: the estimate renders', async function () {
@@ -1590,6 +1612,8 @@ async function browserChecks() {
     await check(target.name + ': step 1 renders', async function () {
       eq(await page.locator('#rc-section-1').isVisible(), true, 'step 1 visible');
       eq(await page.locator('#rc-full-name').count(), 1, 'name field');
+      eq(await page.locator('#rc-start-zip').isVisible(), true, 'zip field visible on Step 1');
+      eq(await page.locator('#rc-full-name').isVisible(), false, 'name field hidden until Step 3');
     });
 
     await check(target.name + ': PAGE_VARIANT is ' + target.variant, async function () {
@@ -1751,6 +1775,11 @@ async function browserChecks() {
     // lead reads them, and why the visitor id is the only thing tying the click
     // to a person until I.STITCH runs.
     // -----------------------------------------------------------------------
+    // The consent block and its links live on Step 3 since 2026-10-13, so open
+    // it the way a lead would reach it, then come back to Step 1 for the walk.
+    await page.evaluate(function () { window.ReeceCalculator.goToStep(3); });
+    await page.waitForSelector('#rc-section-3.rc-visible', { timeout: 10000 });
+
     await check(target.name + ': both policy links open the GHL redirect in a new tab', async function () {
       for (const pair of [['#rc-link-privacy', 'https://landing.reecewindows.com/privacy'],
                           ['#rc-link-terms',   'https://landing.reecewindows.com/terms']]) {
@@ -1803,19 +1832,25 @@ async function browserChecks() {
       });
     }
 
-    // Walk the whole funnel.
-    await page.fill('#rc-full-name', LEAD.name);
-    await page.fill('#rc-street-address', LEAD.street);
-    await page.fill('#rc-city', LEAD.city);
-    await page.fill('#rc-state', 'FL');
-    await page.fill('#rc-postal-code', LEAD.zip);
-    await page.fill('#rc-phone', LEAD.phone);
-    await page.check('#rc-consent-checkbox');
+    await page.evaluate(function () { window.ReeceCalculator.goToStep(1); });
+    await page.waitForSelector('#rc-section-1.rc-visible', { timeout: 10000 });
+
+    // Walk the whole funnel. Step 1 is the zip alone.
+    await page.fill('#rc-start-zip', LEAD.zip);
     await page.click('#rc-section-1 button.rc-btn-primary');
     await page.waitForSelector('#rc-section-2.rc-visible', { timeout: 10000 });
 
     await check(target.name + ': step 2 advances', async function () {
       eq(await page.locator('#rc-section-2').isVisible(), true, 'step 2 visible');
+    });
+
+    await check(target.name + ': no contact is created before Step 3', async function () {
+      const early = events.filter(function (e) { return e.path.indexOf('/api/contact') === 0; });
+      eq(early.length, 0, '/api/contact calls before Step 3');
+      const leads = await page.evaluate(function () {
+        return (window.fbqCalls || []).filter(function (c) { return c[2] === 'Lead'; }).length;
+      });
+      eq(leads, 0, 'Meta Lead events before Step 3');
     });
 
     await page.click('#rc-window-style .rc-tile[data-value="single_hung"]');
@@ -1824,7 +1859,7 @@ async function browserChecks() {
     await page.waitForSelector('#rc-window-list .rc-cart-item', { timeout: 10000 });
     await page.click('#rc-btn-to-step3');
     await page.waitForSelector('#rc-section-3.rc-visible', { timeout: 10000 });
-    await page.fill('#rc-email', LEAD.email);
+    await fillContact(page);
     await page.click('#rc-section-3 button.rc-btn-primary');
     await page.waitForSelector('#rc-verify-email-modal.rc-active', { timeout: 10000 });
     await page.fill('#rc-verify-code-input', '123456');
@@ -2030,6 +2065,30 @@ async function browserChecks() {
         return out;
       });
       eq(past.join(', '), '', 'elements past the viewport at ' + width + 'px');
+    });
+
+    await check('WordPress stand-in at ' + width + 'px: Step 1 asks for the zip and nothing else', async function () {
+      const m = await page.evaluate(function () {
+        const s1 = document.getElementById('rc-section-1');
+        return {
+          zip: !!s1.querySelector('#rc-start-zip'),
+          contact: ['rc-full-name', 'rc-phone', 'rc-email', 'rc-street-address', 'rc-consent-checkbox']
+            .filter(function (id) { return !!s1.querySelector('#' + id); })
+        };
+      });
+      eq(m.zip, true, 'the zip field is on Step 1');
+      eq(m.contact.join(', '), '', 'contact fields on Step 1');
+    });
+
+    // The contact form, consent and policy links are on Step 3.
+    await page.evaluate(function () { window.ReeceCalculator.goToStep(3); });
+    await page.waitForSelector('#rc-section-3.rc-visible', { timeout: 10000 });
+
+    await check('WordPress stand-in at ' + width + 'px: Step 3 does not scroll sideways', async function () {
+      const m = await page.evaluate(function () {
+        return { scrollWidth: document.body.scrollWidth, viewport: window.innerWidth };
+      });
+      eq(m.scrollWidth, m.viewport, 'body scrollWidth on Step 3 at ' + width + 'px');
     });
 
     await check('WordPress stand-in at ' + width + 'px: fields fill the column and do not zoom iOS', async function () {
