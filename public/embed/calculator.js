@@ -115,7 +115,6 @@
   var shadowRootEl = null;
   var state = {
     contactId: '',
-    verifyId: '',
     estimateToken: '',
     estimateSent: false,
     leadFired: false,
@@ -915,6 +914,7 @@
     "  #reece-calculator .rc-btn,",
     "  #reece-calculator #rc-section-2,",
     "  #reece-calculator #rc-section-3,",
+    "  #reece-calculator #rc-section-5,",
     "  #reece-calculator .rc-config-video,",
     "  #reece-calculator .rc-how-it-works,",
     "  #reece-calculator .rc-verify-cta,",
@@ -1153,8 +1153,10 @@
     "  #reece-calculator .rc-style-section {",
     "    display: contents;",
     "  }",
+    "  /* After the style and frame tiles, not above them: the window step is the",
+    "     first screen, and half a screen of video ahead of the choices cost clicks. */",
     "  #reece-calculator .rc-config-video {",
-    "    order: -1;",
+    "    order: 0;",
     "    width: 100%;",
     "    max-width: 100%;",
     "    margin: 0 auto calc(1 * var(--rc-rem));",
@@ -1269,75 +1271,6 @@
     "  padding: calc(0.5 * var(--rc-rem));",
     "  display: block;",
     "  width: 100%;",
-    "}",
-    "/* ===== EMAIL VERIFICATION MODAL ===== */",
-    "#reece-calculator .rc-verify-code-input {",
-    "  width: 100%;",
-    "  padding: calc(0.85 * var(--rc-rem)) calc(0.7 * var(--rc-rem));",
-    "  border: 2px solid var(--mist);",
-    "  border-radius: 0;",
-    "  font-size: calc(1.5 * var(--rc-rem));",
-    "  font-family: 'Courier New', monospace;",
-    "  font-weight: 700;",
-    "  text-align: center;",
-    "  letter-spacing: calc(0.5 * var(--rc-rem));",
-    "  color: var(--deep-navy);",
-    "  background: var(--white);",
-    "  margin-bottom: calc(0.5 * var(--rc-rem));",
-    "}",
-    "#reece-calculator .rc-verify-code-input:focus {",
-    "  outline: none;",
-    "  border-color: var(--steel-blue);",
-    "  box-shadow: 0 0 0 3px rgba(100,136,160,0.15);",
-    "}",
-    "#reece-calculator .rc-verify-code-input.rc-field-error {",
-    "  border-color: var(--cta-red);",
-    "}",
-    "#reece-calculator .rc-verify-spam-note {",
-    "  font-size: calc(0.78 * var(--rc-rem));",
-    "  color: var(--text-gray);",
-    "  margin-bottom: calc(1 * var(--rc-rem));",
-    "  font-style: italic;",
-    "}",
-    "#reece-calculator .rc-verify-error-msg {",
-    "  color: var(--cta-red);",
-    "  font-size: calc(0.82 * var(--rc-rem));",
-    "  font-weight: 600;",
-    "  margin-top: calc(0.25 * var(--rc-rem));",
-    "  margin-bottom: calc(0.75 * var(--rc-rem));",
-    "  display: none;",
-    "}",
-    "#reece-calculator .rc-verify-error-msg.rc-visible {",
-    "  display: block;",
-    "}",
-    "#reece-calculator .rc-verify-success-msg {",
-    "  color: #2e7d32;",
-    "  font-size: calc(0.82 * var(--rc-rem));",
-    "  font-weight: 600;",
-    "  margin-top: calc(0.25 * var(--rc-rem));",
-    "  margin-bottom: calc(0.75 * var(--rc-rem));",
-    "  display: none;",
-    "}",
-    "#reece-calculator .rc-verify-success-msg.rc-visible {",
-    "  display: block;",
-    "}",
-    "#reece-calculator .rc-modal-dialog .rc-btn-resend {",
-    "  background: var(--white);",
-    "  color: var(--deep-navy);",
-    "  border: 1.5px solid var(--mist);",
-    "}",
-    "#reece-calculator .rc-modal-dialog .rc-btn-resend:hover:not(:disabled) {",
-    "  background: var(--light-bg);",
-    "  border-color: var(--steel-blue);",
-    "}",
-    "#reece-calculator .rc-modal-dialog .rc-btn-resend:disabled {",
-    "  opacity: 0.5;",
-    "  cursor: not-allowed;",
-    "}",
-    "#reece-calculator .rc-verify-email-display {",
-    "  font-weight: 700;",
-    "  color: var(--deep-navy);",
-    "  word-break: break-all;",
     "}",
     "/* =============================================================",
     "   MAIN-DOMAIN EMBED",
@@ -1703,10 +1636,10 @@
     "          <p class=\"rc-teaser-label\">Your estimate is ready</p>",
     "          <p class=\"rc-teaser-count\" id=\"rc-teaser-count\">Your windows are priced.</p>",
     "          <div class=\"rc-teaser-price\" aria-hidden=\"true\">$&#8203;00,000</div>",
-    "          <p class=\"rc-teaser-sub\">Tell us where to send it to unlock your full estimate.</p>",
+    "          <p class=\"rc-teaser-sub\">Tell us a little about you to unlock your full estimate.</p>",
     "        </div>",
-    "        <h2>Where Should We Send Your Estimate?</h2>",
-    "        <p class=\"rc-contact-note\">We'll email a PDF copy of your estimate. Your details are only used for your estimate.</p>",
+    "        <h2>Who Is This Estimate For?</h2>",
+    "        <p class=\"rc-contact-note\">Your details are only used for your estimate. No spam. No surprise visits.</p>",
     "        <div class=\"rc-form-row rc-full\">",
     "          <div class=\"rc-field\" id=\"rc-field-full-name\">",
     "            <label>Name <span style=\"color:var(--cta-red);\">*</span></label>",
@@ -1747,14 +1680,6 @@
     "          </div>",
     "        </div>",
     "        <div class=\"rc-form-row rc-full\">",
-    "          <div class=\"rc-field\" id=\"rc-field-email\">",
-    "            <label>Email Address <span style=\"color:var(--cta-red);\">*</span></label>",
-    "            <input type=\"email\" id=\"rc-email\" placeholder=\"you@example.com\" inputmode=\"email\" required>",
-    "            <div class=\"rc-field-error-msg\">Please enter a valid email address.</div>",
-    "            <p class=\"rc-field-hint\">We'll email a PDF copy of your estimate.</p>",
-    "          </div>",
-    "        </div>",
-    "        <div class=\"rc-form-row rc-full\">",
     "          <div class=\"rc-field\" id=\"rc-field-consent\">",
     "            <label class=\"rc-consent-label\">",
     "              <input type=\"checkbox\" id=\"rc-consent-checkbox\">",
@@ -1772,10 +1697,32 @@
     "            <p class=\"rc-consent-footer\">By submitting this form you agree to our <a href=\"https://landing.reecewindows.com/privacy\" id=\"rc-link-privacy\" target=\"_blank\" rel=\"noopener\">Privacy Policy</a> &amp; <a href=\"https://landing.reecewindows.com/terms\" id=\"rc-link-terms\" target=\"_blank\" rel=\"noopener\">Terms of Service</a>.</p>",
     "          </div>",
     "        </div>",
-    "        <p class=\"rc-reassurance-note\">We respect your privacy. No spam. No surprise visits.</p>",
     "        <div class=\"rc-btn-row\">",
     "          <button class=\"rc-btn rc-btn-secondary\" onclick=\"ReeceCalculator.goToStep(2)\">&larr; Edit Windows</button>",
-    "          <button class=\"rc-btn rc-btn-primary\" onclick=\"ReeceCalculator.validateAndGoToStep4()\">Unlock My Estimate &rarr;</button>",
+    "          <button class=\"rc-btn rc-btn-primary\" onclick=\"ReeceCalculator.submitContactStep()\">Continue &rarr;</button>",
+    "        </div>",
+    "      </div>",
+    "    </div>",
+    "    <!-- ========== EMAIL STEP (section 5): where to send the estimate ========== -->",
+    "    <div class=\"rc-section\" id=\"rc-section-5\">",
+    "      <div class=\"rc-card\">",
+    "        <div class=\"rc-teaser\">",
+    "          <p class=\"rc-teaser-label\">Last step</p>",
+    "          <p class=\"rc-teaser-count\" id=\"rc-email-teaser-count\">Your estimate is ready.</p>",
+    "          <div class=\"rc-teaser-price\" aria-hidden=\"true\">$&#8203;00,000</div>",
+    "        </div>",
+    "        <h2>Where Should We Send Your Estimate?</h2>",
+    "        <p class=\"rc-contact-note\">We'll email you a PDF copy to keep, and your estimate opens right here.</p>",
+    "        <div class=\"rc-form-row rc-full\">",
+    "          <div class=\"rc-field\" id=\"rc-field-email\">",
+    "            <label>Email Address <span style=\"color:var(--cta-red);\">*</span></label>",
+    "            <input type=\"email\" id=\"rc-email\" placeholder=\"you@example.com\" inputmode=\"email\" autocomplete=\"email\" required>",
+    "            <div class=\"rc-field-error-msg\">Please enter a valid email address.</div>",
+    "          </div>",
+    "        </div>",
+    "        <div class=\"rc-btn-row\">",
+    "          <button class=\"rc-btn rc-btn-secondary\" onclick=\"ReeceCalculator.goToStep(3)\">&larr; Back</button>",
+    "          <button class=\"rc-btn rc-btn-primary\" id=\"rc-btn-show-estimate\" onclick=\"ReeceCalculator.submitEmailStep()\">Show My Estimate &rarr;</button>",
     "        </div>",
     "      </div>",
     "    </div>",
@@ -1809,7 +1756,7 @@
     "        This estimate reflects current material pricing and standard installation conditions. Final pricing is confirmed following professional on-site verification.",
     "      </div>",
     "      <div class=\"rc-btn-row\">",
-    "        <button class=\"rc-btn rc-btn-secondary\" onclick=\"ReeceCalculator.goToStep(3)\">&larr; Back</button>",
+    "        <button class=\"rc-btn rc-btn-secondary\" onclick=\"ReeceCalculator.goToStep(5)\">&larr; Back</button>",
     "        <button class=\"rc-btn rc-btn-print\" onclick=\"window.print()\">Print Estimate</button>",
     "      </div>",
     "    </div>",
@@ -1825,26 +1772,6 @@
     "      <p>Your estimate will remain available, but final pricing and scheduling priority are confirmed during verification.</p>",
     "      <button class=\"rc-btn rc-btn-primary\" onclick=\"ReeceCalculator.openMeasurementVerification()\">Secure My Exact Price &rarr;</button>",
     "      <button class=\"rc-btn-link\" onclick=\"ReeceCalculator.sendEvent('left_unverified'); window.location.href='https://reecewindows.com/';\">Leave Unverified</button>",
-    "    </div>",
-    "  </div>",
-    "  <!-- Email Verification Modal -->",
-    "  <div class=\"rc-modal-overlay\" id=\"rc-verify-email-modal\">",
-    "    <div class=\"rc-modal-dialog\">",
-    "      <h3>Verify Your Email</h3>",
-    "      <p>We just sent a 6-digit verification code to<br><span class=\"rc-verify-email-display\" id=\"rc-verify-email-display\"></span></p>",
-    "      <p class=\"rc-verify-spam-note\">Don't see it? Check your spam or junk folder.</p>",
-    "      <input type=\"text\"",
-    "             class=\"rc-verify-code-input\"",
-    "             id=\"rc-verify-code-input\"",
-    "             placeholder=\"######\"",
-    "             maxlength=\"6\"",
-    "             inputmode=\"numeric\"",
-    "             autocomplete=\"one-time-code\">",
-    "      <div class=\"rc-verify-error-msg\" id=\"rc-verify-error-msg\">Incorrect code. Please try again.</div>",
-    "      <div class=\"rc-verify-success-msg\" id=\"rc-verify-success-msg\">Verified! Loading your estimate...</div>",
-    "      <button class=\"rc-btn rc-btn-primary\" id=\"rc-verify-submit-btn\" onclick=\"ReeceCalculator.verifyEnteredCode()\">Verify &amp; See My Estimate</button>",
-    "      <button class=\"rc-btn rc-btn-resend\" id=\"rc-verify-resend-btn\" onclick=\"ReeceCalculator.resendVerificationCode()\">Resend Code</button>",
-    "      <button class=\"rc-btn-link\" onclick=\"ReeceCalculator.changeEmail()\">Use a different email address</button>",
     "    </div>",
     "  </div>",
     "<div id=\"rc-print-root\"></div>"
@@ -2624,7 +2551,8 @@
   }
   // ============================================================
   //  CONTACT SUBMIT (server-side GHL upsert)
-  //  Sent once from Step 3 with every detail, email included.
+  //  Sent from the contact screen, then again from the email screen with
+  //  the email added; that second save returns the estimate pass.
   //  The server enforces consent and stamps the consent audit fields.
   // ============================================================
   function submitContact(includeEmail) {
@@ -2652,6 +2580,7 @@
     var visitorId = trackerVisitorId();
     if (visitorId) payload.visitor_id = visitorId;
     return apiPost('/api/contact', payload).then(function(result) {
+      if (result && result.estimateToken) state.estimateToken = result.estimateToken;
       if (result && result.contactId) {
         state.contactId = result.contactId;
         console.log('Contact upserted via server:', result.contactId);
@@ -2935,7 +2864,10 @@
   // ============================================================
   //  STEP 3 (CONTACT) VALIDATION
   // ============================================================
-  function validateAndGoToStep4() {
+  // Contact screen (section 3). Name, address, phone and consent only; the email
+  // has its own screen next (2026-10-15). The GHL contact is saved HERE, so a
+  // lead who stops at the email screen is still a callable lead with consent.
+  function submitContactStep() {
     var fields = [
       { id: 'rc-full-name', fieldId: 'rc-field-full-name' },
       { id: 'rc-street-address', fieldId: 'rc-field-street-address' },
@@ -2962,14 +2894,6 @@
     } else {
       $id('rc-field-phone').classList.remove('rc-field-error');
     }
-    // Email is required and must be valid format
-    var email = $id('rc-email').value.trim();
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      $id('rc-field-email').classList.add('rc-field-error');
-      valid = false;
-    } else {
-      $id('rc-field-email').classList.remove('rc-field-error');
-    }
     // Consent is required before the phone number leaves this page
     var consentBox = $id('rc-consent-checkbox');
     if (!consentBox || !consentBox.checked) {
@@ -2995,161 +2919,52 @@
       }
     }
     sendEvent('step3_complete');
-    // One upsert carrying everything, then server-side email verification.
-    // Step 4 is unreachable until the server confirms the 6-digit code.
-    submitContact(true).catch(function(err) {
+    // Move on straight away; the upsert finishes in the background. The email
+    // screen re-sends everything, so a slow or failed save here is retried there.
+    submitContact(false).catch(function (err) {
       console.error('Contact upsert failed:', err);
       sendEvent('contact_failed', { meta: { reason: String((err && err.status) || 'network') } });
-    }).finally(function() {
-      startEmailVerification();
     });
+    goToStep(5);
   }
-  // ============================================================
-  //  EMAIL VERIFICATION FLOW
-  // ============================================================
 
-  function startEmailVerification() {
+  // Email screen (section 5). No code: the email is where the PDF goes, and the
+  // estimate opens on screen as soon as it is saved (2026-10-15). The 6-digit
+  // email code lost 2 of 3 leads in its first two days after the windows-first
+  // change, mostly people in the Facebook app who had to leave it to read mail.
+  // The server issues the estimate pass from this save (consent + phone +
+  // email), not from a code.
+  var _emailSubmitting = false;
+  function submitEmailStep() {
+    if (_emailSubmitting) return;
     var email = $id('rc-email').value.trim();
-    var data = gatherContactData();
-    showVerificationModal(email);
-    sendEvent('verify_sent');
-    apiPost('/api/verify/start', {
-      email: email,
-      contactId: state.contactId || '',
-      contactName: (data.firstName + ' ' + data.lastName).trim()
-    }).then(function(result) {
-      if (result && result.verifyId) state.verifyId = result.verifyId;
-    }).catch(function(err) {
-      console.error('[Verify] start failed:', err);
-      var errorMsg = $id('rc-verify-error-msg');
-      errorMsg.textContent = (err.status === 429)
-        ? 'Too many codes requested. Please wait a bit and try Resend Code.'
-        : 'We could not send the code. Please click Resend Code to try again.';
-      errorMsg.classList.add('rc-visible');
-    });
-  }
-
-  function showVerificationModal(email) {
-    var modal = $id('rc-verify-email-modal');
-    var display = $id('rc-verify-email-display');
-    var input = $id('rc-verify-code-input');
-    var errorMsg = $id('rc-verify-error-msg');
-    var successMsg = $id('rc-verify-success-msg');
-    display.textContent = email;
-    input.value = '';
-    input.classList.remove('rc-field-error');
-    errorMsg.classList.remove('rc-visible');
-    successMsg.classList.remove('rc-visible');
-    modal.classList.add('rc-active');
-    setTimeout(function() { input.focus(); }, 100);
-  }
-
-  function hideVerificationModal() {
-    $id('rc-verify-email-modal').classList.remove('rc-active');
-  }
-
-  function verifyEnteredCode() {
-    var input = $id('rc-verify-code-input');
-    var entered = (input.value || '').trim();
-    var errorMsg = $id('rc-verify-error-msg');
-    var successMsg = $id('rc-verify-success-msg');
-    if (entered.length !== 6 || !/^\d{6}$/.test(entered)) {
-      input.classList.add('rc-field-error');
-      errorMsg.textContent = 'Please enter the 6-digit code from your email.';
-      errorMsg.classList.add('rc-visible');
-      successMsg.classList.remove('rc-visible');
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
+      $id('rc-field-email').classList.add('rc-field-error');
+      $id('rc-email').focus();
       return;
     }
-    var btn = $id('rc-verify-submit-btn');
+    $id('rc-field-email').classList.remove('rc-field-error');
+    _emailSubmitting = true;
+    var btn = $id('rc-btn-show-estimate');
     if (btn) btn.disabled = true;
-    apiPost('/api/verify/check', {
-      verifyId: state.verifyId || '',
-      code: entered
-    }).then(function(result) {
-      state.estimateToken = (result && result.estimateToken) || '';
-      input.classList.remove('rc-field-error');
-      errorMsg.classList.remove('rc-visible');
-      successMsg.textContent = 'Verified! Loading your estimate...';
-      successMsg.classList.add('rc-visible');
-      sendEvent('verify_success');
-      // Re-identify: the phone can be corrected during verification, and the
-      // email is confirmed real only now. Skipped internally if nothing changed.
-      trackerIdentify();
-      if (typeof fbq === 'function') { fbq('trackSingleCustom', META_PIXEL_ID, 'CalcVerified'); }
-      setTimeout(function() {
-        hideVerificationModal();
-        goToStep(4);
-      }, 600);
-    }).catch(function(err) {
-      sendEvent('verify_failed', { meta: { reason: (err.body && err.body.error) || String(err.status || 'network') } });
-      input.classList.add('rc-field-error');
-      if (err.status === 503) {
-        // Server can't issue the token — the code was fine, so don't say otherwise.
-        errorMsg.textContent = 'Verification is temporarily unavailable. Please try again in a moment.';
-      } else if (err.status === 410) {
-        errorMsg.textContent = 'That code has expired. Click Resend Code for a fresh one.';
-      } else if (err.status === 429) {
-        errorMsg.textContent = 'Too many attempts. Click Resend Code to get a new code.';
-      } else if (err.body && err.body.attemptsRemaining !== undefined) {
-        errorMsg.textContent = 'Incorrect code. ' + err.body.attemptsRemaining + ' attempt' + (err.body.attemptsRemaining === 1 ? '' : 's') + ' remaining, or click Resend Code.';
-      } else {
-        errorMsg.textContent = 'Incorrect code. Please try again or click Resend Code.';
-      }
-      errorMsg.classList.add('rc-visible');
-      successMsg.classList.remove('rc-visible');
-      input.select();
-    }).finally(function() {
+    sendEvent('email_submitted');
+    submitContact(true).then(function (result) {
+      if (result && result.estimateToken) state.estimateToken = result.estimateToken;
+      if (!state.estimateToken) sendEvent('estimate_pass_missing');
+    }).catch(function (err) {
+      console.error('Contact upsert with email failed:', err);
+      sendEvent('contact_failed', { meta: { reason: String((err && err.status) || 'network'), step: 'email' } });
+    }).finally(function () {
+      _emailSubmitting = false;
       if (btn) btn.disabled = false;
+      // The same Meta custom conversion the email code used to fire, kept so
+      // ad reporting keeps counting "reached the estimate".
+      if (typeof fbq === 'function') { fbq('trackSingleCustom', META_PIXEL_ID, 'CalcVerified'); }
+      // The estimate opens either way: the lead has done everything we asked.
+      // Without a pass /api/estimate refuses, so the PDF is retried on the next
+      // visit to the estimate rather than lost silently.
+      goToStep(4);
     });
-  }
-
-  function resendVerificationCode() {
-    var btn = $id('rc-verify-resend-btn');
-    var email = $id('rc-email').value.trim();
-    var data = gatherContactData();
-    // Ask the server for a fresh code (new verifyId invalidates the old one)
-    apiPost('/api/verify/start', {
-      email: email,
-      contactId: state.contactId || '',
-      contactName: (data.firstName + ' ' + data.lastName).trim()
-    }).then(function(result) {
-      if (result && result.verifyId) state.verifyId = result.verifyId;
-    }).catch(function(err) {
-      console.error('[Verify] resend failed:', err);
-    });
-    sendEvent('verify_sent', { meta: { resend: true } });
-    // 30-second cooldown
-    btn.disabled = true;
-    var seconds = 30;
-    var originalText = 'Resend Code';
-    btn.textContent = 'Resend Code (' + seconds + 's)';
-    // Show success indicator for the resend action
-    var errorMsg = $id('rc-verify-error-msg');
-    var successMsg = $id('rc-verify-success-msg');
-    errorMsg.classList.remove('rc-visible');
-    successMsg.textContent = 'New code sent. Check your email (and spam folder).';
-    successMsg.classList.add('rc-visible');
-    setTimeout(function() {
-      successMsg.classList.remove('rc-visible');
-      successMsg.textContent = 'Verified! Loading your estimate...';
-    }, 4000);
-    var interval = setInterval(function() {
-      seconds--;
-      if (seconds <= 0) {
-        clearInterval(interval);
-        btn.disabled = false;
-        btn.textContent = originalText;
-      } else {
-        btn.textContent = 'Resend Code (' + seconds + 's)';
-      }
-    }, 1000);
-  }
-
-  function changeEmail() {
-    hideVerificationModal();
-    var emailInput = $id('rc-email');
-    emailInput.focus();
-    emailInput.select();
   }
   // ============================================================
   //  PHONE AUTO-FORMATTER
@@ -3177,11 +2992,13 @@
     if (typeof fbq === 'function' && n >= 2) { fbq('trackSingleCustom', META_PIXEL_ID, 'CalcStep' + n); }
     $all('.rc-section').forEach(s => s.classList.remove('rc-visible'));
     $id('rc-section-' + n).classList.add('rc-visible');
+    // Section 5 (email) is the second half of "Get Pricing" on the stepper.
+    const stepPos = (n === 5) ? 3 : n;
     $all('.rc-stepper .rc-step').forEach(s => {
       const sn = parseInt(s.dataset.step);
       s.classList.remove('rc-active', 'rc-done');
-      if (sn < n) s.classList.add('rc-done');
-      if (sn === n) s.classList.add('rc-active');
+      if (sn < stepPos) s.classList.add('rc-done');
+      if (sn === stepPos) s.classList.add('rc-active');
     });
     // Show running total only on the estimate step (step 4). The bar belongs to
     // the host page, so it is optional — WordPress does not supply one.
@@ -3198,7 +3015,7 @@
         mountEl.classList.remove('rc-step-4-active');
       }
     }
-    if (n === 3) updateTeaser();
+    if (n === 3 || n === 5) updateTeaser();
     // Show "How This Works" only on the first screen (the window step)
     $id('rc-how-it-works').style.display = (n === 2) ? '' : 'none';
     // Build summary and auto-send PDF to GHL when arriving at estimate step
@@ -3219,7 +3036,8 @@
         var contactName = (data.firstName + ' ' + data.lastName).trim();
         sendEvent('estimate_completed', { meta: { estimate_total: estimateTotal, window_count: windowCount } });
         // One server call replaces the contact update, estimate webhook, and
-        // PDF chain. Requires the token issued by /api/verify/check.
+        // PDF chain. Requires the estimate pass /api/contact returns once the
+        // email is saved (the email screen).
         var estimatePayload = {
           estimateToken: state.estimateToken || '',
           contactId: contactId || '',
@@ -3281,13 +3099,15 @@
   // Step 3's teaser line. The price itself stays a blurred placeholder in the
   // markup — the real figure is never in the DOM until the email is verified.
   function updateTeaser() {
-    var el = $id('rc-teaser-count');
-    if (!el) return;
     var count = 0;
     windows.forEach(function (w) { count += (w.config && w.config.qty) || 0; });
-    el.textContent = count > 0
+    var line = count > 0
       ? 'We priced ' + count + ' window' + (count === 1 ? '' : 's') + ' for your home.'
       : 'Your windows are priced.';
+    ['rc-teaser-count', 'rc-email-teaser-count'].forEach(function (id) {
+      var el = $id(id);
+      if (el) el.textContent = line;
+    });
   }
   function getSelectedTile(groupId) {
     const sel = $one('#' + groupId + ' .rc-tile.rc-selected');
@@ -3959,26 +3779,14 @@
       }
   })();
 
-    // ============================================================
-    //  VERIFICATION CODE INPUT — Enter to submit, digits-only filter
-    // ============================================================
-    (function setupVerifyCodeInput() {
-      var codeInput = $id('rc-verify-code-input');
-      if (!codeInput) return;
-      codeInput.addEventListener('input', function(e) {
-        // Strip any non-digit characters as user types
-        var cleaned = (e.target.value || '').replace(/\D/g, '').slice(0, 6);
-        if (e.target.value !== cleaned) e.target.value = cleaned;
-        // Clear error styling once user starts typing again
-        if (cleaned.length > 0) {
-          e.target.classList.remove('rc-field-error');
-          $id('rc-verify-error-msg').classList.remove('rc-visible');
-        }
-      });
-      codeInput.addEventListener('keydown', function(e) {
+    // Enter on the email screen submits it, like the button.
+    (function setupEmailEnter() {
+      var emailInput = $id('rc-email');
+      if (!emailInput) return;
+      emailInput.addEventListener('keydown', function(e) {
         if (e.key === 'Enter') {
           e.preventDefault();
-          verifyEnteredCode();
+          submitEmailStep();
         }
       });
     })();
@@ -4266,13 +4074,11 @@
     adjustQty: adjustQty,
     handlePaneChange: handlePaneChange,
     continueToPricing: continueToPricing,
-    validateAndGoToStep4: validateAndGoToStep4,
+    submitContactStep: submitContactStep,
+    submitEmailStep: submitEmailStep,
     addWindow: addWindow,
     editWindow: editWindow,
     removeWindow: removeWindow,
-    verifyEnteredCode: verifyEnteredCode,
-    resendVerificationCode: resendVerificationCode,
-    changeEmail: changeEmail,
     showKeepEstimateModal: showKeepEstimateModal,
     hideKeepEstimateModal: hideKeepEstimateModal,
     openMeasurementVerification: openMeasurementVerification,

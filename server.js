@@ -230,6 +230,9 @@ function pageVariant(p) {
 // ---------------------------------------------------------------------------
 // POST /api/contact — consent-gated GHL upsert
 // ---------------------------------------------------------------------------
+// Same shape the email screen checks: something@domain.tld (tld 2+ letters).
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
 app.post('/api/contact', rateLimit(20, 10 * 60 * 1000), async function (req, res) {
   const p = req.body || {};
 
@@ -333,7 +336,27 @@ app.post('/api/contact', rateLimit(20, 10 * 60 * 1000), async function (req, res
 
     const result = await ghl('/contacts/upsert', { body: body });
     const contactId = (result && result.contact && result.contact.id) || (matched && matched.id) || null;
-    return res.json({ contactId: contactId });
+
+    // The estimate pass (2026-10-15). It used to come only from the 6-digit email
+    // code (/api/verify/check), which lost most leads in the Facebook app. It is
+    // now issued by the save that carries the email, and only after the same
+    // gates every save passes: consent, a valid phone, a name, and a contact GHL
+    // actually stored. /api/verify/* stays in place for rollback.
+    let estimateToken;
+    if (email && contactId && EMAIL_RE.test(email)) {
+      try {
+        estimateToken = signToken({
+          cid: contactId,
+          email: email,
+          exp: Date.now() + ESTIMATE_TOKEN_TTL_MS
+        });
+      } catch (err) {
+        console.error('[contact] cannot issue estimate token:', err.message);
+      }
+    }
+    const out = { contactId: contactId };
+    if (estimateToken) out.estimateToken = estimateToken;
+    return res.json(out);
   } catch (err) {
     console.error('[contact] upsert failed:', err.message);
     return res.status(502).json({ error: 'CONTACT_UPSERT_FAILED' });
