@@ -710,9 +710,8 @@ async function routeOffline(page, sink) {
       return route.fulfill({ status: 204, body: '', headers: { 'access-control-allow-origin': '*' } });
     }
     const json =
-      url.indexOf('/api/contact') !== -1 ? { contactId: 'test-contact' } :
-      url.indexOf('/api/verify/start') !== -1 ? { verifyId: 'test-verify' } :
-      url.indexOf('/api/verify/check') !== -1 ? { verified: true, estimateToken: 'test-token' } :
+      url.indexOf('/api/contact') !== -1
+        ? (body.email ? { contactId: 'test-contact', estimateToken: 'test-token' } : { contactId: 'test-contact' }) :
       { ok: true };
     return route.fulfill({
       status: 200, contentType: 'application/json', body: JSON.stringify(json),
@@ -733,9 +732,9 @@ async function walkFunnel(page) {
   await page.waitForSelector('#rc-section-3.rc-visible', { timeout: 10000 });
   await fillContact(page);
   await page.click('#rc-section-3 button.rc-btn-primary');
-  await page.waitForSelector('#rc-verify-email-modal.rc-active', { timeout: 10000 });
-  await page.fill('#rc-verify-code-input', '123456');
-  await page.click('#rc-verify-submit-btn');
+  await page.waitForSelector('#rc-section-5.rc-visible', { timeout: 10000 });
+  await page.fill('#rc-email', LEAD.email);
+  await page.click('#rc-btn-show-estimate');
   await page.waitForSelector('#rc-section-4.rc-visible', { timeout: 10000 });
 }
 
@@ -748,7 +747,6 @@ async function fillContact(page) {
   await page.fill('#rc-state', 'FL');
   await page.fill('#rc-postal-code', LEAD.zip);
   await page.fill('#rc-phone', LEAD.phone);
-  await page.fill('#rc-email', LEAD.email);
   await page.check('#rc-consent-checkbox');
 }
 
@@ -1451,13 +1449,13 @@ async function fullModeChecks(browser) {
     // flex column from stretching to the stepper's min-content width. Size
     // containment must NOT make the host a containing block for fixed-position
     // descendants — if it ever did, the verification modal would be trapped
-    // inside the mount instead of covering the screen, and a lead on a phone
-    // could not read the code they were sent.
-    await check('full mode at ' + width + 'px: the verification modal still covers the viewport',
+    // inside the mount instead of covering the screen. The email-code modal is
+    // gone (2026-10-15); the keep-estimate modal is the overlay that remains.
+    await check('full mode at ' + width + 'px: the keep-estimate modal still covers the viewport',
       async function () {
         const m = await page.evaluate(function () {
           var root = document.getElementById('reece-calculator').shadowRoot;
-          var modal = root.getElementById('rc-verify-email-modal');
+          var modal = root.getElementById('rc-keep-estimate-modal');
           modal.classList.add('rc-active');
           var r = modal.getBoundingClientRect();
           var cs = getComputedStyle(modal);
@@ -1561,9 +1559,8 @@ async function browserChecks() {
         return route.fulfill({ status: 204, body: '', headers: { 'access-control-allow-origin': '*' } });
       }
       const json =
-        url.indexOf('/api/contact') !== -1 ? { contactId: 'test-contact' } :
-        url.indexOf('/api/verify/start') !== -1 ? { verifyId: 'test-verify' } :
-        url.indexOf('/api/verify/check') !== -1 ? { verified: true, estimateToken: 'test-token' } :
+        url.indexOf('/api/contact') !== -1
+          ? (body.email ? { contactId: 'test-contact', estimateToken: 'test-token' } : { contactId: 'test-contact' }) :
         { ok: true };
       return route.fulfill({
         status: 200, contentType: 'application/json', body: JSON.stringify(json),
@@ -1872,14 +1869,32 @@ async function browserChecks() {
     await page.waitForSelector('#rc-section-3.rc-visible', { timeout: 10000 });
     await fillContact(page);
     await page.click('#rc-section-3 button.rc-btn-primary');
-    await page.waitForSelector('#rc-verify-email-modal.rc-active', { timeout: 10000 });
-    await page.fill('#rc-verify-code-input', '123456');
-    await page.click('#rc-verify-submit-btn');
+    await page.waitForSelector('#rc-section-5.rc-visible', { timeout: 10000 });
+    await page.fill('#rc-email', LEAD.email);
+    await page.click('#rc-btn-show-estimate');
     await page.waitForSelector('#rc-section-4.rc-visible', { timeout: 10000 });
 
     await check(target.name + ': the estimate renders', async function () {
       const price = await page.locator('#rc-summary-content .rc-hero-price').textContent();
       assert(/^\$[\d,]+\.\d\d$/.test(price.trim()), 'hero price looks wrong: ' + price);
+    });
+
+    await check(target.name + ': the lead is saved before the email screen, then again with the email', async function () {
+      const contact = events.filter(function (e) { return e.path.indexOf('/api/contact') === 0; });
+      assert(contact.length >= 2, '/api/contact calls: ' + contact.length);
+      eq(!!contact[0].body.email, false, 'first save (contact screen) carries no email');
+      eq(contact[0].body.consent, true, 'first save carries consent');
+      eq(contact[contact.length - 1].body.email, LEAD.email, 'last save carries the email');
+    });
+
+    await check(target.name + ': no email code is asked for, and the estimate uses the pass from the email save', async function () {
+      const verify = events.filter(function (e) { return e.path.indexOf('/api/verify') === 0; });
+      eq(verify.length, 0, '/api/verify calls');
+      eq(await page.locator('#rc-verify-email-modal').count(), 0, 'code modal in the page');
+      const est = events.filter(function (e) { return e.path.indexOf('/api/estimate') === 0; });
+      eq(est.length, 1, '/api/estimate calls');
+      eq(est[0].body.estimateToken, 'test-token', 'estimate pass sent');
+      eq(est[0].body.contactEmail, LEAD.email, 'estimate carries the email');
     });
 
     // -----------------------------------------------------------------------
@@ -1917,7 +1932,7 @@ async function browserChecks() {
         assert(stepView < completed, 'calc_step_view came after calc_estimate_completed');
         // Every event the walk passes through, none dropped.
         ['calc_consent_checked', 'calc_step1_complete', 'calc_step3_complete',
-         'calc_verify_sent', 'calc_verify_success', 'calc_window_added'].forEach(function (n) {
+         'calc_email_submitted', 'calc_window_added'].forEach(function (n) {
           assert(names.indexOf(n) !== -1, n + ' was never mirrored (saw: ' + names.join(', ') + ')');
         });
       });
@@ -1960,12 +1975,12 @@ async function browserChecks() {
         assert(consent !== -1, 'calc_consent_checked was never mirrored');
         assert(rt.indexOf(identifies[0]) > consent,
           'identify fired before the contact was submitted');
-        // Exactly one identify per distinct payload: Step 1 has phone + name,
-        // Step 3 adds the email. Verification repeats neither, so it is skipped.
+        // Exactly one identify per distinct payload: the contact screen has phone
+        // + name, the email screen adds the email.
         const payloads = identifies.map(function (c) { return JSON.stringify(c.traits); });
         eq(new Set(payloads).size, payloads.length, 'identify payloads (duplicates are noise for I.STITCH)');
         const withEmail = identifies.filter(function (c) { return c.traits.email === LEAD.email; });
-        eq(withEmail.length, 1, 'identify calls carrying the verified email');
+        eq(withEmail.length, 1, 'identify calls carrying the email');
         identifies.forEach(function (c) {
           assert(c.traits.email || c.traits.phone, 'identify with nothing to match on');
         });
@@ -2167,6 +2182,21 @@ async function browserChecks() {
       // Never purple: a visited link left to the browser default is off-brand.
       eq(m.colour, 'rgb(135, 137, 139)', 'policy link colour at ' + width + 'px');
       assert(m.height > 0 && m.width > 0, 'the privacy link has no tappable box at ' + width + 'px');
+    });
+
+    await check('WordPress stand-in at ' + width + 'px: the video sits below the window choices', async function () {
+      await page.evaluate(function () { window.ReeceCalculator.goToStep(2); });
+      await page.waitForSelector('#rc-section-2.rc-visible', { timeout: 10000 });
+      const m = await page.evaluate(function () {
+        const top = function (sel) { return document.querySelector(sel).getBoundingClientRect().top; };
+        return {
+          video: top('#reece-calculator .rc-config-video'),
+          style: top('#reece-calculator #rc-window-style'),
+          frame: top('#reece-calculator #rc-frame-material')
+        };
+      });
+      assert(m.video > m.style, 'video above the window styles at ' + width + 'px');
+      assert(m.video > m.frame, 'video above the frame choices at ' + width + 'px');
     });
 
     await check('WordPress stand-in at ' + width + 'px: the calculator uses the whole screen', async function () {
